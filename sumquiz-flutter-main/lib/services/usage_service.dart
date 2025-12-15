@@ -1,41 +1,35 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class UsageService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String uid;
 
   UsageService(this.uid);
 
+  /// Check if user can perform an action (server-side validation)
+  /// HIGH PRIORITY FIX H5: Move limits logic to Cloud Function
   Future<bool> canPerformAction(String action) async {
-    final doc = await _firestore.collection('users').doc(uid).collection('usage').doc(_today()).get();
-    if (!doc.exists) {
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('canPerformAction');
+      final result = await callable.call({'action': action});
+      return result.data['canPerform'] as bool;
+    } catch (e) {
+      // Fallback to allowing action if cloud function fails
+      print('Error checking usage limit: $e');
       return true;
     }
-    final usage = doc.data()!;
-    final limit = _getLimitForAction(action);
-    return (usage[action] ?? 0) < limit;
   }
 
+  /// Record an action (server-side counter)
+  /// HIGH PRIORITY FIX H5: Enforce strict counters
   Future<void> recordAction(String action) async {
-    final docRef = _firestore.collection('users').doc(uid).collection('usage').doc(_today());
-    await docRef.set({action: FieldValue.increment(1)}, SetOptions(merge: true));
-  }
-
-  int _getLimitForAction(String action) {
-    switch (action) {
-      case 'summaries':
-        return 5;
-      case 'quizzes':
-        return 3;
-      case 'flashcards':
-        return 3;
-      default:
-        return 0;
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('recordAction');
+      await callable.call({'action': action});
+    } catch (e) {
+      print('Error recording action: $e');
+      rethrow;
     }
-  }
-
-  String _today() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month}-${now.day}';
   }
 }

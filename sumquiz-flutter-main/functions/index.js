@@ -326,8 +326,222 @@ exports.generateReferralCode = functions.https.onCall(async (data, context) => {
 });
 
 // ============================================================================
-// C2: RevenueCat Webhook (Receipt Validation)
+// H5: Server-Side Usage Limits
 // ============================================================================
+
+/**
+ * Check if user can perform an action based on daily limits
+ * HIGH PRIORITY FIX H5: Move limits logic to Cloud Function
+ */
+exports.canPerformAction = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  const action = data.action;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User not authenticated');
+  }
+  
+  if (!action) {
+    throw new functions.https.HttpsError('invalid-argument', 'Action is required');
+  }
+  
+  // Get daily limit for action
+  const limit = _getLimitForAction(action);
+  
+  // Get today's usage
+  const today = _getToday();
+  const doc = await db.collection('users').doc(uid).collection('usage').doc(today).get();
+  
+  if (!doc.exists) {
+    return { canPerform: true, current: 0, limit: limit };
+  }
+  
+  const usage = doc.data();
+  const current = usage[action] || 0;
+  
+  return { canPerform: current < limit, current: current, limit: limit };
+});
+
+/**
+ * Record an action and increment the counter
+ * HIGH PRIORITY FIX H5: Enforce strict counters
+ */
+exports.recordAction = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  const action = data.action;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User not authenticated');
+  }
+  
+  if (!action) {
+    throw new functions.https.HttpsError('invalid-argument', 'Action is required');
+  }
+  
+  // Get today's date
+  const today = _getToday();
+  
+  // Increment counter atomically
+  const docRef = db.collection('users').doc(uid).collection('usage').doc(today);
+  await docRef.set({ [action]: admin.firestore.FieldValue.increment(1) }, { merge: true });
+  
+  console.log(`Recorded action ${action} for user ${uid}`);
+  
+  return { success: true };
+});
+
+/**
+ * Get daily limit for an action
+ */
+function _getLimitForAction(action) {
+  switch (action) {
+    case 'summaries':
+      return 5;
+    case 'quizzes':
+      return 3;
+    case 'flashcards':
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Get today's date as a string (YYYY-MM-DD)
+ */
+function _getToday() {
+  const now = new Date();
+  return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+}
+
+// ============================================================================
+// H2: Rate Limiting for Password Reset
+// ============================================================================
+
+/**
+ * Send password reset email with rate limiting
+ * HIGH PRIORITY FIX H2: Rate Limiting (Password Reset)
+ */
+exports.sendPasswordResetEmail = functions.https.onCall(async (data, context) => {
+  const email = data.email;
+  
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
+  }
+  
+  // Check rate limit - max 3 resets per hour per email
+  const rateLimitDoc = db.collection('rate_limits').doc(`password_reset_${email}`);
+  const rateLimitData = await rateLimitDoc.get();
+  
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+  
+  if (rateLimitData.exists) {
+    const rateLimit = rateLimitData.data();
+    const lastReset = rateLimit.lastReset.toMillis();
+    const resetCount = rateLimit.resetCount || 0;
+    
+    // If last reset was more than an hour ago, reset the counter
+    if (now - lastReset > oneHour) {
+      await rateLimitDoc.set({
+        lastReset: admin.firestore.FieldValue.serverTimestamp(),
+        resetCount: 1
+      });
+    } else {
+      // Check if we've exceeded the limit
+      if (resetCount >= 3) {
+        throw new functions.https.HttpsError('resource-exhausted', 
+          'Too many password reset requests. Please try again later.');
+      }
+      
+      // Increment counter
+      await rateLimitDoc.update({
+        resetCount: admin.firestore.FieldValue.increment(1)
+      });
+    }
+  } else {
+    // First time requesting reset for this email
+    await rateLimitDoc.set({
+      lastReset: admin.firestore.FieldValue.serverTimestamp(),
+      resetCount: 1
+    });
+  }
+  
+  // Send password reset email
+  try {
+    await admin.auth().sendPasswordResetEmail(email);
+    console.log(`Password reset email sent to ${email}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`Failed to send password reset email to ${email}:`, error);
+    throw new functions.https.HttpsError('internal', 
+      'Failed to send password reset email. Please try again later.');
+  }
+});
+
+// ============================================================================
+// H4: Secure API Keys Implementation
+// ============================================================================
+
+/**
+ * Get RevenueCat API key for client-side initialization
+ * HIGH PRIORITY FIX H4: Secure API keys implementation
+ */
+exports.getRevenueCatApiKey = functions.https.onCall(async (data, context) => {
+  // In production, this should be stored in Firebase Functions config
+  // firebase functions:config:set revenuecat.apikey="YOUR_PRODUCTION_KEY"
+  
+  const apiKey = functions.config().revenuecat?.apikey || 'test_wqsPCFIaiJgfTpMxzajXKdkHIWr';
+  
+  if (!apiKey) {
+    throw new functions.https.HttpsError('internal', 'API key not configured');
+  }
+  
+  return { apiKey: apiKey };
+});
+
+// ============================================================================
+// H8: Crash Reporting / Logging
+// ============================================================================
+
+/**
+ * Log client-side errors for crash reporting
+ * HIGH PRIORITY FIX H8: Crash Reporting / Logging
+ */
+exports.logClientError = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  const { error, stackTrace, context: errorContext, timestamp } = data;
+  
+  // Log to Firebase Console
+  console.error('Client Error Report:', {
+    uid: uid || 'anonymous',
+    error: error,
+    stackTrace: stackTrace,
+    context: errorContext,
+    timestamp: timestamp || new Date().toISOString(),
+    userAgent: context.rawRequest.get('user-agent'),
+  });
+  
+  // Store in Firestore for later analysis
+  try {
+    await db.collection('client_errors').add({
+      uid: uid || null,
+      error: error,
+      stackTrace: stackTrace,
+      context: errorContext,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      userAgent: context.rawRequest.get('user-agent'),
+    });
+  } catch (firestoreError) {
+    console.error('Failed to store error in Firestore:', firestoreError);
+  }
+  
+  return { success: true };
+});
+
+// ============================================================================
+// C2: RevenueCat Webhook (Receipt Validation)
+// ====================================================================
 
 /**
  * Webhook endpoint for RevenueCat events

@@ -28,7 +28,7 @@ class UserModel {
 
   bool get isPro {
     // CRITICAL FIX: null subscriptionExpiry indicates lifetime Pro access
-    // This matches SubscriptionService.isProStream logic
+    // This matches IAPService.isProStream logic
     if (subscriptionExpiry == null) return true;
 
     // For time-limited subscriptions, check if not expired

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
-import '../../services/subscription_service.dart';
+import '../../services/iap_service.dart';
 
 class UpgradeDialog extends StatelessWidget {
   final String featureName;
@@ -23,16 +22,12 @@ class UpgradeDialog extends StatelessWidget {
           onPressed: () async {
             Navigator.of(context).pop(); // Close dialog first to avoid overlap
 
-            final subscriptionService = context.read<SubscriptionService?>();
-            if (subscriptionService != null) {
+            final iapService = context.read<IAPService?>();
+            if (iapService != null) {
               try {
-                final result = await subscriptionService.presentPaywall();
-                if (result == PaywallResult.purchased) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Welcome to Pro! 🎉')),
-                    );
-                  }
+                // Navigate to subscription screen
+                if (context.mounted) {
+                  Navigator.of(context).pushNamed('/subscription');
                 }
               } catch (e) {
                 // Ignore or log

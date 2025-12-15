@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
-
-import '../../services/subscription_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import '../../services/iap_service.dart';
+import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
 
 /// Modern subscription screen using RevenueCat native paywalls
@@ -14,7 +15,9 @@ class SubscriptionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = context.watch<UserModel?>();
-    final subscriptionService = context.watch<SubscriptionService?>();
+    final iapService = context.watch<IAPService?>();
+    final authUser = FirebaseAuth.instance.currentUser;
+    final isVerified = authUser?.emailVerified ?? false;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -23,30 +26,39 @@ class SubscriptionScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Center(
-        child: FutureBuilder<bool>(
-          future: _checkProStatus(subscriptionService),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
-            }
+      body: Column(
+        children: [
+          if (authUser != null && !isVerified)
+            _buildVerificationWarning(context, theme),
+          Expanded(
+            child: Center(
+              child: FutureBuilder<bool>(
+                future: _checkProStatus(iapService),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
 
-            final hasPro = snapshot.data ?? user?.isPro ?? false;
+                  final hasPro = snapshot.data ?? user?.isPro ?? false;
 
-            if (hasPro) {
-              // User already has Pro - show subscription management
-              return _buildProMemberView(context, theme, subscriptionService);
-            }
+                  if (hasPro) {
+                    // User already has Pro - show subscription management
+                    return _buildProMemberView(
+                        context, theme, iapService);
+                  }
 
-            // User needs to subscribe - show paywall button
-            return _buildUpgradeView(context, theme, subscriptionService);
-          },
-        ),
+                  // User needs to subscribe - show paywall button
+                  return _buildUpgradeView(context, theme, iapService);
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Future<bool> _checkProStatus(SubscriptionService? service) async {
+  Future<bool> _checkProStatus(IAPService? service) async {
     if (service == null) return false;
     return await service.hasProAccess();
   }
@@ -54,7 +66,7 @@ class SubscriptionScreen extends StatelessWidget {
   Widget _buildUpgradeView(
     BuildContext context,
     ThemeData theme,
-    SubscriptionService? subscriptionService,
+    IAPService? iapService,
   ) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -91,9 +103,9 @@ class SubscriptionScreen extends StatelessWidget {
 
           const SizedBox(height: 48),
 
-          // Show Paywall Button
+          // Show IAP Purchase Button
           ElevatedButton(
-            onPressed: () => _presentPaywall(context, subscriptionService),
+            onPressed: () => _showIAPProducts(context, iapService),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               minimumSize: const Size(double.infinity, 56),
@@ -114,7 +126,7 @@ class SubscriptionScreen extends StatelessWidget {
 
           // Restore Purchases
           TextButton(
-            onPressed: () => _restorePurchases(context, subscriptionService),
+            onPressed: () => _restorePurchases(context, iapService),
             child: Text(
               'Restore Purchases',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -130,7 +142,7 @@ class SubscriptionScreen extends StatelessWidget {
   Widget _buildProMemberView(
     BuildContext context,
     ThemeData theme,
-    SubscriptionService? subscriptionService,
+    IAPService? iapService,
   ) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -160,12 +172,12 @@ class SubscriptionScreen extends StatelessWidget {
           const SizedBox(height: 48),
 
           // Show subscription details
-          FutureBuilder<SubscriptionDetails?>(
-            future: subscriptionService?.getSubscriptionDetails(),
+          FutureBuilder<List<ProductDetails>?>(
+            future: iapService?.getAvailableProducts(),
             builder: (context, snapshot) {
-              final details = snapshot.data;
+              final products = snapshot.data;
 
-              if (details == null) {
+              if (products == null || products.isEmpty) {
                 return const SizedBox.shrink();
               }
 
@@ -176,18 +188,13 @@ class SubscriptionScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Current Plan',
+                        'Available Products',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildDetailRow(theme, 'Plan', details.productName),
-                      const SizedBox(height: 8),
-                      _buildDetailRow(theme, 'Status', details.renewalStatus),
-                      const SizedBox(height: 8),
-                      _buildDetailRow(
-                          theme, 'Expires', details.formattedExpiry),
+                      ...products.map((product) => _buildProductRow(theme, product)).toList(),
                     ],
                   ),
                 ),
@@ -197,10 +204,10 @@ class SubscriptionScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // Manage Subscription (Customer Center)
+          // Manage Subscription (IAP Management)
           ElevatedButton(
             onPressed: () =>
-                _presentCustomerCenter(context, subscriptionService),
+                _presentIAPManagement(context, iapService),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               minimumSize: const Size(double.infinity, 56),
@@ -259,104 +266,209 @@ class SubscriptionScreen extends StatelessWidget {
     );
   }
 
-  /// Present RevenueCat native paywall
-  Future<void> _presentPaywall(
+  Widget _buildProductRow(ThemeData theme, ProductDetails product) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          product.title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          product.description,
+          style: theme.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          product.price,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const Divider(),
+      ],
+    );
+  }
+
+  /// Show IAP products for purchase
+  Future<void> _showIAPProducts(
     BuildContext context,
-    SubscriptionService? subscriptionService,
+    IAPService? iapService,
   ) async {
-    if (subscriptionService == null) {
-      _showError(context, 'Subscription service not available');
+    if (iapService == null) {
+      _showError(context, 'IAP service not available');
       return;
     }
 
     try {
-      final result = await subscriptionService.presentPaywall();
-
+      final products = await iapService.getAvailableProducts();
+      
       if (!context.mounted) return;
-
-      switch (result) {
-        case PaywallResult.purchased:
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Welcome to SumQuiz Pro! 🎉'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          break;
-        case PaywallResult.restored:
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Purchases restored successfully!'),
-            ),
-          );
-          break;
-        case PaywallResult.cancelled:
-        case PaywallResult.error:
-          // User cancelled or error - no action needed
-          break;
+      
+      if (products.isEmpty) {
+        _showError(context, 'No products available');
+        return;
       }
+      
+      // Show product selection dialog
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Choose a Plan'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: products.map((product) => ListTile(
+                title: Text(product.title),
+                subtitle: Text(product.description),
+                trailing: Text(product.price),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final success = await iapService.purchaseProduct(product.id);
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Welcome to SumQuiz Pro! 🎉'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+              )).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
     } catch (e) {
       if (context.mounted) {
-        _showError(context, 'Failed to show payment options: $e');
+        _showError(context, 'Failed to load products: $e');
       }
     }
   }
 
-  /// Present Customer Center for subscription management
-  Future<void> _presentCustomerCenter(
+  /// Present IAP management options
+  Future<void> _presentIAPManagement(
     BuildContext context,
-    SubscriptionService? subscriptionService,
+    IAPService? iapService,
   ) async {
-    if (subscriptionService == null) {
-      _showError(context, 'Subscription service not available');
+    if (iapService == null) {
+      _showError(context, 'IAP service not available');
       return;
     }
 
-    try {
-      await subscriptionService.presentCustomerCenter();
-    } catch (e) {
-      if (context.mounted) {
-        _showError(context, 'Failed to open management screen: $e');
-      }
-    }
+    // For now, just show a simple dialog with restore option
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Manage Subscription'),
+        content: const Text('You can restore your purchases or manage your subscription through the Play Store app.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await iapService.restorePurchases();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Restore request sent')),
+                );
+              }
+            },
+            child: const Text('Restore Purchases'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Restore previous purchases
   Future<void> _restorePurchases(
     BuildContext context,
-    SubscriptionService? subscriptionService,
+    IAPService? iapService,
   ) async {
-    if (subscriptionService == null) {
-      _showError(context, 'Subscription service not available');
+    if (iapService == null) {
+      _showError(context, 'IAP service not available');
       return;
     }
 
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+    try {
+      await iapService.restorePurchases();
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Restore request sent')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showError(context, 'Failed to restore purchases: $e');
+      }
+    }
+  }
+
+  Widget _buildVerificationWarning(BuildContext context, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.errorContainer,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Please verify your email to access Pro features.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () async {
+                try {
+                  final authService = context.read<AuthService>();
+                  await authService.resendVerificationEmail();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Verification email sent!')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Resend Verification Email'),
+            ),
+          ),
+        ],
       ),
     );
-
-    try {
-      await subscriptionService.restorePurchases();
-
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Dismiss loading
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Purchases restored successfully!'),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Dismiss loading
-
-      _showError(context, 'Failed to restore purchases: $e');
-    }
   }
 
   void _showError(BuildContext context, String message) {

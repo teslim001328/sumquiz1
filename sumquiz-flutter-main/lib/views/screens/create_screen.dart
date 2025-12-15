@@ -3,10 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:myapp/services/ai_service.dart';
 import 'package:myapp/services/content_extraction_service.dart';
-import 'package:myapp/services/subscription_service.dart';
+import 'package:myapp/services/iap_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class CreateScreen extends StatefulWidget {
@@ -96,12 +95,15 @@ class _CreateScreenState extends State<CreateScreen> {
 
   Future<void> _handleUploadPdf() async {
     // PRO CHECK: Check Pro access before allowing PDF upload
-    final subscriptionService = context.read<SubscriptionService?>();
-    if (subscriptionService != null) {
-      final isPro = await subscriptionService.hasProAccess();
+    final iapService = context.read<IAPService?>();
+    if (iapService != null) {
+      final isPro = await iapService.hasProAccess();
       if (!isPro && mounted) {
-        final result = await subscriptionService.presentPaywall();
-        if (result != PaywallResult.purchased) return;
+        // Navigate to subscription screen
+        if (mounted) {
+          context.push('/subscription');
+        }
+        return;
       }
     }
 

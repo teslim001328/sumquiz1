@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 
-import '../services/subscription_service.dart';
+import '../services/iap_service.dart';
 
 /// Widget that gates content behind Pro subscription
 /// Shows paywall if user doesn't have Pro access
@@ -12,7 +11,7 @@ class ProGate extends StatelessWidget {
   final String featureName;
   final bool showFullScreen;
 
-  const Pro Gate({
+  const ProGate({
     super.key,
     required this.child,
     required this.featureName,
@@ -22,14 +21,14 @@ class ProGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    
+
     if (uid == null) {
       return _buildLoginPrompt(context);
     }
 
     return StreamBuilder<bool>(
-      stream: Provider.of<SubscriptionService?>(context, listen: false)
-          ?.isProStream(uid),
+      stream:
+          Provider.of<IAPService?>(context, listen: false)?.isProStream(uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -69,7 +68,7 @@ class ProGate extends StatelessWidget {
 
   Widget _buildInlinePrompt(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(24.0),
       margin: const EdgeInsets.all(16.0),
@@ -107,7 +106,7 @@ class ProGate extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => _showPaywall(context),
+            onPressed: () => _showIAP(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               minimumSize: const Size(double.infinity, 48),
@@ -121,7 +120,7 @@ class ProGate extends StatelessWidget {
 
   Widget _buildFullScreenPrompt(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(featureName),
@@ -155,7 +154,7 @@ class ProGate extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               ElevatedButton(
-                onPressed: () => _showPaywall(context),
+                onPressed: () => _showIAP(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   minimumSize: const Size(double.infinity, 56),
@@ -178,26 +177,19 @@ class ProGate extends StatelessWidget {
     );
   }
 
-  Future<void> _showPaywall(BuildContext context) async {
-    final subscriptionService = Provider.of<SubscriptionService?>(
+  Future<void> _showIAP(BuildContext context) async {
+    final iapService = Provider.of<IAPService?>(
       context,
       listen: false,
     );
 
-    if (subscriptionService == null) return;
+    if (iapService == null) return;
 
     try {
-      final result = await subscriptionService.presentPaywall();
-
-      if (!context.mounted) return;
-
-      if (result == PaywallResult.purchased) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Welcome to SumQuiz Pro! 🎉'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      // For simplicity, we'll navigate to the subscription screen
+      // In a real app, you might show a product selection dialog
+      if (context.mounted) {
+        Navigator.of(context).pushNamed('/subscription');
       }
     } catch (e) {
       if (context.mounted) {
@@ -250,29 +242,18 @@ class ProActionButton extends StatelessWidget {
   }
 
   Future<bool> _checkProAccess(BuildContext context) async {
-    final service = Provider.of<SubscriptionService?>(context, listen: false);
+    final service = Provider.of<IAPService?>(context, listen: false);
     return await service?.hasProAccess() ?? false;
   }
 
   Future<void> _showPaywallThenExecute(BuildContext context) async {
-    final service = Provider.of<SubscriptionService?>(context, listen: false);
+    final service = Provider.of<IAPService?>(context, listen: false);
     if (service == null) return;
 
     try {
-      final result = await service.presentPaywall();
-
-      if (!context.mounted) return;
-
-      if (result == PaywallResult.purchased) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Welcome to Pro! 🎉'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Execute the action after purchase
-        onPressed();
+      // Navigate to subscription screen instead of showing paywall
+      if (context.mounted) {
+        Navigator.of(context).pushNamed('/subscription');
       }
     } catch (e) {
       if (context.mounted) {
@@ -296,7 +277,7 @@ class ProBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

@@ -131,9 +131,16 @@ class AuthService {
 
   Future<void> sendPasswordResetEmail(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (e, s) {
-      developer.log('Error sending password reset email',
+      // HIGH PRIORITY FIX H2: Rate Limiting (Password Reset)
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('sendPasswordResetEmail');
+      await callable.call({'email': email});
+    } on FirebaseFunctionsException catch (e) {
+      developer.log('Error sending password reset email via Cloud Function',
+          error: e);
+      rethrow;
+    } catch (e, s) {
+      developer.log('Unexpected error sending password reset email',
           error: e, stackTrace: s);
       rethrow;
     }

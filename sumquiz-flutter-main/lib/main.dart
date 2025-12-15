@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, PlatformDispatcher;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/theme_provider.dart';
 import 'package:myapp/services/auth_service.dart';
@@ -16,7 +17,7 @@ import 'package:myapp/router/app_router.dart';
 import 'package:myapp/providers/navigation_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:myapp/services/subscription_service.dart';
+import 'package:myapp/services/iap_service.dart';
 import 'package:myapp/services/usage_service.dart';
 import 'package:myapp/services/referral_service.dart';
 import 'package:myapp/services/notification_service.dart';
@@ -25,10 +26,29 @@ import 'package:myapp/services/content_extraction_service.dart';
 import 'package:myapp/services/spaced_repetition_service.dart';
 import 'package:myapp/services/mission_service.dart';
 import 'package:myapp/services/time_sync_service.dart';
+import 'package:myapp/services/error_reporting_service.dart';
 import 'package:myapp/widgets/notification_navigator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // HIGH PRIORITY FIX H8: Crash Reporting / Logging
+  // Global error handling
+  FlutterError.onError = (FlutterErrorDetails details) async {
+    final errorReportingService = ErrorReportingService();
+    await errorReportingService.reportError(
+        details.exception, details.stack ?? StackTrace.current,
+        context: 'Flutter Framework Error');
+  };
+
+  // Handle async errors
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    final errorReportingService = ErrorReportingService();
+    errorReportingService.reportError(error, stack,
+        context: 'Unhandled Async Error');
+    return true;
+  };
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -36,6 +56,10 @@ void main() async {
 
   final notificationService = NotificationService();
   await notificationService.initialize();
+
+  // Initialize error reporting service
+  // HIGH PRIORITY FIX H8: Crash Reporting / Logging
+  final errorReportingService = ErrorReportingService();
 
   if (!kIsWeb) {
     await FirebaseAppCheck.instance.activate(
@@ -89,15 +113,15 @@ class MyApp extends StatelessWidget {
             notificationService: notificationService,
           ),
         ),
-        ProxyProvider<AuthService, SubscriptionService?>(
+        ProxyProvider<AuthService, IAPService?>(
           update: (context, authService, previous) {
             final user = authService.currentUser;
             if (user != null) {
               if (previous != null) {
                 return previous;
               }
-              final service = SubscriptionService();
-              service.initialize(user.uid);
+              final service = IAPService();
+              service.initialize();
               return service;
             }
             previous?.dispose();

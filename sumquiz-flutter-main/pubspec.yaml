@@ -56,8 +56,7 @@ dependencies:
   flutter_animate: ^4.5.2
   youtube_explode_dart: ^3.0.5
   html: ^0.15.6
-  purchases_flutter: ^9.10.0
-  purchases_ui_flutter: ^9.10.0
+  # Removed RevenueCat dependencies and using in_app_purchase instead
 
 dev_dependencies:
   flutter_test:

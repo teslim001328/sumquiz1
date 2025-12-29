@@ -19,6 +19,13 @@ class LocalQuizQuestion extends HiveObject {
     required this.correctAnswer,
   });
 
+  factory LocalQuizQuestion.fromJson(Map<String, dynamic> json) =>
+      LocalQuizQuestion(
+        question: json['question'] ?? '',
+        options: List<String>.from(json['options'] ?? []),
+        correctAnswer: json['correctAnswer'] ?? '',
+      );
+
   LocalQuizQuestion.empty() {
     question = '';
     options = [];

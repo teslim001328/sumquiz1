@@ -19,6 +19,11 @@ class LocalFlashcard extends HiveObject {
     required this.answer,
   }) : id = const Uuid().v4();
 
+  factory LocalFlashcard.fromJson(Map<String, dynamic> json) => LocalFlashcard(
+        question: json['question'] ?? '',
+        answer: json['answer'] ?? '',
+      );
+
   LocalFlashcard.empty() {
     question = '';
     answer = '';

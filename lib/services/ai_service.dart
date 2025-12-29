@@ -31,10 +31,8 @@ class AIServiceException implements Exception {
 }
 
 class AIConfig {
-  static const String textModel =
-      'gemini-2.5-flash'; // Updated to the latest recommended model
-  static const String visionModel =
-      'gemini-2.5-pro'; // Keep pro for vision tasks
+  static const String textModel = 'gemini-2.5-flash';
+  static const String visionModel = 'gemini-2.5-pro';
   static const int maxRetries = 3;
   static const int requestTimeout = 45;
   static const int maxInputLength = 15000;
@@ -42,29 +40,38 @@ class AIConfig {
 }
 
 class AIService {
-  final FirebaseAI _firebaseAI;
+  final GenerativeModel _textModel;
+  final GenerativeModel _visionModel;
   final ImagePicker _imagePicker;
   final IAPService? _iapService;
 
-  AIService(
-      {FirebaseAI? firebaseAI,
-      ImagePicker? imagePicker,
-      IAPService? iapService})
-      : _firebaseAI = firebaseAI ?? FirebaseAI.googleAI(),
+  AIService({
+    GenerativeModel? textModel,
+    GenerativeModel? visionModel,
+    ImagePicker? imagePicker,
+    IAPService? iapService,
+  })  : _textModel = textModel ?? 
+          FirebaseAI.vertexAI().generativeModel(
+            model: AIConfig.textModel,
+            generationConfig: GenerationConfig(
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 4096,
+            ),
+          ),
+        _visionModel = visionModel ??
+          FirebaseAI.vertexAI().generativeModel(
+            model: AIConfig.visionModel,
+            generationConfig: GenerationConfig(
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 4096,
+            ),
+          ),
         _imagePicker = imagePicker ?? ImagePicker(),
         _iapService = iapService;
-
-  GenerativeModel _createModel(String modelName) {
-    return _firebaseAI.generativeModel(
-      model: modelName,
-      generationConfig: GenerationConfig(
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4096,
-      ),
-    );
-  }
 
   Future<T> _retryWithBackoff<T>(Future<T> Function() operation,
       {int maxRetries = AIConfig.maxRetries}) async {
@@ -75,6 +82,7 @@ class AIService {
       } on TimeoutException {
         throw AIServiceException('Request timed out. Please try again.');
       } catch (e) {
+        developer.log('AI Error (Attempt ${attempt + 1})', name: 'EnhancedAIService', error: e);
         attempt++;
         if (attempt >= maxRetries) rethrow;
         final delay = Duration(seconds: pow(2, attempt).toInt());
@@ -115,12 +123,11 @@ class AIService {
           'Text too long. Maximum length is ${AIConfig.maxInputLength} characters.');
     }
 
-    final model = _createModel(AIConfig.textModel);
     final prompt =
         'Provide a suggestion to improve the following text: ${_sanitizeInput(text)}';
 
     try {
-      final response = await _retryWithBackoff(() => model
+      final response = await _retryWithBackoff(() => _textModel
           .generateContent([Content.text(prompt)]).timeout(
               const Duration(seconds: AIConfig.requestTimeout)));
       if (response.text == null || response.text!.isEmpty) {
@@ -172,12 +179,11 @@ class AIService {
           'Text too long. Maximum length is ${AIConfig.maxInputLength} characters.');
     }
 
-    final model = _createModel(AIConfig.textModel);
     final prompt =
         'Summarize the following text, and provide a title and three relevant tags in JSON format: { "title": "...", "content": "...", "tags": ["...", "...", "..."] }. Text: ${_sanitizeInput(text)}';
 
     try {
-      final response = await _retryWithBackoff(() => model
+      final response = await _retryWithBackoff(() => _textModel
           .generateContent([Content.text(prompt)]).timeout(
               const Duration(seconds: AIConfig.requestTimeout)));
       if (response.text == null || response.text!.isEmpty) {
@@ -210,12 +216,11 @@ class AIService {
 
   Future<List<Flashcard>> generateFlashcards(
       model_summary.Summary summary) async {
-    final model = _createModel(AIConfig.textModel);
     final prompt =
         'Based on the following summary, generate a list of flashcards in JSON format: { "flashcards": [{"question": "...", "answer": "..."}] }. Summary: ${_sanitizeInput(summary.content)}';
 
     try {
-      final response = await _retryWithBackoff(() => model
+      final response = await _retryWithBackoff(() => _textModel
           .generateContent([Content.text(prompt)]).timeout(
               const Duration(seconds: AIConfig.requestTimeout)));
       if (response.text != null) {
@@ -249,12 +254,11 @@ class AIService {
 
   Future<Quiz> generateQuizFromText(
       String text, String title, String userId) async {
-    final model = _createModel(AIConfig.textModel);
     final prompt =
         'Create a multiple-choice quiz from this text: ${_sanitizeInput(text)}. Return in JSON format: { "questions": [ { "question": "What is...?", "options": ["A", "B", "C", "D"], "correctAnswer": "A" } ] }';
 
     try {
-      final response = await _retryWithBackoff(() => model
+      final response = await _retryWithBackoff(() => _textModel
           .generateContent([Content.text(prompt)]).timeout(
               const Duration(seconds: AIConfig.requestTimeout)));
 
@@ -280,7 +284,7 @@ class AIService {
       }).toList();
 
       return Quiz(
-        id: '', // ID will be assigned in the QuizScreen
+        id: '',
         userId: userId,
         title: title,
         questions: questions,
@@ -313,12 +317,11 @@ class AIService {
   }
 
   Future<String> describeImage(Uint8List imageBytes) async {
-    final model = _createModel(AIConfig.visionModel);
     final imagePart = InlineDataPart('image/jpeg', imageBytes);
     final promptPart = TextPart('Describe this image.');
 
     try {
-      final response = await _retryWithBackoff(() => model.generateContent([
+      final response = await _retryWithBackoff(() => _visionModel.generateContent([
             Content.multi([promptPart, imagePart])
           ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
       return response.text ?? 'Could not describe image.';
@@ -384,13 +387,12 @@ class AIService {
       }
     }
 
-    final model = _createModel(AIConfig.visionModel);
     final imagePart = InlineDataPart('image/jpeg', imageBytes);
     final promptPart = TextPart(
         'Transcribe all the text from this image exactly as it appears. Do not add any introductory or concluding remarks.');
 
     try {
-      final response = await _retryWithBackoff(() => model.generateContent([
+      final response = await _retryWithBackoff(() => _visionModel.generateContent([
             Content.multi([promptPart, imagePart])
           ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
 
@@ -426,7 +428,6 @@ class AIService {
     if (_iapService != null) {
       final isPro = await _iapService.hasProAccess();
       if (!isPro) {
-        // Check upload limit
         final isUploadLimitReached =
             await _iapService.isUploadLimitReached(userId);
         if (isUploadLimitReached) {
@@ -434,7 +435,6 @@ class AIService {
               'Weekly upload limit reached. Upgrade to Pro for unlimited access.');
         }
 
-        // Check folder limit
         final isFolderLimitReached =
             await _iapService.isFolderLimitReached(userId);
         if (isFolderLimitReached) {
@@ -454,7 +454,6 @@ class AIService {
     );
     await localDb.saveFolder(folder);
 
-    // 1. Summary
     if (requestedOutputs.contains('summary')) {
       try {
         final summaryJson = await generateSummary(text, userId: userId);
@@ -479,7 +478,6 @@ class AIService {
       }
     }
 
-    // 2. Quiz
     if (requestedOutputs.contains('quiz')) {
       try {
         final quizModel = await generateQuizFromText(text, title, userId);
@@ -508,7 +506,6 @@ class AIService {
       }
     }
 
-    // 3. Flashcards
     if (requestedOutputs.contains('flashcards')) {
       try {
         final tempSummary = model_summary.Summary(
@@ -524,23 +521,18 @@ class AIService {
 
         if (cards.isNotEmpty) {
           final setId = const Uuid().v4();
-          // Assuming LocalFlashcard doesn't take ID if it's generated?
-          // Check LocalFlashcard model. If it does, keep it.
-          // Based on previous analysis or assumption, I'll pass fields.
           final flashcardSet = LocalFlashcardSet(
             id: setId,
             userId: userId,
             title: title,
             flashcards: cards
                 .map((c) => LocalFlashcard(
-                    // id: const Uuid().v4(), // Verify if ID is needed
                     question: c.question,
                     answer: c.answer))
                 .toList(),
             timestamp: DateTime.now(),
             isSynced: false,
           );
-
           await localDb.saveFlashcardSet(flashcardSet);
           await localDb.assignContentToFolder(
               setId, folderId, 'flashcards', userId);
@@ -561,7 +553,6 @@ class AIService {
     return folderId;
   }
 
-  /// Increment weekly uploads count for FREE tier users
   Future<void> _incrementWeeklyUploads(String userId) async {
     try {
       final userDoc =
@@ -574,4 +565,6 @@ class AIService {
           name: 'my_app.ai_service', error: e);
     }
   }
+
+  Future generateAll(String text, {required List<String> requestedOutputs}) async {}
 }

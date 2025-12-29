@@ -35,6 +35,35 @@ class LocalSummary extends HiveObject {
     this.tags = const [],
   });
 
+  factory LocalSummary.fromJson(Map<String, dynamic> json) => LocalSummary(
+        id: ' ',
+        title: json['title'] ?? '',
+        content: json['content'] ?? '',
+        tags: List<String>.from(json['tags'] ?? []),
+        userId: ' ',
+        timestamp: DateTime.now(),
+      );
+
+  LocalSummary copyWith({
+    String? id,
+    String? title,
+    String? content,
+    DateTime? timestamp,
+    bool? isSynced,
+    String? userId,
+    List<String>? tags,
+  }) {
+    return LocalSummary(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      timestamp: timestamp ?? this.timestamp,
+      isSynced: isSynced ?? this.isSynced,
+      userId: userId ?? this.userId,
+      tags: tags ?? this.tags,
+    );
+  }
+
   LocalSummary.empty() {
     id = '';
     title = '';

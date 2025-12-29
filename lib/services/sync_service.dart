@@ -21,6 +21,18 @@ class SyncService {
 
   SyncService(this._localDb);
 
+  Future<void> syncOnLogin() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    if (await isConnected()) {
+      developer.log('User is online, starting sync...', name: 'SyncService');
+      await syncAllData();
+    } else {
+      developer.log('User is offline, skipping sync.', name: 'SyncService');
+    }
+  }
+
   Future<void> syncAllData() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -30,8 +42,7 @@ class SyncService {
       await _syncQuizzes(user.uid);
       await _syncFlashcardSets(user.uid);
     } catch (e, s) {
-      developer.log('Error during sync',
-          name: 'SyncService', error: e, stackTrace: s);
+      developer.log('Error during sync', name: 'SyncService', error: e, stackTrace: s);
     }
   }
 
@@ -59,8 +70,7 @@ class SyncService {
 
         await _localDb.updateSummarySyncStatus(localSummary.id, true);
       } catch (e, s) {
-        developer.log('Error syncing summary ${localSummary.id}',
-            name: 'SyncService', error: e, stackTrace: s);
+        developer.log('Error syncing summary ${localSummary.id}', name: 'SyncService', error: e, stackTrace: s);
       }
     }
 
@@ -129,8 +139,7 @@ class SyncService {
 
         await _localDb.updateQuizSyncStatus(localQuiz.id, true);
       } catch (e, s) {
-        developer.log('Error syncing quiz ${localQuiz.id}',
-            name: 'SyncService', error: e, stackTrace: s);
+        developer.log('Error syncing quiz ${localQuiz.id}', name: 'SyncService', error: e, stackTrace: s);
       }
     }
 
@@ -206,8 +215,7 @@ class SyncService {
 
         await _localDb.updateFlashcardSetSyncStatus(localFlashcardSet.id, true);
       } catch (e, s) {
-        developer.log('Error syncing flashcard set ${localFlashcardSet.id}',
-            name: 'SyncService', error: e, stackTrace: s);
+        developer.log('Error syncing flashcard set ${localFlashcardSet.id}', name: 'SyncService', error: e, stackTrace: s);
       }
     }
 

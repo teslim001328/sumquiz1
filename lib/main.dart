@@ -3,10 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sumquiz/providers/sync_provider.dart';
 import 'package:sumquiz/providers/theme_provider.dart';
 import 'package:sumquiz/services/auth_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/sync_service.dart';
 import 'firebase_options.dart';
 import 'package:sumquiz/services/ai_service.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
@@ -92,15 +94,6 @@ class MyApp extends StatelessWidget {
         Provider<LocalDatabaseService>(create: (_) => LocalDatabaseService()),
         Provider<SpacedRepetitionService>(
             create: (context) => SpacedRepetitionService(context.read<LocalDatabaseService>().getSpacedRepetitionBox())),
-        Provider<ContentExtractionService>(
-            create: (_) => ContentExtractionService()),
-        Provider<UserService>(create: (_) => UserService()),
-        Provider<EnhancedAIService>(create: (_) => EnhancedAIService()),
-
-        ChangeNotifierProvider<QuizViewModel>(
-          create: (context) => QuizViewModel(context.read<LocalDatabaseService>(), context.read<AuthService>()),
-        ),
-        
         ProxyProvider<AuthService, IAPService?>(
           update: (context, authService, previous) {
             final user = authService.currentUser;
@@ -116,6 +109,23 @@ class MyApp extends StatelessWidget {
             return null;
           },
           dispose: (_, service) => service?.dispose(),
+        ),
+        Provider<AIService>(
+            create: (context) =>
+                AIService(iapService: context.read<IAPService?>())),
+        Provider<ContentExtractionService>(
+            create: (context) => ContentExtractionService(context.read<AIService>(), context.read<LocalDatabaseService>())),
+        Provider<UserService>(create: (_) => UserService()),
+        Provider<EnhancedAIService>(create: (_) => EnhancedAIService()),
+        Provider<SyncService>(
+          create: (context) => SyncService(context.read<LocalDatabaseService>()),
+        ),
+        ChangeNotifierProvider<QuizViewModel>(
+          create: (context) => QuizViewModel(context.read<LocalDatabaseService>(), context.read<AuthService>()),
+        ),
+        ChangeNotifierProxyProvider<SyncService, SyncProvider>(
+          create: (context) => SyncProvider(context.read<SyncService>()),
+          update: (context, syncService, previous) => SyncProvider(syncService),
         ),
         ProxyProvider<AuthService, UsageService?>(
           update: (context, authService, previous) {
@@ -151,9 +161,6 @@ class MyApp extends StatelessWidget {
             return previous!;
           },
         ),
-         Provider<AIService>(
-            create: (context) =>
-                AIService(iapService: context.read<IAPService?>())),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

@@ -2,12 +2,17 @@ import 'dart:developer' as developer;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/providers/sync_provider.dart';
 import 'package:sumquiz/services/firestore_service.dart';
 import 'package:sumquiz/services/referral_service.dart';
 import 'package:sumquiz/services/user_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sumquiz/services/sync_service.dart';
+import 'package:sumquiz/services/local_database_service.dart';
+import 'package:flutter/material.dart';
 
 class AuthService {
   final FirebaseAuth _auth;
@@ -91,7 +96,7 @@ class AuthService {
     });
   }
 
-  Future<void> signInWithGoogle({String? referralCode}) async {
+  Future<void> signInWithGoogle(BuildContext context, {String? referralCode}) async {
     try {
       developer.log('Starting Google Sign-In flow');
 
@@ -130,6 +135,9 @@ class AuthService {
 
         // Check and reset weekly uploads if needed
         await _userService.checkAndResetWeeklyUploads(user.uid);
+
+        // Use the SyncProvider to trigger the sync
+        await Provider.of<SyncProvider>(context, listen: false).syncData();
 
         final isNewUser = result.additionalUserInfo?.isNewUser ?? false;
         if (isNewUser) {
@@ -203,7 +211,7 @@ class AuthService {
     }
   }
 
-  Future<void> signInWithEmailAndPassword(String email, String password) async {
+  Future<void> signInWithEmailAndPassword(BuildContext context, String email, String password) async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -213,14 +221,16 @@ class AuthService {
       // Save authentication state for offline access
       if (result.user != null) {
         await _saveAuthState(result.user!);
+        // Use the SyncProvider to trigger the sync
+        await Provider.of<SyncProvider>(context, listen: false).syncData();
       }
     } on FirebaseAuthException catch (e, s) {
-      developer.log('Error signing in with email', error: e, stackTrace: s);
+      developer.log('Error signing in with email', error: e, stackTrace:s);
       rethrow;
     }
   }
 
-  Future<void> signUpWithEmailAndPassword(String email, String password,
+  Future<void> signUpWithEmailAndPassword(BuildContext context, String email, String password,
       String fullName, String? referralCode) async {
     try {
       // CRITICAL FIX C5: Use Cloud Function for atomic signup + referral
@@ -246,6 +256,8 @@ class AuthService {
       // Save authentication state for offline access
       if (authResult.user != null) {
         await _saveAuthState(authResult.user!);
+        // Use the SyncProvider to trigger the sync
+        await Provider.of<SyncProvider>(context, listen: false).syncData();
       }
 
       // HIGH PRIORITY FIX H1: Send email verification

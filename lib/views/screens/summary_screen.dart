@@ -16,7 +16,7 @@ import '../../services/enhanced_ai_service.dart';
 import '../../services/usage_service.dart';
 import '../widgets/upgrade_dialog.dart';
 
-enum SummaryState { initial, loading, error, success }
+enum ScreenState { initial, loading, error, success }
 
 class SummaryScreen extends StatefulWidget {
   final LocalSummary? summary;
@@ -31,7 +31,7 @@ class SummaryScreenState extends State<SummaryScreen> {
   final TextEditingController _textController = TextEditingController();
   String? _pdfFileName;
   Uint8List? _pdfBytes;
-  SummaryState _state = SummaryState.initial;
+  ScreenState _state = ScreenState.initial;
   String _summaryContent = '';
   String _summaryTitle = '';
   List<String> _summaryTags = [];
@@ -52,7 +52,7 @@ class SummaryScreenState extends State<SummaryScreen> {
       _summaryContent = widget.summary!.content;
       _summaryTitle = widget.summary!.title;
       _summaryTags = widget.summary!.tags;
-      _state = SummaryState.success;
+      _state = ScreenState.success;
     }
   }
 
@@ -73,7 +73,7 @@ class SummaryScreenState extends State<SummaryScreen> {
     } catch (e, s) {
       developer.log('Error picking or reading PDF', name: 'summary.screen', error: e, stackTrace: s);
       setState(() {
-        _state = SummaryState.error;
+        _state = ScreenState.error;
         _errorMessage = "Error picking or reading PDF: $e";
       });
     }
@@ -94,7 +94,7 @@ class SummaryScreenState extends State<SummaryScreen> {
     }
 
     setState(() {
-      _state = SummaryState.loading;
+      _state = ScreenState.loading;
       _loadingMessage = 'Generating summary...';
     });
 
@@ -122,7 +122,7 @@ class SummaryScreenState extends State<SummaryScreen> {
           _summaryTitle = summary.title;
           _summaryContent = summary.content;
           _summaryTags = summary.tags;
-          _state = SummaryState.success;
+          _state = ScreenState.success;
         });
       } else {
         throw Exception('Failed to retrieve the generated summary.');
@@ -130,14 +130,14 @@ class SummaryScreenState extends State<SummaryScreen> {
     } catch (e, s) {
       developer.log('An unexpected error occurred during summary generation', name: 'summary.screen', error: e, stackTrace: s);
       setState(() {
-        _state = SummaryState.error;
+        _state = ScreenState.error;
         _errorMessage = "An unexpected error occurred. Please try again.";
       });
     }
   }
 
   void _retry() => setState(() {
-        _state = SummaryState.initial;
+        _state = ScreenState.initial;
         _summaryContent = _summaryTitle = _errorMessage = '';
         _summaryTags = [];
         _textController.clear();
@@ -210,9 +210,9 @@ class SummaryScreenState extends State<SummaryScreen> {
 
   Widget _buildBody() {
     switch (_state) {
-      case SummaryState.loading: return _buildLoadingState();
-      case SummaryState.error: return _buildErrorState();
-      case SummaryState.success: return _buildSuccessState();
+      case ScreenState.loading: return _buildLoadingState();
+      case ScreenState.error: return _buildErrorState();
+      case ScreenState.success: return _buildSuccessState();
       default: return _buildInitialState();
     }
   }

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-enum AuthMode { Login, SignUp }
+enum AuthMode { login, signUp }
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -20,7 +20,7 @@ class _AuthScreenState extends State<AuthScreen>
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _referralCodeController = TextEditingController();
-  AuthMode _authMode = AuthMode.Login;
+  AuthMode _authMode = AuthMode.login;
   bool _isLoading = false;
 
   @override
@@ -35,7 +35,7 @@ class _AuthScreenState extends State<AuthScreen>
   void _switchAuthMode() {
     setState(() {
       _authMode =
-          _authMode == AuthMode.Login ? AuthMode.SignUp : AuthMode.Login;
+          _authMode == AuthMode.login ? AuthMode.signUp : AuthMode.login;
     });
   }
 
@@ -50,13 +50,15 @@ class _AuthScreenState extends State<AuthScreen>
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      if (_authMode == AuthMode.Login) {
+      if (_authMode == AuthMode.login) {
         await authService.signInWithEmailAndPassword(
+          context,
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
       } else {
         await authService.signUpWithEmailAndPassword(
+          context,
           _emailController.text.trim(),
           _passwordController.text.trim(),
           _fullNameController.text.trim(),
@@ -136,7 +138,7 @@ class _AuthScreenState extends State<AuthScreen>
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.signInWithGoogle(
+      await authService.signInWithGoogle(context,
           referralCode: _referralCodeController.text.trim());
     } catch (e) {
       String errorMessage = 'Google Sign-In failed. Please try again.';
@@ -199,7 +201,7 @@ class _AuthScreenState extends State<AuthScreen>
                 transitionBuilder: (child, animation) {
                   return FadeTransition(opacity: animation, child: child);
                 },
-                child: _authMode == AuthMode.Login
+                child: _authMode == AuthMode.login
                     ? _buildLoginForm(theme)
                     : _buildSignUpForm(theme),
               ),
@@ -360,7 +362,7 @@ class _AuthScreenState extends State<AuthScreen>
       style: TextStyle(color: theme.colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+        labelStyle: TextStyle(color: Color.fromRGBO(theme.colorScheme.onSurface.red, theme.colorScheme.onSurface.green, theme.colorScheme.onSurface.blue, 0.6)),
       ),
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -393,7 +395,7 @@ class _AuthScreenState extends State<AuthScreen>
       child: OutlinedButton.icon(
         icon: SvgPicture.asset('assets/icons/google_logo.svg', height: 20),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+          side: BorderSide(color: Color.fromRGBO(theme.colorScheme.onSurface.red, theme.colorScheme.onSurface.green, theme.colorScheme.onSurface.blue, 0.4)),
           padding: const EdgeInsets.symmetric(vertical: 18),
         ),
         onPressed: _isLoading ? null : _googleSignIn,

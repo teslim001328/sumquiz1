@@ -22,6 +22,8 @@ import '../../models/flashcard_set.dart';
 import '../../models/summary_model.dart';
 import '../widgets/upgrade_dialog.dart';
 
+enum FlashcardState { creation, loading, review, finished, error }
+
 class FlashcardsScreen extends StatefulWidget {
   final FlashcardSet? flashcardSet;
   const FlashcardsScreen({super.key, this.flashcardSet});
@@ -39,9 +41,10 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   late SpacedRepetitionService _srsService;
   late LocalDatabaseService _localDbService;
 
-  bool _isLoading = false;
+  FlashcardState _state = FlashcardState.creation;
   String _loadingMessage = 'Generating Flashcards...';
-  bool _isReviewFinished = false;
+  String _errorMessage = '';
+
   List<Flashcard> _flashcards = [];
   int _currentIndex = 0;
   int _correctCount = 0;
@@ -55,6 +58,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       setState(() {
         _flashcards = widget.flashcardSet!.flashcards;
         _titleController.text = widget.flashcardSet!.title;
+        _state = FlashcardState.review;
       });
     }
   }
@@ -67,18 +71,20 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
 
   Future<void> _generateFlashcards() async {
     if (_titleController.text.isEmpty || _textController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please fill in both the title and content fields.')),
-      );
+      setState(() {
+        _state = FlashcardState.error;
+        _errorMessage = 'Please fill in both the title and content fields.';
+      });
       return;
     }
 
     final userModel = Provider.of<UserModel?>(context, listen: false);
     final usageService = Provider.of<UsageService?>(context, listen: false);
     if (userModel == null || usageService == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('User not found.')));
+       setState(() {
+        _state = FlashcardState.error;
+        _errorMessage = 'User not found.';
+      });
       return;
     }
 
@@ -97,7 +103,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      _state = FlashcardState.loading;
       _loadingMessage = 'Generating flashcards...';
     });
 
@@ -132,7 +138,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
             _flashcards = flashcardSet.flashcards
                 .map((f) => Flashcard(id: f.id, question: f.question, answer: f.answer))
                 .toList();
-            _isLoading = false;
+            _state = FlashcardState.review;
           });
           developer.log('${_flashcards.length} flashcards generated successfully.',
               name: 'flashcards.generation');
@@ -142,17 +148,17 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       }
     } catch (e, s) {
       if (mounted) {
-        setState(() => _isLoading = false);
+         setState(() {
+            _state = FlashcardState.error;
+            _errorMessage = 'Error generating flashcards: $e';
+          });
         if (e.toString().contains('quota')) {
           showDialog(
             context: context,
             builder: (context) =>
                 const UpgradeDialog(featureName: 'flashcards'),
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error generating flashcards: $e')));
-        }
+        } 
         developer.log('Error generating flashcards',
             name: 'flashcards.generation', error: e, stackTrace: s);
       }
@@ -177,7 +183,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() => _state = FlashcardState.loading);
 
     try {
       final set = FlashcardSet(
@@ -211,12 +217,14 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       developer.log('Error saving flashcard set or scheduling reviews',
           name: 'flashcards.save', error: e, stackTrace: s);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error saving set: $e')));
+        setState(() {
+          _state = FlashcardState.error;
+          _errorMessage = 'Error saving set: $e';
+        });
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _state = FlashcardState.review);
       }
     }
   }
@@ -231,7 +239,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   bool _onSwipe(
       int previousIndex, int? currentIndex, CardSwiperDirection direction) {
     if (currentIndex == null) {
-      setState(() => _isReviewFinished = true);
+      setState(() => _state = FlashcardState.finished);
     } else {
       setState(() {
         _currentIndex = currentIndex;
@@ -242,10 +250,17 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
 
   void _reviewAgain() {
     setState(() {
-      _isReviewFinished = false;
+      _state = FlashcardState.review;
       _currentIndex = 0;
       _correctCount = 0;
       _swiperController.moveTo(0);
+    });
+  }
+
+  void _retry() {
+    setState(() {
+      _state = FlashcardState.creation;
+      _errorMessage = '';
     });
   }
 
@@ -255,7 +270,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
         appBar: AppBar(
           title: Text(_isCreationMode ? 'Create Flashcards' : 'Review Flashcards'),
           actions: [
-            if (_flashcards.isNotEmpty && !_isReviewFinished)
+            if (_flashcards.isNotEmpty && _state == FlashcardState.review)
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: _saveFlashcardSet,
@@ -272,25 +287,48 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            Text(_loadingMessage),
-          ],
-        ),
-      );
+    switch (_state) {
+      case FlashcardState.loading:
+        return _buildLoadingState();
+      case FlashcardState.error:
+        return _buildErrorState();
+      case FlashcardState.review:
+        return _buildReviewInterface();
+      case FlashcardState.finished:
+        return _buildCompletionScreen();
+      default:
+        return _buildCreationForm();
     }
-    if (_isReviewFinished) {
-      return _buildCompletionScreen();
-    } else if (_flashcards.isNotEmpty) {
-      return _buildReviewInterface();
-    } else {
-      return _buildCreationForm();
-    }
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 20),
+          Text(_loadingMessage),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 64),
+          const SizedBox(height: 16),
+          Text('Oops! Something went wrong.', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(_errorMessage, textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: _retry, child: const Text('Try Again')),
+        ],
+      ),
+    );
   }
 
   Widget _buildCreationForm() {

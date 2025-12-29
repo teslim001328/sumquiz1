@@ -1,9 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
+import 'package:sumquiz/services/ai_service.dart';
+import 'package:sumquiz/services/local_database_service.dart';
+import 'package:provider/provider.dart';
 import 'dart:typed_data';
+
+import '../../models/user_model.dart';
 
 // Enum to represent the single source of content
 enum ContentType { text, link, pdf, image }
@@ -88,53 +95,69 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
 
     setState(() => _isLoading = true);
 
-    String? extractedText;
-    String errorMsg = '';
+    final user = Provider.of<UserModel?>(context, listen: false);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to create content.')),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    String source;
+    String title;
 
     try {
       switch (_activeContentType!) {
         case ContentType.text:
-          if (_textController.text.trim().isNotEmpty) {
-            extractedText = _textController.text;
-          } else {
-            errorMsg = 'The text field is empty.';
+          if (_textController.text.trim().isEmpty) {
+            throw Exception('The text field is empty.');
           }
+          source = _textController.text;
+          title = _textController.text.substring(0, min(_textController.text.length, 50));
           break;
         case ContentType.link:
-          if (_linkController.text.trim().isNotEmpty) {
-            extractedText = await ContentExtractionService.extractFromUrl(_linkController.text);
-          } else {
-            errorMsg = 'The URL field is empty.';
+          if (_linkController.text.trim().isEmpty) {
+            throw Exception('The URL field is empty.');
           }
+          source = _linkController.text;
+          title = _linkController.text;
           break;
         case ContentType.pdf:
-          if (_pdfBytes != null) {
-            extractedText = await ContentExtractionService.extractFromPdfBytes(_pdfBytes!);
-          } else {
-            errorMsg = 'No PDF file was selected.';
+          if (_pdfBytes == null) {
+            throw Exception('No PDF file was selected.');
           }
+          source = await ContentExtractionService.extractFromPdfBytes(_pdfBytes!);
+          title = _pdfName ?? 'PDF Document';
           break;
         case ContentType.image:
-          if (_imageBytes != null) {
-            extractedText = await ContentExtractionService.extractFromImageBytes(_imageBytes!);
-          } else {
-            errorMsg = 'No image was selected.';
+          if (_imageBytes == null) {
+            throw Exception('No image was selected.');
           }
+          source = await ContentExtractionService.extractFromImageBytes(_imageBytes!);
+          title = _imageName ?? 'Image';
           break;
       }
+
+      final aiService = Provider.of<AIService>(context, listen: false);
+      final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
+      final contentExtractionService = ContentExtractionService(aiService, localDb);
+
+      final folderId = await contentExtractionService.extractAndGenerate(
+          source, title, ['summary', 'quiz', 'flashcards'], user.uid);
+
+      if (mounted) {
+        context.push('/results-view/$folderId');
+      }
     } catch (e) {
-      errorMsg = 'Failed to extract content: $e';
-    }
-
-    setState(() => _isLoading = false);
-
-    if (extractedText != null && extractedText.isNotEmpty) {
-      context.push('/create/extraction-view', extra: extractedText);
-    } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg.isNotEmpty ? errorMsg : 'Could not extract any content.')),
+          SnackBar(content: Text('Failed to process content: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }

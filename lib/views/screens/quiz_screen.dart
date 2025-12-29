@@ -14,6 +14,8 @@ import '../../services/usage_service.dart';
 import '../../view_models/quiz_view_model.dart';
 import '../widgets/upgrade_dialog.dart';
 
+enum QuizState { creation, loading, inProgress, finished, error }
+
 class QuizScreen extends StatefulWidget {
   final LocalQuiz? quiz;
   final String? initialText;
@@ -36,10 +38,11 @@ class _QuizScreenState extends State<QuizScreen> {
   final EnhancedAIService _aiService = EnhancedAIService();
   final LocalDatabaseService _localDbService = LocalDatabaseService();
 
-  late List<LocalQuizQuestion> _questions;
-  bool _isLoading = false;
+  QuizState _state = QuizState.creation;
   String _loadingMessage = 'Generating Quiz...';
-  bool _isQuizFinished = false;
+  String _errorMessage = '';
+
+  late List<LocalQuizQuestion> _questions;
   int _currentQuestionIndex = 0;
   int? _selectedAnswerIndex;
   bool _answerWasSelected = false;
@@ -55,6 +58,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _questions = widget.quiz!.questions;
       _titleController.text = widget.quiz!.title;
       _quizId = widget.quiz!.id;
+      _state = QuizState.inProgress;
     } else {
       _questions = [];
       _quizId = const Uuid().v4();
@@ -70,11 +74,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Future<void> _generateQuiz() async {
     if (_titleController.text.isEmpty || _textController.text.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please provide both a title and text.')),
-        );
-      }
+      setState(() {
+        _state = QuizState.error;
+        _errorMessage = 'Please provide both a title and text.';
+      });
       return;
     }
 
@@ -96,7 +99,7 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      _state = QuizState.loading;
       _loadingMessage = 'Generating quiz...';
       _resetQuizState();
     });
@@ -123,28 +126,21 @@ class _QuizScreenState extends State<QuizScreen> {
       final quizId = content.firstWhere((c) => c.contentType == 'quiz').contentId;
       final quiz = await _localDbService.getQuiz(quizId);
 
-
       if (quiz != null && quiz.questions.isNotEmpty) {
         setState(() {
           _questions = quiz.questions;
           _quizId = quiz.id;
+          _state = QuizState.inProgress;
         });
       } else {
         throw Exception('AI service returned an empty quiz.');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating quiz: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+      setState(() {
+        _state = QuizState.error;
+        _errorMessage = 'Error generating quiz: $e';
+      });
+    } 
   }
 
   Future<void> _saveInProgress() async {
@@ -257,30 +253,35 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     } else {
       setState(() {
-        _isQuizFinished = true;
+        _state = QuizState.finished;
       });
     }
   }
 
   void _resetQuizState() {
     setState(() {
-      _isQuizFinished = false;
+      _state = QuizState.inProgress;
       _currentQuestionIndex = 0;
       _selectedAnswerIndex = null;
       _answerWasSelected = false;
       _score = 0;
     });
   }
+  
+  void _retry() {
+      setState(() {
+        _state = QuizState.creation;
+        _errorMessage = '';
+      });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isQuizInProgress = _questions.isNotEmpty && !_isQuizFinished;
-
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.quiz == null ? 'Create Quiz' : 'Take Quiz'),
           actions: [
-            if (isQuizInProgress)
+            if (_state == QuizState.inProgress)
               IconButton(
                 icon: const Icon(Icons.save_alt_outlined),
                 onPressed: _saveInProgress,
@@ -297,25 +298,48 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
    Widget _buildContent() {
-     if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            Text(_loadingMessage),
-          ],
-        ),
-      );
+    switch (_state) {
+      case QuizState.loading:
+        return _buildLoadingState();
+      case QuizState.error:
+        return _buildErrorState();
+      case QuizState.inProgress:
+        return _buildQuizInterface();
+      case QuizState.finished:
+        return _buildResultScreen();
+      default:
+        return _buildCreationForm();
     }
-    if (_isQuizFinished) {
-      return _buildResultScreen();
-    } else if (_questions.isNotEmpty) {
-      return _buildQuizInterface();
-    } else {
-      return _buildCreationForm();
-    }
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 20),
+          Text(_loadingMessage),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 64),
+          const SizedBox(height: 16),
+          Text('Oops! Something went wrong.', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(_errorMessage, textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: _retry, child: const Text('Try Again')),
+        ],
+      ),
+    );
   }
 
   Widget _buildCreationForm() {

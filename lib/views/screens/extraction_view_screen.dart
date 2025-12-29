@@ -235,7 +235,7 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
       children: OutputType.values.map((type) {
         final isSelected = _selectedOutputs.contains(type);
         return FilterChip(
-          label: Text(type.name.capitalize()),
+          label: Text(StringExtension(type.name).capitalize()),
           selected: isSelected,
           onSelected: (_) => _toggleOutput(type),
           showCheckmark: true, // Explicitly show the checkmark

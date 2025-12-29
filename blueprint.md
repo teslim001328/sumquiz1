@@ -1,35 +1,45 @@
-# SumQuiz Application Blueprint
+# SumQuiz Blueprint
 
 ## Overview
 
-SumQuiz is a mobile application designed to provide users with instant clarity on various topics through a quiz-based learning experience. The app is built with Flutter and leverages Firebase for backend services, including authentication, database, and analytics.
+This document outlines the architecture, features, and design of the SumQuiz application. It serves as a single source of truth for the project, documenting all style, design, and features implemented from the initial version to the current version.
 
-## Style and Design
+## Project Structure
 
-- **Theme:** The app uses a modern, clean theme with a professional and intuitive design.
-- **Layout:** The layout is visually balanced, with clean spacing and a mobile-responsive design that adapts to different screen sizes.
-- **Typography:** The app uses the Poppins font for a clean and modern look.
+The project is organized into the following directories:
 
-## Implemented Features
+- `lib`: Contains the main application code, organized by feature.
+- `lib/models`: Contains the data models for the application.
+- `lib/services`: Contains the services that interact with external APIs and databases.
+- `lib/views`: Contains the UI widgets and screens.
+- `lib/view_models`: Contains the view models that manage the state of the UI.
 
-- **User Authentication:**
-  - Email and password sign-up and sign-in.
-  - Google Sign-In.
-  - Password reset functionality.
+## Features
 
-- **Referral System:**
-  - Users can enter a referral code during sign-up to receive a 3-day Pro trial.
-  - The system validates the referral code and applies the Pro trial to the new user.
+- **User Authentication**: Users can sign in with Google or email and password.
+- **Summarization**: Users can generate summaries from text or PDF files.
+- **Quizzes**: Users can generate quizzes from summaries or text.
+- **Flashcards**: Users can generate flashcards from summaries or text.
+- **Library**: Users can save their summaries, quizzes, and flashcards to a local database for offline access.
+- **Spaced Repetition**: The application uses a spaced repetition algorithm to schedule flashcard reviews.
+- **Synchronization**: The application synchronizes the local database with Firestore when the user logs in.
 
-- **Onboarding:**
-  - A multi-step onboarding process to welcome new users and collect their interests.
+## Design
 
-- **Quizzes:**
-  - Users can take quizzes on various topics.
+The application uses a modern, clean design with a consistent color scheme and typography. The UI is designed to be intuitive and easy to use.
 
-## Current Plan: Fix Google Sign-In and Referral Code Handling
+## Current Plan
 
-- [x] **Problem:** The "Continue with Google" button is not working as expected, and the referral code is not being applied during Google Sign-In.
-- [x] **Solution:**
-  1. Update `lib/views/screens/auth_screen.dart` to pass the referral code to the `signInWithGoogle` method.
-  2. Update `lib/services/auth_service.dart` to handle the referral code during Google Sign-In, ensuring that new users receive their Pro trial.
+### Bug Fixes
+
+- **Fixed**: The library screen was not displaying the content from the Firestore database. This was fixed by adding a synchronization service that is triggered when the user logs in.
+
+### Refactoring
+
+- **Refactored**: The `SummaryScreen`, `QuizScreen`, and `FlashcardsScreen` were refactored to use a state enum and improve the overall code structure.
+
+### Next Steps
+
+- Continue to improve the UI and add new features.
+- Add more tests to improve the code coverage.
+- Monitor the application for bugs and performance issues.

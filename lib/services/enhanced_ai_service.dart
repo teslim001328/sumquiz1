@@ -41,6 +41,7 @@ class EnhancedAIService {
               generationConfig: GenerationConfig(
                 temperature: 0.3,
                 maxOutputTokens: 8192,
+                responseMimeType: 'application/json',
               ),
             );
 
@@ -53,6 +54,8 @@ class EnhancedAIService {
             const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
         final responseText = response.text;
+        developer.log('Raw AI Response: $responseText',
+            name: 'EnhancedAIService');
         if (responseText == null || responseText.isEmpty) {
           throw EnhancedAIServiceException('Model returned an empty response.');
         }
@@ -61,6 +64,13 @@ class EnhancedAIService {
         final match = jsonRegex.firstMatch(responseText);
         if (match != null && match.group(1) != null) {
           return match.group(1)!.trim();
+        }
+
+        // Fallback: Attempt to extract JSON from raw text (find first '{' and last '}')
+        final startIndex = responseText.indexOf('{');
+        final endIndex = responseText.lastIndexOf('}');
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+          return responseText.substring(startIndex, endIndex + 1).trim();
         }
 
         return responseText.trim();
@@ -92,8 +102,8 @@ class EnhancedAIService {
   Future<String> _generateSummaryJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
     final prompt = '''Analyze the text and generate a summary.
-Return ONLY a single, valid JSON object: 
-{"title": "A Concise Title", "content": "The summary.", "tags": ["tag1", "tag2"]}
+Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks.
+Structure: {"title": "A Concise Title", "content": "The summary.", "tags": ["tag1", "tag2"]}
 
 Text: $sanitizedText''';
     return _generateWithRetry(prompt);
@@ -104,8 +114,8 @@ Text: $sanitizedText''';
     final prompt =
         '''Create a multiple-choice quiz with 5-10 questions from the text.
 Each question must have 4 options and one correct answer.
-Return ONLY a single, valid JSON object:
-{"questions": [{"question": "...", "options": ["A", "B", "C", "D"], "correctAnswer": "A"}]}
+Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks.
+Structure: {"questions": [{"question": "...", "options": ["A", "B", "C", "D"], "correctAnswer": "A"}]}
 
 Text: $sanitizedText''';
     return _generateWithRetry(prompt);
@@ -115,8 +125,8 @@ Text: $sanitizedText''';
     final sanitizedText = _sanitizeInput(text);
     final prompt = '''Generate 5-15 flashcards from the text.
 Each card must have a question and an answer.
-Return ONLY a single, valid JSON object:
-{"flashcards": [{"question": "Term", "answer": "Definition"}]}
+Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks.
+Structure: {"flashcards": [{"question": "Term", "answer": "Definition"}]}
 
 Text: $sanitizedText''';
     return _generateWithRetry(prompt);

@@ -24,19 +24,22 @@ enum OutputType {
 
 class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
   late TextEditingController _textController;
-  final TextEditingController _titleController = TextEditingController(text: 'Untitled Creation');
-  final Set<OutputType> _selectedOutputs = {}; // Default to none, allow multi-select
+  final TextEditingController _titleController =
+      TextEditingController(text: 'Untitled Creation');
+  final Set<OutputType> _selectedOutputs =
+      {}; // Default to none, allow multi-select
   bool _isLoading = false;
   String _loadingMessage = 'Generating...';
   bool _isEditingTitle = false;
 
   // Add a minimum character count validation
-  static const int minTextLength = 50;
+  static const int minTextLength = 10;
 
   @override
   void initState() {
     super.initState();
     _textController = TextEditingController(text: widget.initialText ?? '');
+    _selectedOutputs.add(OutputType.summary); // Select Summary by default
   }
 
   @override
@@ -64,7 +67,8 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
     }
 
     if (_selectedOutputs.isEmpty) {
-      _showError('Please select at least one output type to generate (Summary, Quiz, or Flashcards).');
+      _showError(
+          'Please select at least one output type to generate (Summary, Quiz, or Flashcards).');
       return;
     }
 
@@ -95,7 +99,9 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
 
       final folderId = await aiService.generateAndStoreOutputs(
         text: _textController.text,
-        title: _titleController.text.isNotEmpty ? _titleController.text : 'Untitled Creation',
+        title: _titleController.text.isNotEmpty
+            ? _titleController.text
+            : 'Untitled Creation',
         requestedOutputs: requestedOutputs,
         userId: userId,
         localDb: localDb,
@@ -114,9 +120,11 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
         context.go('/results-view/$folderId');
       }
     } on EnhancedAIServiceException catch (e) {
-      _showError('AI Processing Error: Failed to create content. The AI may have returned an invalid format. Please try again. Error: ${e.message}');
+      _showError(
+          'AI Processing Error: Failed to create content. The AI may have returned an invalid format. Please try again. Error: ${e.message}');
     } catch (e) {
-      _showError('Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
+      _showError(
+          'Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -154,11 +162,16 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
           icon: Icon(Icons.close, color: theme.iconTheme.color),
           onPressed: () => context.pop(),
         ),
-        title: _isEditingTitle ? _buildTitleEditor() : Text(_titleController.text, style: theme.textTheme.titleLarge, overflow: TextOverflow.ellipsis),
+        title: _isEditingTitle
+            ? _buildTitleEditor()
+            : Text(_titleController.text,
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             tooltip: 'Edit Title',
-            icon: Icon(_isEditingTitle ? Icons.check : Icons.edit_outlined, size: 22),
+            icon: Icon(_isEditingTitle ? Icons.check : Icons.edit_outlined,
+                size: 22),
             onPressed: () => setState(() => _isEditingTitle = !_isEditingTitle),
           ),
         ],
@@ -170,18 +183,22 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('1. Choose what to generate:', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('1. Choose what to generate:',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 _buildOutputSelector(),
                 const SizedBox(height: 24),
-                 Text('2. Review your text:', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                 const SizedBox(height: 12),
+                Text('2. Review your text:',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
                 Expanded(child: _buildDocumentDisplayArea()),
               ],
             ),
           ),
-           if (!_isLoading) 
-             Align(
+          if (!_isLoading)
+            Align(
               alignment: Alignment.bottomCenter,
               child: _buildGenerateButton(),
             ),
@@ -214,7 +231,7 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
     );
   }
 
-   Widget _buildTitleEditor() {
+  Widget _buildTitleEditor() {
     return TextField(
       controller: _titleController,
       autofocus: true,
@@ -243,10 +260,14 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
           selectedColor: theme.colorScheme.secondary,
           labelStyle: TextStyle(
             fontWeight: FontWeight.w600,
-            color: isSelected ? theme.colorScheme.onSecondary : theme.textTheme.bodyLarge?.color,
+            color: isSelected
+                ? theme.colorScheme.onSecondary
+                : theme.textTheme.bodyLarge?.color,
           ),
           checkmarkColor: theme.colorScheme.onSecondary,
-          shape: StadiumBorder(side: BorderSide(color: isSelected ? Colors.transparent : theme.dividerColor)),
+          shape: StadiumBorder(
+              side: BorderSide(
+                  color: isSelected ? Colors.transparent : theme.dividerColor)),
         );
       }).toList(),
     );
@@ -267,7 +288,8 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
         expands: true,
         style: theme.textTheme.bodyMedium,
         decoration: InputDecoration.collapsed(
-          hintText: 'Your extracted or pasted text appears here. You can edit it before generating.',
+          hintText:
+              'Your extracted or pasted text appears here. You can edit it before generating.',
           hintStyle: theme.textTheme.bodySmall,
         ),
       ),
@@ -288,8 +310,10 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
           style: ElevatedButton.styleFrom(
             foregroundColor: theme.colorScheme.onSecondary,
             backgroundColor: theme.colorScheme.secondary,
-            textStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            textStyle: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           ),
         ),
       ),

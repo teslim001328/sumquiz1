@@ -97,6 +97,36 @@ GoRouter createAppRouter(AuthService authService) {
         path: '/auth',
         builder: (context, state) => const AuthScreen(),
       ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'preferences',
+            builder: (context, state) => const PreferencesScreen(),
+          ),
+          GoRoute(
+            path: 'data-storage',
+            builder: (context, state) => const DataStorageScreen(),
+          ),
+          GoRoute(
+            path: 'privacy-about',
+            builder: (context, state) => const PrivacyAboutScreen(),
+          ),
+          GoRoute(
+            path: 'subscription',
+            builder: (context, state) => const SubscriptionScreen(),
+          ),
+          GoRoute(
+            path: 'account-profile',
+            builder: (context, state) => const AccountProfileScreen(),
+          ),
+          GoRoute(
+            path: 'referral',
+            builder: (context, state) => const ReferralScreen(),
+          ),
+        ],
+      ),
 
       // Main application shell with bottom navigation bar
       StatefulShellRoute.indexedStack(
@@ -111,43 +141,7 @@ GoRouter createAppRouter(AuthService authService) {
               GoRoute(
                 path: '/',
                 builder: (context, state) => const ReviewScreen(),
-                routes: [
-                  GoRoute(
-                      path: 'settings',
-                      parentNavigatorKey: _rootNavigatorKey,
-                      builder: (context, state) => const SettingsScreen(),
-                      routes: [
-                        GoRoute(
-                          path: 'preferences',
-                          builder: (context, state) =>
-                              const PreferencesScreen(),
-                        ),
-                        GoRoute(
-                          path: 'data-storage',
-                          builder: (context, state) =>
-                              const DataStorageScreen(),
-                        ),
-                        GoRoute(
-                          path: 'privacy-about',
-                          builder: (context, state) =>
-                              const PrivacyAboutScreen(),
-                        ),
-                        GoRoute(
-                          path: 'subscription',
-                          builder: (context, state) =>
-                              const SubscriptionScreen(),
-                        ),
-                        GoRoute(
-                          path: 'account-profile',
-                          builder: (context, state) =>
-                              const AccountProfileScreen(),
-                        ),
-                        GoRoute(
-                          path: 'referral',
-                          builder: (context, state) => const ReferralScreen(),
-                        ),
-                      ]),
-                ],
+                routes: [],
               ),
             ],
           ),
@@ -238,43 +232,7 @@ GoRouter createAppRouter(AuthService authService) {
               GoRoute(
                   path: '/progress',
                   builder: (context, state) => const ProgressScreen(),
-                  routes: [
-                    GoRoute(
-                        path: 'settings',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) => const SettingsScreen(),
-                        routes: [
-                          GoRoute(
-                            path: 'preferences',
-                            builder: (context, state) =>
-                                const PreferencesScreen(),
-                          ),
-                          GoRoute(
-                            path: 'data-storage',
-                            builder: (context, state) =>
-                                const DataStorageScreen(),
-                          ),
-                          GoRoute(
-                            path: 'privacy-about',
-                            builder: (context, state) =>
-                                const PrivacyAboutScreen(),
-                          ),
-                          GoRoute(
-                            path: 'subscription',
-                            builder: (context, state) =>
-                                const SubscriptionScreen(),
-                          ),
-                          GoRoute(
-                            path: 'account-profile',
-                            builder: (context, state) =>
-                                const AccountProfileScreen(),
-                          ),
-                          GoRoute(
-                            path: 'referral',
-                            builder: (context, state) => const ReferralScreen(),
-                          ),
-                        ]),
-                  ]),
+                  routes: []),
             ],
           ),
         ],

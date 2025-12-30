@@ -24,7 +24,8 @@ class EnhancedAIServiceException implements Exception {
 
 // --- CONFIG ---
 class EnhancedAIConfig {
-  static const String textModel = 'gemini-2.0-flash-exp';
+  static const String textModel =
+      'gemini-3.0-flash-preview'; // Validated 2025 Preview Model
   static const int maxRetries = 2;
   static const int requestTimeoutSeconds = 60;
   static const int maxInputLength = 30000;
@@ -33,6 +34,7 @@ class EnhancedAIConfig {
 // --- SERVICE ---
 class EnhancedAIService {
   final GenerativeModel _model;
+  final GenerativeModel _stableModel;
 
   EnhancedAIService({GenerativeModel? model})
       : _model = model ??
@@ -43,18 +45,37 @@ class EnhancedAIService {
                 maxOutputTokens: 8192,
                 responseMimeType: 'application/json',
               ),
-            );
+            ),
+        _stableModel = FirebaseAI.vertexAI().generativeModel(
+          model: 'gemini-2.0-flash-001', // Validated 2025 Stable Model
+          generationConfig: GenerationConfig(
+            temperature: 0.3,
+            maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
+          ),
+        );
 
-  Future<String> _generateWithRetry(String prompt) async {
+  Future<String> _generateWithFallback(String prompt) async {
+    try {
+      return await _generateWithModel(_model, prompt, 'Gemini 2.0');
+    } catch (e) {
+      developer.log('Gemini 2.0 failed, falling back to 1.5 Flash',
+          name: 'EnhancedAIService', error: e);
+      return await _generateWithModel(_stableModel, prompt, 'Gemini 1.5');
+    }
+  }
+
+  Future<String> _generateWithModel(
+      GenerativeModel model, String prompt, String modelName) async {
     int attempt = 0;
     while (attempt < EnhancedAIConfig.maxRetries) {
       try {
-        final chat = _model.startChat();
+        final chat = model.startChat();
         final response = await chat.sendMessage(Content.text(prompt)).timeout(
             const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
         final responseText = response.text;
-        developer.log('Raw AI Response: $responseText',
+        developer.log('Raw AI Response ($modelName): $responseText',
             name: 'EnhancedAIService');
         if (responseText == null || responseText.isEmpty) {
           throw EnhancedAIServiceException('Model returned an empty response.');
@@ -76,20 +97,20 @@ class EnhancedAIService {
         return responseText.trim();
       } on TimeoutException {
         throw EnhancedAIServiceException(
-            'The AI model took too long to respond. Please try again.');
+            'The AI model took too long to respond.');
       } catch (e) {
-        developer.log('AI Generation Error (Attempt ${attempt + 1})',
-            name: 'EnhancedAIService', error: e);
+        developer.log(
+            'AI Generation Error ($modelName, Attempt ${attempt + 1})',
+            name: 'EnhancedAIService',
+            error: e);
         attempt++;
         if (attempt >= EnhancedAIConfig.maxRetries) {
-          throw EnhancedAIServiceException(
-              'Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
+          rethrow; // Rethrow to let fallback handle it or fail
         }
         await Future.delayed(Duration(seconds: pow(2, attempt).toInt()));
       }
     }
-    throw EnhancedAIServiceException(
-        'An unknown error occurred during AI generation.');
+    throw EnhancedAIServiceException('Generation failed.');
   }
 
   String _sanitizeInput(String input) {
@@ -106,7 +127,7 @@ Return ONLY a single, valid JSON object. Do not use Markdown formatted code bloc
 Structure: {"title": "A Concise Title", "content": "The summary.", "tags": ["tag1", "tag2"]}
 
 Text: $sanitizedText''';
-    return _generateWithRetry(prompt);
+    return _generateWithFallback(prompt);
   }
 
   Future<String> _generateQuizJson(String text) async {
@@ -118,7 +139,7 @@ Return ONLY a single, valid JSON object. Do not use Markdown formatted code bloc
 Structure: {"questions": [{"question": "...", "options": ["A", "B", "C", "D"], "correctAnswer": "A"}]}
 
 Text: $sanitizedText''';
-    return _generateWithRetry(prompt);
+    return _generateWithFallback(prompt);
   }
 
   Future<String> _generateFlashcardsJson(String text) async {
@@ -129,7 +150,7 @@ Return ONLY a single, valid JSON object. Do not use Markdown formatted code bloc
 Structure: {"flashcards": [{"question": "Term", "answer": "Definition"}]}
 
 Text: $sanitizedText''';
-    return _generateWithRetry(prompt);
+    return _generateWithFallback(prompt);
   }
 
 // ... (existing code)

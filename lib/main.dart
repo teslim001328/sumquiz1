@@ -93,7 +93,8 @@ class MyApp extends StatelessWidget {
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         Provider<LocalDatabaseService>(create: (_) => LocalDatabaseService()),
         Provider<SpacedRepetitionService>(
-            create: (context) => SpacedRepetitionService(context.read<LocalDatabaseService>().getSpacedRepetitionBox())),
+            create: (context) => SpacedRepetitionService(
+                context.read<LocalDatabaseService>().getSpacedRepetitionBox())),
         ProxyProvider<AuthService, IAPService?>(
           update: (context, authService, previous) {
             final user = authService.currentUser;
@@ -114,14 +115,18 @@ class MyApp extends StatelessWidget {
             create: (context) =>
                 AIService(iapService: context.read<IAPService?>())),
         Provider<ContentExtractionService>(
-            create: (context) => ContentExtractionService(context.read<AIService>(), context.read<LocalDatabaseService>())),
+            create: (context) =>
+                ContentExtractionService(context.read<AIService>())),
         Provider<UserService>(create: (_) => UserService()),
         Provider<EnhancedAIService>(create: (_) => EnhancedAIService()),
         Provider<SyncService>(
-          create: (context) => SyncService(context.read<LocalDatabaseService>()),
+          create: (context) =>
+              SyncService(context.read<LocalDatabaseService>()),
         ),
         ChangeNotifierProvider<QuizViewModel>(
-          create: (context) => QuizViewModel(context.read<LocalDatabaseService>(), context.read<AuthService>()),
+          create: (context) => QuizViewModel(
+              context.read<LocalDatabaseService>(),
+              context.read<AuthService>()),
         ),
         ChangeNotifierProxyProvider<SyncService, SyncProvider>(
           create: (context) => SyncProvider(context.read<SyncService>()),

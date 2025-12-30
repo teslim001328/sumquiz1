@@ -10,7 +10,7 @@ import 'package:sumquiz/views/screens/auth_screen.dart';
 import 'package:sumquiz/views/screens/library_screen.dart';
 import 'package:sumquiz/views/screens/progress_screen.dart';
 import 'package:sumquiz/views/screens/settings_screen.dart';
-import 'package:sumquiz/views/screens/spaced_repetition_screen.dart';
+import 'package:sumquiz/views/screens/review_screen.dart';
 import 'package:sumquiz/views/screens/summary_screen.dart';
 import 'package:sumquiz/views/screens/quiz_screen.dart';
 import 'package:sumquiz/views/screens/flashcards_screen.dart';
@@ -47,10 +47,14 @@ class GoRouterRefreshStream extends ChangeNotifier {
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 // Keys for shell branches
-final _libraryShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'LibraryShell');
-final _reviewShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'ReviewShell');
-final _createShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'CreateShell');
-final _progressShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'ProgressShell');
+final _libraryShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'LibraryShell');
+final _reviewShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'ReviewShell');
+final _createShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'CreateShell');
+final _progressShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'ProgressShell');
 
 GoRouter createAppRouter(AuthService authService) {
   return GoRouter(
@@ -68,7 +72,9 @@ GoRouter createAppRouter(AuthService authService) {
       }
 
       if (user == null) {
-        return isAuthRoute ? null : '/auth'; // If not logged in, redirect to auth
+        return isAuthRoute
+            ? null
+            : '/auth'; // If not logged in, redirect to auth
       }
 
       if (isAuthRoute) {
@@ -98,18 +104,67 @@ GoRouter createAppRouter(AuthService authService) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
         },
         branches: <StatefulShellBranch>[
-          // Branch 1: Library
+          // Branch 1: Home (formerly Review)
+          StatefulShellBranch(
+            navigatorKey: _reviewShellNavigatorKey,
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const ReviewScreen(),
+                routes: [
+                  GoRoute(
+                      path: 'settings',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      builder: (context, state) => const SettingsScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'preferences',
+                          builder: (context, state) =>
+                              const PreferencesScreen(),
+                        ),
+                        GoRoute(
+                          path: 'data-storage',
+                          builder: (context, state) =>
+                              const DataStorageScreen(),
+                        ),
+                        GoRoute(
+                          path: 'privacy-about',
+                          builder: (context, state) =>
+                              const PrivacyAboutScreen(),
+                        ),
+                        GoRoute(
+                          path: 'subscription',
+                          builder: (context, state) =>
+                              const SubscriptionScreen(),
+                        ),
+                        GoRoute(
+                          path: 'account-profile',
+                          builder: (context, state) =>
+                              const AccountProfileScreen(),
+                        ),
+                        GoRoute(
+                          path: 'referral',
+                          builder: (context, state) => const ReferralScreen(),
+                        ),
+                      ]),
+                ],
+              ),
+            ],
+          ),
+
+          // Branch 2: Library
           StatefulShellBranch(
             navigatorKey: _libraryShellNavigatorKey,
             routes: <RouteBase>[
               GoRoute(
-                path: '/',
+                path: '/library',
                 builder: (context, state) => const LibraryScreen(),
                 routes: [
                   // Sub-routes accessible from the Library tab
                   GoRoute(
                     path: 'summary',
-                    parentNavigatorKey: _rootNavigatorKey, // Show without nav bar
+                    parentNavigatorKey:
+                        _rootNavigatorKey, // Show without nav bar
                     builder: (context, state) {
                       final summary = state.extra as LocalSummary?;
                       return SummaryScreen(summary: summary);
@@ -117,7 +172,8 @@ GoRouter createAppRouter(AuthService authService) {
                   ),
                   GoRoute(
                     path: 'quiz',
-                     parentNavigatorKey: _rootNavigatorKey, // Show without nav bar
+                    parentNavigatorKey:
+                        _rootNavigatorKey, // Show without nav bar
                     builder: (context, state) {
                       final quiz = state.extra as LocalQuiz?;
                       return QuizScreen(quiz: quiz);
@@ -125,30 +181,20 @@ GoRouter createAppRouter(AuthService authService) {
                   ),
                   GoRoute(
                     path: 'flashcards',
-                     parentNavigatorKey: _rootNavigatorKey, // Show without nav bar
+                    parentNavigatorKey:
+                        _rootNavigatorKey, // Show without nav bar
                     builder: (context, state) {
-                       final set = state.extra as FlashcardSet?;
+                      final set = state.extra as FlashcardSet?;
                       return FlashcardsScreen(flashcardSet: set);
                     },
                   ),
-                   GoRoute(
-                      path: 'results-view/:folderId',
-                       parentNavigatorKey: _rootNavigatorKey,
-                      builder: (context, state) =>
-                          ResultsViewScreen(folderId: state.pathParameters['folderId']!),
-                    ),
+                  GoRoute(
+                    path: 'results-view/:folderId',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => ResultsViewScreen(
+                        folderId: state.pathParameters['folderId']!),
+                  ),
                 ],
-              ),
-            ],
-          ),
-
-          // Branch 2: Review
-          StatefulShellBranch(
-            navigatorKey: _reviewShellNavigatorKey,
-            routes: <RouteBase>[
-              GoRoute(
-                path: '/review',
-                builder: (context, state) => const SpacedRepetitionScreen(),
               ),
             ],
           ),
@@ -158,29 +204,30 @@ GoRouter createAppRouter(AuthService authService) {
             navigatorKey: _createShellNavigatorKey,
             routes: <RouteBase>[
               GoRoute(
-                path: '/create',
-                builder: (context, state) => const CreateContentScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'extraction-view',
-                     parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) =>
-                        ExtractionViewScreen(initialText: state.extra as String?),
-                  ),
-                  GoRoute(
+                  path: '/create',
+                  builder: (context, state) => const CreateContentScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'extraction-view',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      builder: (context, state) => ExtractionViewScreen(
+                          initialText: state.extra as String?),
+                    ),
+                    GoRoute(
                       path: 'edit-content',
-                       parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: _rootNavigatorKey,
                       builder: (context, state) {
                         if (state.extra is EditableContent) {
-                          return EditContentScreen(content: state.extra as EditableContent);
+                          return EditContentScreen(
+                              content: state.extra as EditableContent);
                         } else {
                           // Should return a valid widget, like an error screen
-                          return const Scaffold(body: Center(child: Text('Invalid Content')));
+                          return const Scaffold(
+                              body: Center(child: Text('Invalid Content')));
                         }
                       },
                     ),
-                ]
-              ),
+                  ]),
             ],
           ),
 
@@ -189,42 +236,45 @@ GoRouter createAppRouter(AuthService authService) {
             navigatorKey: _progressShellNavigatorKey,
             routes: <RouteBase>[
               GoRoute(
-                path: '/progress',
-                builder: (context, state) => const ProgressScreen(),
-                 routes: [
-                     GoRoute(
-                      path: 'settings',
-                       parentNavigatorKey: _rootNavigatorKey,
-                      builder: (context, state) => const SettingsScreen(),
-                      routes: [
-                         GoRoute(
+                  path: '/progress',
+                  builder: (context, state) => const ProgressScreen(),
+                  routes: [
+                    GoRoute(
+                        path: 'settings',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) => const SettingsScreen(),
+                        routes: [
+                          GoRoute(
                             path: 'preferences',
-                            builder: (context, state) => const PreferencesScreen(),
+                            builder: (context, state) =>
+                                const PreferencesScreen(),
                           ),
                           GoRoute(
                             path: 'data-storage',
-                            builder: (context, state) => const DataStorageScreen(),
+                            builder: (context, state) =>
+                                const DataStorageScreen(),
                           ),
                           GoRoute(
                             path: 'privacy-about',
-                            builder: (context, state) => const PrivacyAboutScreen(),
+                            builder: (context, state) =>
+                                const PrivacyAboutScreen(),
                           ),
                           GoRoute(
                             path: 'subscription',
-                            builder: (context, state) => const SubscriptionScreen(),
+                            builder: (context, state) =>
+                                const SubscriptionScreen(),
                           ),
-                           GoRoute(
+                          GoRoute(
                             path: 'account-profile',
-                            builder: (context, state) => const AccountProfileScreen(),
+                            builder: (context, state) =>
+                                const AccountProfileScreen(),
                           ),
                           GoRoute(
                             path: 'referral',
                             builder: (context, state) => const ReferralScreen(),
                           ),
-                      ]
-                    ),
-                 ]
-              ),
+                        ]),
+                  ]),
             ],
           ),
         ],

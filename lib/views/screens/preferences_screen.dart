@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/providers/theme_provider.dart';
 
-/// Modern preferences screen with enhanced visual design and additional options
-/// Allows users to customize their app experience with theme, font size, and more
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
 
@@ -30,72 +28,111 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: theme.iconTheme.color),
+          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildDarkModeTile(themeProvider, theme),
-                const Divider(height: 32),
-                _buildFontSizeSelector(themeProvider, theme),
-                const Divider(height: 32),
-                _buildToggleOption(
-                  context,
-                  title: 'Notifications',
-                  subtitle: 'Enable or disable app notifications',
-                  value: _notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _notificationsEnabled = value;
-                    });
-                  },
+            children: [
+              _buildSectionHeader(theme, 'Appearance'),
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
                 ),
-                const Divider(height: 32),
-                _buildToggleOption(
-                  context,
-                  title: 'Haptic Feedback',
-                  subtitle: 'Enable vibration for interactions',
-                  value: _hapticFeedbackEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _hapticFeedbackEnabled = value;
-                    });
-                  },
+                color: theme.cardColor,
+                child: Column(
+                  children: [
+                    _buildDarkModeTile(themeProvider, theme),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                          height: 1,
+                          color: theme.dividerColor.withOpacity(0.1)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildFontSizeSelector(themeProvider, theme),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionHeader(theme, 'Interaction'),
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                ),
+                color: theme.cardColor,
+                child: Column(
+                  children: [
+                    _buildToggleOption(
+                      context,
+                      title: 'Notifications',
+                      value: _notificationsEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _notificationsEnabled = value;
+                        });
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                          height: 1,
+                          color: theme.dividerColor.withOpacity(0.1)),
+                    ),
+                    _buildToggleOption(
+                      context,
+                      title: 'Haptic Feedback',
+                      value: _hapticFeedbackEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _hapticFeedbackEnabled = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDarkModeTile(ThemeProvider themeProvider, ThemeData theme) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text('Dark Mode', style: theme.textTheme.titleLarge),
-      subtitle: Text('Switch between light and dark themes',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.textTheme.bodySmall?.color)),
-      trailing: Switch(
-        value: themeProvider.themeMode == ThemeMode.dark,
-        onChanged: (value) {
-          themeProvider.toggleTheme();
-        },
-        activeThumbColor: theme.colorScheme.onSurface,
-        activeTrackColor: theme.colorScheme.secondaryContainer,
-        inactiveThumbColor: theme.colorScheme.onSurface,
-        inactiveTrackColor: theme.colorScheme.secondaryContainer,
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
       ),
+    );
+  }
+
+  Widget _buildDarkModeTile(ThemeProvider themeProvider, ThemeData theme) {
+    return SwitchListTile(
+      title: Text('Dark Mode', style: theme.textTheme.bodyLarge),
+      secondary:
+          Icon(Icons.dark_mode_outlined, color: theme.colorScheme.primary),
+      value: themeProvider.themeMode == ThemeMode.dark,
+      onChanged: (value) => themeProvider.toggleTheme(),
+      activeColor: theme.colorScheme.primary,
     );
   }
 
@@ -103,21 +140,19 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Font Size',
-          style: theme.textTheme.titleLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Adjust text size for better readability',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.textTheme.bodySmall?.color),
+        Row(
+          children: [
+            Icon(Icons.format_size, color: theme.colorScheme.primary),
+            const SizedBox(width: 16),
+            Text('Font Size', style: theme.textTheme.bodyLarge),
+          ],
         ),
         const SizedBox(height: 16),
         Container(
+          height: 40,
           decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
@@ -143,19 +178,19 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
           ),
+          alignment: Alignment.center,
           child: Text(
             text,
-            textAlign: TextAlign.center,
             style: TextStyle(
               color: isSelected
                   ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurface,
+                  : theme.colorScheme.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
             ),
           ),
         ),
@@ -166,25 +201,18 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   Widget _buildToggleOption(
     BuildContext context, {
     required String title,
-    required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: theme.textTheme.titleLarge),
-      subtitle: Text(subtitle,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.textTheme.bodySmall?.color)),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: theme.colorScheme.onSurface,
-        activeTrackColor: theme.colorScheme.secondaryContainer,
-        inactiveThumbColor: theme.colorScheme.onSurface,
-        inactiveTrackColor: theme.colorScheme.secondaryContainer,
-      ),
+    return SwitchListTile(
+      title: Text(title, style: theme.textTheme.bodyLarge),
+      secondary: Icon(
+          title == 'Notifications' ? Icons.notifications_none : Icons.vibration,
+          color: theme.colorScheme.primary),
+      value: value,
+      onChanged: onChanged,
+      activeColor: theme.colorScheme.primary,
     );
   }
 }

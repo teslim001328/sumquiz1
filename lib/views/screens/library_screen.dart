@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../models/user_model.dart';
 import '../../models/library_item.dart';
@@ -37,7 +38,7 @@ class LibraryScreenState extends State<LibraryScreen>
   bool _isOfflineMode = false;
   String _searchQuery = '';
 
-  Stream<Map<String, List<LibraryItem>>>? _allItemsStream;
+  Stream<List<LibraryItem>>? _allItemsStream;
   Stream<List<LibraryItem>>? _summariesStream;
   Stream<List<LibraryItem>>? _flashcardsStream;
   String? _userIdForStreams;
@@ -68,16 +69,75 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   void _initializeStreams(String userId) {
-    setState(() {
-      _allItemsStream =
-          _firestoreService.streamAllItems(userId).asBroadcastStream();
-      _summariesStream = _firestoreService
-          .streamItems(userId, 'summaries')
-          .asBroadcastStream();
-      _flashcardsStream = _firestoreService
-          .streamItems(userId, 'flashcards')
-          .asBroadcastStream();
-    });
+    // Summaries: Merge Firestore & Local
+    final localSummaries = _localDb.watchAllSummaries(userId).map((list) => list
+        .map((s) => LibraryItem(
+            id: s.id,
+            title: s.title,
+            type: LibraryItemType.summary,
+            timestamp: Timestamp.fromDate(s.timestamp)))
+        .toList());
+
+    final firestoreSummaries =
+        _firestoreService.streamItems(userId, 'summaries');
+
+    _summariesStream = Rx.combineLatest2<List<LibraryItem>, List<LibraryItem>,
+        List<LibraryItem>>(
+      localSummaries,
+      firestoreSummaries.handleError(
+          (_) => <LibraryItem>[]), // Handle offline/error gracefully
+      (local, cloud) {
+        final ids = local.map((e) => e.id).toSet();
+        return [...local, ...cloud.where((c) => !ids.contains(c.id))];
+      },
+    ).asBroadcastStream();
+
+    // Flashcards: Merge Firestore & Local
+    final localFlashcards = _localDb.watchAllFlashcardSets(userId).map((list) =>
+        list
+            .map((f) => LibraryItem(
+                id: f.id,
+                title: f.title,
+                type: LibraryItemType.flashcards,
+                timestamp: Timestamp.fromDate(f.timestamp)))
+            .toList());
+
+    final firestoreFlashcards =
+        _firestoreService.streamItems(userId, 'flashcards');
+
+    _flashcardsStream = Rx.combineLatest2<List<LibraryItem>, List<LibraryItem>,
+        List<LibraryItem>>(
+      localFlashcards,
+      firestoreFlashcards.handleError((_) => <LibraryItem>[]),
+      (local, cloud) {
+        final ids = local.map((e) => e.id).toSet();
+        return [...local, ...cloud.where((c) => !ids.contains(c.id))];
+      },
+    ).asBroadcastStream();
+
+    // Quizzes: Merge Firestore & Local (via QuizViewModel or direct stream? Let's use direct stream for consistency)
+    final localQuizzes = _localDb.watchAllQuizzes(userId).map((list) => list
+        .map((q) => LibraryItem(
+            id: q.id,
+            title: q.title,
+            type: LibraryItemType.quiz,
+            timestamp: Timestamp.fromDate(q.timestamp)))
+        .toList());
+
+    // Note: Firestore quizzes might be different structurally, but let's assume LibraryItem adapts
+    // If FirestoreService.streamItems returns LibraryItems, we are good.
+
+    // All Items
+    _allItemsStream = Rx.combineLatest3<List<LibraryItem>, List<LibraryItem>,
+            List<LibraryItem>, List<LibraryItem>>(
+        _summariesStream!,
+        _flashcardsStream!,
+        localQuizzes, // Using local quizzes stream directly here
+        (summaries, flashcards, quizzes) {
+      final all = [...summaries, ...flashcards, ...quizzes];
+      all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return all;
+    }).asBroadcastStream();
   }
 
   void _clearStreams() {
@@ -308,42 +368,20 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildCombinedList(String userId, ThemeData theme) {
-    return Consumer<QuizViewModel>(
-      builder: (context, quizViewModel, child) {
-        return StreamBuilder<Map<String, List<LibraryItem>>>(
-          stream: _allItemsStream,
-          builder: (context, snapshot) {
-            if (quizViewModel.isLoading ||
-                (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData)) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    return StreamBuilder<List<LibraryItem>>(
+      stream: _allItemsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-            final firestoreItems = snapshot.hasData
-                ? snapshot.data!.values.expand((list) => list).toList()
-                : <LibraryItem>[];
-            final localQuizItems = quizViewModel.quizzes
-                .map((quiz) => LibraryItem(
-                    id: quiz.id,
-                    title: quiz.title,
-                    type: LibraryItemType.quiz,
-                    timestamp: Timestamp.fromDate(quiz.timestamp)))
-                .toList();
+        final allItems = snapshot.data ?? [];
 
-            final firestoreQuizIds = localQuizItems.map((q) => q.id).toSet();
-            final filteredFirestoreItems = firestoreItems.where((item) =>
-                item.type != LibraryItemType.quiz ||
-                !firestoreQuizIds.contains(item.id));
-
-            final allItems = [...filteredFirestoreItems, ...localQuizItems];
-            allItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-            if (allItems.isEmpty) {
-              return _buildNoContentState('all', theme);
-            }
-            return _buildContentList(allItems, userId, theme);
-          },
-        );
+        if (allItems.isEmpty) {
+          return _buildNoContentState('all', theme);
+        }
+        return _buildContentList(allItems, userId, theme);
       },
     );
   }
@@ -614,7 +652,6 @@ class LibraryScreenState extends State<LibraryScreen>
 
   Future<void> _navigateToContent(
       BuildContext context, String userId, LibraryItem item) async {
-
     Widget? screen;
     switch (item.type) {
       case LibraryItemType.summary:
@@ -629,7 +666,13 @@ class LibraryScreenState extends State<LibraryScreen>
 
         if (content != null) {
           final summary = content as Summary;
-          screen = SummaryScreen(summary: LocalSummary(id: summary.id, title: summary.title, content: summary.content, timestamp: summary.timestamp.toDate(), userId: userId));
+          screen = SummaryScreen(
+              summary: LocalSummary(
+                  id: summary.id,
+                  title: summary.title,
+                  content: summary.content,
+                  timestamp: summary.timestamp.toDate(),
+                  userId: userId));
         }
         break;
       case LibraryItemType.quiz:
@@ -640,7 +683,7 @@ class LibraryScreenState extends State<LibraryScreen>
         break;
       case LibraryItemType.flashcards:
         if (_isOfflineMode) {
-           if (mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Navigation is disabled in offline mode.')));
           }
@@ -653,26 +696,25 @@ class LibraryScreenState extends State<LibraryScreen>
         break;
     }
 
-
     if (screen != null) {
-      if(mounted) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => screen!));
+      if (mounted) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => screen!));
       }
     } else {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Could not load content.')));
+            const SnackBar(content: Text('Error: Could not load content.')));
       }
     }
   }
 
   Future<void> _editContent(
       BuildContext context, String userId, LibraryItem item) async {
-
     if (_isOfflineMode) {
       if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Editing is disabled in offline mode.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Editing is disabled in offline mode.')));
       }
       return;
     }
@@ -704,10 +746,10 @@ class LibraryScreenState extends State<LibraryScreen>
 
     if (mounted && editableContent != null) {
       Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                EditContentScreen(content: editableContent!)));
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  EditContentScreen(content: editableContent!)));
     }
   }
 

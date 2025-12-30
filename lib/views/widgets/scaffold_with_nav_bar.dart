@@ -25,10 +25,22 @@ class ScaffoldWithNavBar extends StatelessWidget {
             body: navigationShell,
             bottomNavigationBar: BottomNavigationBar(
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.book_outlined), activeIcon: Icon(Icons.book), label: 'Library'),
-                BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school), label: 'Review'),
-                BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), activeIcon: Icon(Icons.add_circle), label: 'Create'),
-                BottomNavigationBarItem(icon: Icon(Icons.show_chart_outlined), activeIcon: Icon(Icons.show_chart), label: 'Progress'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.home_outlined),
+                    activeIcon: Icon(Icons.home),
+                    label: 'Home'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.book_outlined),
+                    activeIcon: Icon(Icons.book),
+                    label: 'Library'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.add_circle_outline),
+                    activeIcon: Icon(Icons.add_circle),
+                    label: 'Create'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.show_chart_outlined),
+                    activeIcon: Icon(Icons.show_chart),
+                    label: 'Progress'),
               ],
               currentIndex: navigationShell.currentIndex,
               onTap: onTap,
@@ -47,10 +59,22 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   onDestinationSelected: onTap,
                   labelType: NavigationRailLabelType.all,
                   destinations: const <NavigationRailDestination>[
-                    NavigationRailDestination(icon: Icon(Icons.book_outlined), selectedIcon: Icon(Icons.book), label: Text('Library')),
-                    NavigationRailDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: Text('Review')),
-                    NavigationRailDestination(icon: Icon(Icons.add_circle_outline), selectedIcon: Icon(Icons.add_circle), label: Text('Create')),
-                    NavigationRailDestination(icon: Icon(Icons.show_chart_outlined), selectedIcon: Icon(Icons.show_chart), label: Text('Progress')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.home_outlined),
+                        selectedIcon: Icon(Icons.home),
+                        label: Text('Home')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.book_outlined),
+                        selectedIcon: Icon(Icons.book),
+                        label: Text('Library')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.add_circle_outline),
+                        selectedIcon: Icon(Icons.add_circle),
+                        label: Text('Create')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.show_chart_outlined),
+                        selectedIcon: Icon(Icons.show_chart),
+                        label: Text('Progress')),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),

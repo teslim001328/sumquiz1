@@ -12,6 +12,8 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:developer' as developer;
 
+import 'package:sumquiz/services/spaced_repetition_service.dart';
+
 // --- EXCEPTIONS ---
 class EnhancedAIServiceException implements Exception {
   final String message;
@@ -22,10 +24,10 @@ class EnhancedAIServiceException implements Exception {
 
 // --- CONFIG ---
 class EnhancedAIConfig {
-  static const String textModel = 'gemini-1.5-flash';
+  static const String textModel = 'gemini-2.0-flash-exp';
   static const int maxRetries = 2;
   static const int requestTimeoutSeconds = 60;
-  static const int maxInputLength = 30000; 
+  static const int maxInputLength = 30000;
 }
 
 // --- SERVICE ---
@@ -33,23 +35,22 @@ class EnhancedAIService {
   final GenerativeModel _model;
 
   EnhancedAIService({GenerativeModel? model})
-      : _model = model ?? 
-          FirebaseAI.vertexAI().generativeModel(
-            model: EnhancedAIConfig.textModel,
-            generationConfig: GenerationConfig(
-              temperature: 0.3,
-              maxOutputTokens: 8192,
-            ),
-          );
+      : _model = model ??
+            FirebaseAI.vertexAI().generativeModel(
+              model: EnhancedAIConfig.textModel,
+              generationConfig: GenerationConfig(
+                temperature: 0.3,
+                maxOutputTokens: 8192,
+              ),
+            );
 
   Future<String> _generateWithRetry(String prompt) async {
     int attempt = 0;
     while (attempt < EnhancedAIConfig.maxRetries) {
       try {
         final chat = _model.startChat();
-        final response = await chat
-            .sendMessage(Content.text(prompt))
-            .timeout(const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
+        final response = await chat.sendMessage(Content.text(prompt)).timeout(
+            const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
         final responseText = response.text;
         if (responseText == null || responseText.isEmpty) {
@@ -63,19 +64,22 @@ class EnhancedAIService {
         }
 
         return responseText.trim();
-
       } on TimeoutException {
-        throw EnhancedAIServiceException('The AI model took too long to respond. Please try again.');
+        throw EnhancedAIServiceException(
+            'The AI model took too long to respond. Please try again.');
       } catch (e) {
-        developer.log('AI Generation Error (Attempt ${attempt + 1})', name: 'EnhancedAIService', error: e);
+        developer.log('AI Generation Error (Attempt ${attempt + 1})',
+            name: 'EnhancedAIService', error: e);
         attempt++;
         if (attempt >= EnhancedAIConfig.maxRetries) {
-          throw EnhancedAIServiceException('Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
+          throw EnhancedAIServiceException(
+              'Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
         }
         await Future.delayed(Duration(seconds: pow(2, attempt).toInt()));
       }
     }
-    throw EnhancedAIServiceException('An unknown error occurred during AI generation.');
+    throw EnhancedAIServiceException(
+        'An unknown error occurred during AI generation.');
   }
 
   String _sanitizeInput(String input) {
@@ -97,7 +101,8 @@ Text: $sanitizedText''';
 
   Future<String> _generateQuizJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
-    final prompt = '''Create a multiple-choice quiz with 5-10 questions from the text.
+    final prompt =
+        '''Create a multiple-choice quiz with 5-10 questions from the text.
 Each question must have 4 options and one correct answer.
 Return ONLY a single, valid JSON object:
 {"questions": [{"question": "...", "options": ["A", "B", "C", "D"], "correctAnswer": "A"}]}
@@ -116,6 +121,8 @@ Return ONLY a single, valid JSON object:
 Text: $sanitizedText''';
     return _generateWithRetry(prompt);
   }
+
+// ... (existing code)
 
   Future<String> generateAndStoreOutputs({
     required String text,
@@ -136,6 +143,10 @@ Text: $sanitizedText''';
     );
     await localDb.saveFolder(folder);
 
+    // Initialize SRS Service
+    final srsService =
+        SpacedRepetitionService(localDb.getSpacedRepetitionBox());
+
     try {
       final generationFutures = <String, Future<String>>{};
       for (String outputType in requestedOutputs) {
@@ -154,7 +165,8 @@ Text: $sanitizedText''';
       }
 
       final generatedJsonStrings = await Future.wait(generationFutures.values);
-      final generatedData = Map.fromIterables(generationFutures.keys, generatedJsonStrings);
+      final generatedData =
+          Map.fromIterables(generationFutures.keys, generatedJsonStrings);
 
       onProgress('Saving content to your library...');
 
@@ -173,7 +185,7 @@ Text: $sanitizedText''';
               timestamp: DateTime.now(),
               isSynced: false,
             );
-            await localDb.saveSummary(summary);
+            await localDb.saveSummary(summary, folderId);
             break;
           case 'quiz':
             final questions = (data['questions'] as List)
@@ -183,17 +195,18 @@ Text: $sanitizedText''';
                       correctAnswer: q['correctAnswer'] ?? '',
                     ))
                 .toList();
-            if (questions.isEmpty) throw Exception('The AI failed to generate quiz questions.');
+            if (questions.isEmpty)
+              throw Exception('The AI failed to generate quiz questions.');
             final quiz = LocalQuiz(
               id: const Uuid().v4(),
-              userId: userId, 
+              userId: userId,
               title: title,
               questions: questions,
               timestamp: DateTime.now(),
               scores: [],
               isSynced: false,
             );
-            await localDb.saveQuiz(quiz);
+            await localDb.saveQuiz(quiz, folderId);
             break;
           case 'flashcards':
             final flashcards = (data['flashcards'] as List)
@@ -202,7 +215,8 @@ Text: $sanitizedText''';
                       answer: f['answer'] ?? '',
                     ))
                 .toList();
-            if (flashcards.isEmpty) throw Exception('The AI failed to generate flashcards.');
+            if (flashcards.isEmpty)
+              throw Exception('The AI failed to generate flashcards.');
             final flashcardSet = LocalFlashcardSet(
               id: const Uuid().v4(),
               userId: userId,
@@ -211,19 +225,26 @@ Text: $sanitizedText''';
               timestamp: DateTime.now(),
               isSynced: false,
             );
-            await localDb.saveFlashcardSet(flashcardSet);
+            await localDb.saveFlashcardSet(flashcardSet, folderId);
+
+            // Schedule reviews for each flashcard
+            onProgress('Scheduling reviews...');
+            for (final flashcard in flashcards) {
+              await srsService.scheduleReview(flashcard.id, userId);
+            }
             break;
         }
       }
 
       onProgress('Done!');
       return folderId;
-
     } catch (e) {
       onProgress('An error occurred. Cleaning up...');
       await localDb.deleteFolder(folderId);
-      developer.log('Rolled back folder creation due to error.', name: 'EnhancedAIService', error: e);
-      throw EnhancedAIServiceException('Failed to create content. The AI may have returned an invalid format. Please try again. Error: ${e.toString()}');
+      developer.log('Rolled back folder creation due to error.',
+          name: 'EnhancedAIService', error: e);
+      throw EnhancedAIServiceException(
+          'Failed to create content. The AI may have returned an invalid format. Please try again. Error: ${e.toString()}');
     }
   }
 }

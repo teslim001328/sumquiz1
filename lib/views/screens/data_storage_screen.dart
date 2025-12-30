@@ -7,8 +7,6 @@ import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:go_router/go_router.dart';
 
-/// Modern data storage management screen with improved UI and additional features
-/// Allows users to manage offline data, cache, and storage preferences
 class DataStorageScreen extends StatelessWidget {
   const DataStorageScreen({super.key});
 
@@ -19,52 +17,92 @@ class DataStorageScreen extends StatelessWidget {
     final user = Provider.of<UserModel?>(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Data & Storage'),
+        title: Text(
+          'Data & Storage',
+          style: theme.textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildStorageInfoCard(context, theme),
-                const SizedBox(height: 24),
-                _buildDataCard(
-                  context,
-                  theme: theme,
-                  icon: Icons.cleaning_services_outlined,
-                  title: 'Clear Cache',
-                  subtitle: 'Remove temporary files and cached data',
-                  onTap: () => _showClearCacheConfirmation(context, localDB),
+            children: [
+              _buildStorageInfoCard(context, theme),
+              const SizedBox(height: 24),
+              _buildSectionHeader(theme, 'Manage Data'),
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
                 ),
-                const SizedBox(height: 16),
-                _buildDataCard(
-                  context,
-                  theme: theme,
-                  icon: Icons.offline_pin_outlined,
-                  title: 'Manage Offline Files',
-                  subtitle: 'View and delete downloaded content',
-                  onTap: () =>
-                      _showOfflineFilesModal(context, theme, localDB, user),
+                color: theme.cardColor,
+                child: Column(
+                  children: [
+                    _buildActionTile(
+                      context,
+                      icon: Icons.cleaning_services_outlined,
+                      title: 'Clear Cache',
+                      subtitle: 'Free up space',
+                      onTap: () =>
+                          _showClearCacheConfirmation(context, localDB),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                          height: 1,
+                          color: theme.dividerColor.withOpacity(0.1)),
+                    ),
+                    _buildActionTile(
+                      context,
+                      icon: Icons.offline_pin_outlined,
+                      title: 'Offline Files',
+                      subtitle: 'Manage downloads',
+                      onTap: () =>
+                          _showOfflineFilesModal(context, theme, localDB, user),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                          height: 1,
+                          color: theme.dividerColor.withOpacity(0.1)),
+                    ),
+                    _buildActionTile(
+                      context,
+                      icon: Icons.sync_outlined,
+                      title: 'Sync Data',
+                      subtitle: 'Sync with cloud',
+                      onTap: () => _syncData(context),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _buildDataCard(
-                  context,
-                  theme: theme,
-                  icon: Icons.sync_outlined,
-                  title: 'Sync Data',
-                  subtitle: 'Sync offline data with cloud storage',
-                  onTap: () => _syncData(context),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
         ),
       ),
     );
@@ -72,6 +110,11 @@ class DataStorageScreen extends StatelessWidget {
 
   Widget _buildStorageInfoCard(BuildContext context, ThemeData theme) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: theme.colorScheme.primaryContainer.withOpacity(0.4),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -79,110 +122,64 @@ class DataStorageScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.storage_outlined,
-                      color: theme.colorScheme.primary, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Storage Info',
-                        style: theme.textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Manage your app storage and data',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+                Icon(Icons.storage_outlined,
+                    color: theme.colorScheme.primary, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'Storage Usage',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            // Simulated storage usage
             Text(
-              'Current Usage: 42.5 MB',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500),
+              '42.5 MB Used',
+              style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: 0.42,
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: 0.42,
+                minHeight: 10,
+                backgroundColor: theme.colorScheme.surface,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('0 MB', style: theme.textTheme.bodySmall),
-                Text('100 MB', style: theme.textTheme.bodySmall),
+                Text('100 MB Limit', style: theme.textTheme.bodySmall),
               ],
-            ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDataCard(BuildContext context,
-      {required ThemeData theme,
-      required IconData icon,
+  Widget _buildActionTile(BuildContext context,
+      {required IconData icon,
       required String title,
       required String subtitle,
       required VoidCallback onTap}) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: theme.colorScheme.primary, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 18,
-              ),
-            ],
-          ),
-        ),
-      ),
+    final theme = Theme.of(context);
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: theme.colorScheme.primary),
+      title: Text(title, style: theme.textTheme.bodyLarge),
+      subtitle: Text(subtitle,
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      trailing: Icon(Icons.arrow_forward_ios,
+          size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
     );
   }
 
@@ -227,6 +224,7 @@ class DataStorageScreen extends StatelessWidget {
       LocalDatabaseService localDB, UserModel? user) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -247,7 +245,8 @@ class DataStorageScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'Offline Files',
-                style: theme.textTheme.headlineSmall,
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               if (user != null)
@@ -267,17 +266,12 @@ class DataStorageScreen extends StatelessWidget {
                       return Center(
                         child: Column(
                           children: [
-                            Icon(Icons.folder_outlined,
-                                size: 48, color: theme.iconTheme.color),
+                            Icon(Icons.folder_open,
+                                size: 48, color: theme.disabledColor),
                             const SizedBox(height: 16),
                             Text(
                               'No offline files yet.',
                               style: theme.textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Download content to view it offline.',
-                              style: theme.textTheme.bodySmall,
                             ),
                           ],
                         ),
@@ -341,7 +335,12 @@ class DataStorageScreen extends StatelessWidget {
       String id,
       VoidCallback onDelete) {
     return Card(
+      elevation: 0,
+      color: theme.cardColor,
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
       child: ListTile(
         title: Text(title, style: theme.textTheme.titleMedium),
         subtitle: Text(type, style: theme.textTheme.bodySmall),

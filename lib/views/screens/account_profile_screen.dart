@@ -6,8 +6,6 @@ import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../widgets/pro_status_widget.dart';
 
-/// Modern account profile screen with improved layout and organization
-/// Shows user information, account actions, and premium status in a clean interface
 class AccountProfileScreen extends StatelessWidget {
   const AccountProfileScreen({super.key});
 
@@ -24,28 +22,36 @@ class AccountProfileScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Account'),
+        title: Text('Account',
+            style: theme.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          children: <Widget>[
-            _buildHeader(context, user),
-            const SizedBox(height: 30),
-            const ProStatusWidget(),
-            const SizedBox(height: 30),
-            _buildAccountActions(context, authService, user),
-            const SizedBox(height: 30),
-            _buildSignOutButton(context, authService),
-          ],
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              children: <Widget>[
+                _buildHeader(context, user),
+                const SizedBox(height: 32),
+                const ProStatusWidget(),
+                const SizedBox(height: 24),
+                _buildAccountActions(context, authService, user),
+                const SizedBox(height: 32),
+                _buildSignOutButton(context, authService),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -55,46 +61,47 @@ class AccountProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: theme.colorScheme.primary,
-              width: 3,
-            ),
-          ),
-          child: CircleAvatar(
-            radius: 45,
-            backgroundColor: theme.colorScheme.surface,
-            child: Text(
-              user.displayName.isNotEmpty
-                  ? user.displayName[0].toUpperCase()
-                  : '?',
-              style: theme.textTheme.headlineLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
+        CircleAvatar(
+          radius: 50,
+          backgroundColor: theme.colorScheme.primaryContainer,
+          child: Text(
+            user.displayName.isNotEmpty
+                ? user.displayName[0].toUpperCase()
+                : '?',
+            style: theme.textTheme.displayMedium?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 16),
         Text(
           user.displayName,
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style:
+              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 4),
         Text(
           user.email,
           style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.textTheme.bodySmall?.color),
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(height: 8),
         if (user.subscriptionExpiry != null)
-          Text(
-            'Pro Until: ${user.subscriptionExpiry!.toLocal().toString().split(' ')[0]}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.primary),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Pro until ${user.subscriptionExpiry!.toLocal().toString().split(' ')[0]}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
       ],
     );
@@ -105,7 +112,10 @@ class AccountProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+      ),
       color: theme.cardColor,
       child: Column(
         children: [
@@ -113,7 +123,6 @@ class AccountProfileScreen extends StatelessWidget {
             context,
             icon: Icons.lock_outline,
             title: 'Change Password',
-            subtitle: 'Send password reset email',
             onTap: () {
               authService.sendPasswordResetEmail(user.email);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -124,27 +133,30 @@ class AccountProfileScreen extends StatelessWidget {
               );
             },
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child:
+                Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+          ),
           _buildListTile(
             context,
             icon: Icons.email_outlined,
             title: 'Update Email',
-            subtitle: 'Change your email address',
             onTap: () {
-              // TODO: Implement email update functionality
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Email update coming soon'),
-                ),
+                const SnackBar(content: Text('Email update coming soon')),
               );
             },
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child:
+                Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+          ),
           _buildListTile(
             context,
             icon: Icons.delete_outline,
             title: 'Delete Account',
-            subtitle: 'Permanently delete your account',
             onTap: () => _showDeleteAccountDialog(context, authService),
             isDestructive: true,
           ),
@@ -157,32 +169,23 @@ class AccountProfileScreen extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
-    required String subtitle,
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
     final theme = Theme.of(context);
+    final color =
+        isDestructive ? theme.colorScheme.error : theme.colorScheme.onSurface;
+
     return ListTile(
       onTap: onTap,
       leading: Icon(icon,
           color: isDestructive
               ? theme.colorScheme.error
-              : theme.colorScheme.secondary),
-      title: Text(title,
-          style: theme.textTheme.titleMedium?.copyWith(
-              color: isDestructive
-                  ? theme.colorScheme.error
-                  : theme.textTheme.titleMedium?.color)),
-      subtitle: Text(subtitle,
-          style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDestructive
-                  ? theme.colorScheme.error.withOpacity(0.7)
-                  : theme.textTheme.bodySmall?.color)),
+              : theme.colorScheme.primary),
+      title:
+          Text(title, style: theme.textTheme.bodyLarge?.copyWith(color: color)),
       trailing: Icon(Icons.arrow_forward_ios,
-          color:
-              isDestructive ? theme.colorScheme.error : theme.iconTheme.color,
-          size: 16),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
     );
   }
 
@@ -192,30 +195,21 @@ class AccountProfileScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Delete Account',
-              style: theme.textTheme.headlineSmall
-                  ?.copyWith(color: theme.colorScheme.error)),
-          content: Text(
-              'Are you sure you want to permanently delete your account? This action cannot be undone.',
-              style: theme.textTheme.bodyMedium),
+          title: const Text('Delete Account'),
+          content: const Text(
+              'Are you sure you want to permanently delete your account? This action cannot be undone.'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel',
-                  style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: Text('Delete',
                   style: TextStyle(color: theme.colorScheme.error)),
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implement actual account deletion
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Account deletion coming soon'),
-                  ),
+                  const SnackBar(content: Text('Account deletion coming soon')),
                 );
               },
             ),
@@ -226,22 +220,17 @@ class AccountProfileScreen extends StatelessWidget {
   }
 
   Widget _buildSignOutButton(BuildContext context, AuthService authService) {
-    final theme = Theme.of(context);
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.logout),
-        label: const Text('Sign Out'),
-        onPressed: () {
-          authService.signOut();
-        },
-        style: ElevatedButton.styleFrom(
+      child: TextButton.icon(
+        icon: const Icon(Icons.logout, color: Colors.red),
+        label: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+        onPressed: () => authService.signOut(),
+        style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          backgroundColor: theme.colorScheme.error,
-          foregroundColor: theme.colorScheme.onError,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.red.withOpacity(0.1),
         ),
       ),
     );

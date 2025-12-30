@@ -29,6 +29,13 @@ class ReferralService {
       return;
     }
 
+    // Call validation to ensure code exists before proceeding (optional redundant check, but good for safety)
+    if (!await validateReferralCode(trimmedCode)) {
+      developer.log('Invalid referral code: $trimmedCode',
+          name: 'com.example.myapp.ReferralService.applyReferralCode');
+      return;
+    }
+
     developer.log(
         'Starting referral process for newUser: $newUserId with code: "$trimmedCode"',
         name: 'com.example.myapp.ReferralService.applyReferralCode');
@@ -257,6 +264,24 @@ class ReferralService {
       }
       return snapshot.data()!['referralRewards'] as int;
     });
+  }
+
+  /// Validates if a referral code exists and is valid.
+  /// Returns `true` if valid, `false` otherwise.
+  Future<bool> validateReferralCode(String code) async {
+    if (code.trim().isEmpty) return false;
+
+    try {
+      final query = await _firestore
+          .collection('users')
+          .where('referralCode', isEqualTo: code.trim())
+          .limit(1)
+          .get();
+      return query.docs.isNotEmpty;
+    } catch (e) {
+      developer.log('Error validating referral code', error: e);
+      return false;
+    }
   }
 }
 

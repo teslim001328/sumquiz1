@@ -96,7 +96,8 @@ class AuthService {
     });
   }
 
-  Future<void> signInWithGoogle(BuildContext context, {String? referralCode}) async {
+  Future<void> signInWithGoogle(BuildContext context,
+      {String? referralCode}) async {
     try {
       developer.log('Starting Google Sign-In flow');
 
@@ -211,7 +212,8 @@ class AuthService {
     }
   }
 
-  Future<void> signInWithEmailAndPassword(BuildContext context, String email, String password) async {
+  Future<void> signInWithEmailAndPassword(
+      BuildContext context, String email, String password) async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -225,56 +227,80 @@ class AuthService {
         await Provider.of<SyncProvider>(context, listen: false).syncData();
       }
     } on FirebaseAuthException catch (e, s) {
-      developer.log('Error signing in with email', error: e, stackTrace:s);
+      developer.log('Error signing in with email', error: e, stackTrace: s);
       rethrow;
     }
   }
 
-  Future<void> signUpWithEmailAndPassword(BuildContext context, String email, String password,
-      String fullName, String? referralCode) async {
+  Future<void> signUpWithEmailAndPassword(BuildContext context, String email,
+      String password, String fullName, String? referralCode) async {
     try {
-      // CRITICAL FIX C5: Use Cloud Function for atomic signup + referral
-      // This prevents partial failures (user created but referral not applied)
-      final callable =
-          FirebaseFunctions.instance.httpsCallable('signUpWithReferral');
-      final cloudFunctionResult = await callable.call({
-        'email': email,
-        'password': password,
-        'displayName': fullName,
-        'referralCode': referralCode,
-      });
+      // 0. Validate Referral Code (Pre-check)
+      if (referralCode != null && referralCode.isNotEmpty) {
+        final isValid =
+            await _referralService.validateReferralCode(referralCode);
+        if (!isValid) {
+          throw Exception('Referral code error: Code not found');
+        }
+      }
 
-      developer.log(
-          'User created via Cloud Function: ${cloudFunctionResult.data['uid']}');
-
-      // Sign in the newly created user
-      final authResult = await _auth.signInWithEmailAndPassword(
+      // 1. Create user in Firebase Auth directly (Client-side)
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save authentication state for offline access
-      if (authResult.user != null) {
-        await _saveAuthState(authResult.user!);
-        // Use the SyncProvider to trigger the sync
-        await Provider.of<SyncProvider>(context, listen: false).syncData();
-      }
+      final user = userCredential.user;
+      if (user != null) {
+        developer.log('User created via Client SDK: ${user.uid}');
 
-      // HIGH PRIORITY FIX H1: Send email verification
-      // Prevent fake account abuse by requiring verification
-      try {
-        await _auth.currentUser?.sendEmailVerification();
-        developer.log('Verification email sent to $email');
-      } catch (e) {
-        developer.log('Failed to send verification email', error: e);
-        // Don't block signup, user can resend later
+        // 2. Update Display Name
+        await user.updateDisplayName(fullName);
+
+        // 3. Create User Document in Firestore
+        UserModel newUser = UserModel(
+          uid: user.uid,
+          displayName: fullName,
+          email: email,
+          // Initialize other fields as needed
+        );
+        await _firestoreService.saveUserData(newUser);
+
+        // 4. Apply Referral Code (Best Effort)
+        if (referralCode != null && referralCode.isNotEmpty) {
+          try {
+            // Try to apply referral via service or cloud function
+            // Assuming _referralService exists and handles this
+            await _referralService.applyReferralCode(referralCode, user.uid);
+          } catch (e) {
+            developer.log('Failed to apply referral code', error: e);
+            // Do not fail the whole signup
+          }
+        }
+
+        // 5. Save Auth State & Sync
+        await _saveAuthState(user);
+        if (context.mounted) {
+          await Provider.of<SyncProvider>(context, listen: false).syncData();
+        }
+
+        // 6. Send Verification Email
+        try {
+          if (!user.emailVerified) {
+            await user.sendEmailVerification();
+            developer.log('Verification email sent to $email');
+          }
+        } catch (e) {
+          developer.log('Failed to send verification email', error: e);
+        }
       }
-    } on FirebaseFunctionsException catch (e, s) {
-      developer.log('Cloud Function signup failed', error: e, stackTrace: s);
-      rethrow;
     } on FirebaseAuthException catch (e, s) {
-      developer.log('Error signing in after signup', error: e, stackTrace: s);
+      developer.log('Error signing up', error: e, stackTrace: s);
       rethrow;
+    } catch (e, s) {
+      developer.log('Unexpected error during signup', error: e, stackTrace: s);
+      throw FirebaseAuthException(code: 'unknown', message: e.toString());
     }
   }
 

@@ -1,12 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
-import 'package:sumquiz/services/ai_service.dart';
-import 'package:sumquiz/services/local_database_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:typed_data';
 
@@ -98,56 +94,51 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     final user = Provider.of<UserModel?>(context, listen: false);
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be logged in to create content.')),
+        const SnackBar(
+            content: Text('You must be logged in to create content.')),
       );
       setState(() => _isLoading = false);
       return;
     }
 
-    String source;
-    String title;
-
     try {
+      final extractionService =
+          Provider.of<ContentExtractionService>(context, listen: false);
+      String extractedText = '';
+
       switch (_activeContentType!) {
         case ContentType.text:
           if (_textController.text.trim().isEmpty) {
             throw Exception('The text field is empty.');
           }
-          source = _textController.text;
-          title = _textController.text.substring(0, min(_textController.text.length, 50));
+          extractedText = await extractionService.extractContent(
+              type: 'text', input: _textController.text);
           break;
         case ContentType.link:
           if (_linkController.text.trim().isEmpty) {
             throw Exception('The URL field is empty.');
           }
-          source = _linkController.text;
-          title = _linkController.text;
+          extractedText = await extractionService.extractContent(
+              type: 'link', input: _linkController.text);
           break;
         case ContentType.pdf:
           if (_pdfBytes == null) {
             throw Exception('No PDF file was selected.');
           }
-          source = await ContentExtractionService.extractFromPdfBytes(_pdfBytes!);
-          title = _pdfName ?? 'PDF Document';
+          extractedText = await extractionService.extractContent(
+              type: 'pdf', input: _pdfBytes);
           break;
         case ContentType.image:
           if (_imageBytes == null) {
             throw Exception('No image was selected.');
           }
-          source = await ContentExtractionService.extractFromImageBytes(_imageBytes!);
-          title = _imageName ?? 'Image';
+          extractedText = await extractionService.extractContent(
+              type: 'image', input: _imageBytes);
           break;
       }
 
-      final aiService = Provider.of<AIService>(context, listen: false);
-      final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
-      final contentExtractionService = ContentExtractionService(aiService, localDb);
-
-      final folderId = await contentExtractionService.extractAndGenerate(
-          source, title, ['summary', 'quiz', 'flashcards'], user.uid);
-
       if (mounted) {
-        context.push('/results-view/$folderId');
+        context.push('/create/extraction-view', extra: extractedText);
       }
     } catch (e) {
       if (mounted) {
@@ -183,12 +174,14 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             RichText(
+            RichText(
               text: TextSpan(
                 style: theme.textTheme.headlineMedium,
                 children: [
                   const TextSpan(text: 'What do you want to '),
-                  TextSpan(text: 'learn', style: TextStyle(color: theme.colorScheme.secondary)),
+                  TextSpan(
+                      text: 'learn',
+                      style: TextStyle(color: theme.colorScheme.secondary)),
                   const TextSpan(text: ' today?'),
                 ],
               ),
@@ -269,7 +262,8 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
-              onTap: () => setState(() => _resetInputs(except: ContentType.link)),
+              onTap: () =>
+                  setState(() => _resetInputs(except: ContentType.link)),
               controller: _linkController,
               style: theme.textTheme.bodyMedium,
               decoration: InputDecoration(
@@ -280,12 +274,15 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () => setState(() => _activeContentType = ContentType.link),
+            onPressed: () =>
+                setState(() => _activeContentType = ContentType.link),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.secondary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text('Add', style: TextStyle(color: theme.colorScheme.onSecondary)),
+            child: Text('Add',
+                style: TextStyle(color: theme.colorScheme.onSecondary)),
           ),
         ],
       ),
@@ -303,26 +300,33 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor, width: 1, style: BorderStyle.solid),
+          border: Border.all(
+              color: theme.dividerColor, width: 1, style: BorderStyle.solid),
         ),
         child: _pdfName == null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.upload_file, color: theme.colorScheme.secondary, size: 36),
+                  Icon(Icons.upload_file,
+                      color: theme.colorScheme.secondary, size: 36),
                   const SizedBox(height: 8),
                   Text('Tap to browse', style: theme.textTheme.bodyMedium),
-                  Text('PDF files up to 10MB', style: theme.textTheme.bodySmall),
+                  Text('PDF files up to 10MB',
+                      style: theme.textTheme.bodySmall),
                 ],
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: theme.colorScheme.secondary, size: 36),
+                  Icon(Icons.check_circle,
+                      color: theme.colorScheme.secondary, size: 36),
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(_pdfName!, style: theme.textTheme.bodyMedium, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                    child: Text(_pdfName!,
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center),
                   ),
                 ],
               ),
@@ -335,9 +339,13 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
       margin: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Expanded(child: _buildScanButton('Camera', Icons.camera_alt, () => _pickImage(ImageSource.camera))),
+          Expanded(
+              child: _buildScanButton('Camera', Icons.camera_alt,
+                  () => _pickImage(ImageSource.camera))),
           const SizedBox(width: 16),
-          Expanded(child: _buildScanButton('Gallery', Icons.photo_library, () => _pickImage(ImageSource.gallery))),
+          Expanded(
+              child: _buildScanButton('Gallery', Icons.photo_library,
+                  () => _pickImage(ImageSource.gallery))),
         ],
       ),
     );
@@ -345,7 +353,8 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
 
   Widget _buildScanButton(String label, IconData icon, VoidCallback onPressed) {
     final theme = Theme.of(context);
-    bool isSelected = _activeContentType == ContentType.image && _imageName != null;
+    bool isSelected =
+        _activeContentType == ContentType.image && _imageName != null;
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -357,11 +366,15 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(isSelected ? Icons.check_circle : icon, color: theme.colorScheme.secondary, size: 36),
+            Icon(isSelected ? Icons.check_circle : icon,
+                color: theme.colorScheme.secondary, size: 36),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(isSelected ? _imageName! : label, style: theme.textTheme.bodyMedium, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+              child: Text(isSelected ? _imageName! : label,
+                  style: theme.textTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center),
             ),
           ],
         ),
@@ -380,13 +393,19 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
           onPressed: _isLoading ? null : _processAndNavigate,
           icon: _isLoading
               ? const SizedBox.shrink()
-              : Icon(Icons.double_arrow_rounded, color: theme.colorScheme.onSecondary),
+              : Icon(Icons.double_arrow_rounded,
+                  color: theme.colorScheme.onSecondary),
           label: _isLoading
-              ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onSecondary))
-              : Text('Extract Content', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSecondary)),
+              ? CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.onSecondary))
+              : Text('Extract Content',
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(color: theme.colorScheme.onSecondary)),
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.colorScheme.secondary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           ),
         ),
       ),

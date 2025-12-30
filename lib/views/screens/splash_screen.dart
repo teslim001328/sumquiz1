@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../services/auth_service.dart';
 
@@ -13,34 +13,26 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  bool _isLoading = true;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigate();
+    _handleNavigation();
   }
 
-  Future<void> _navigate() async {
-    // Artificial delay for splash screen visibility
-    await Future.delayed(const Duration(seconds: 3));
+  Future<void> _handleNavigation() async {
+    // Combine min splash duration with initialization
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    // A small delay for the fade-out effect if needed
-    await Future.delayed(const Duration(milliseconds: 300));
 
     final prefs = await SharedPreferences.getInstance();
     final authService = Provider.of<AuthService>(context, listen: false);
 
     final user = authService.currentUser;
     final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+    if (!mounted) return;
 
     if (!hasSeenOnboarding) {
       context.go('/onboarding');
@@ -53,27 +45,76 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // "Strategist" gradient: Deep Professional Blue/Purple
+    final gradientColors = [
+      const Color(0xFF1A237E), // Deep Indigo
+      const Color(0xFF3949AB), // Rich Blue
+    ];
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-              Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
-            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
           ),
         ),
         child: Center(
-          child: _isLoading
-              ? Shimmer.fromColors(
-                  baseColor: Colors.white.withValues(alpha: 0.5),
-                  highlightColor: Colors.white,
-                  child:
-                      Image.asset('assets/images/sumquiz_logo.png', width: 150),
-                )
-              : Image.asset('assets/images/sumquiz_logo.png', width: 150),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo with Entry Animation
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(24.0),
+                child: Image.asset(
+                  'assets/images/sumquiz_logo.png',
+                  width: 100,
+                  height: 100,
+                ),
+              )
+                  .animate()
+                  .scale(duration: 800.ms, curve: Curves.elasticOut)
+                  .fadeIn(duration: 600.ms),
+
+              const SizedBox(height: 24),
+
+              // Title with Fade In
+              Text(
+                'SumQuiz',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+              ).animate().fadeIn(delay: 400.ms).slideY(
+                  begin: 0.3,
+                  end: 0,
+                  duration: 600.ms,
+                  curve: Curves.easeOutQuad),
+
+              const SizedBox(height: 8),
+
+              Text(
+                'Study Smarter, Not Harder',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white70,
+                      letterSpacing: 0.5,
+                    ),
+              ).animate().fadeIn(delay: 600.ms),
+            ],
+          ),
         ),
       ),
     );

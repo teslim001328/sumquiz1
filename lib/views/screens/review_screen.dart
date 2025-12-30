@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../services/auth_service.dart';
-import '../../services/firestore_service.dart';
+import '../../services/local_database_service.dart'; // Changed to LocalDatabaseService
 import '../../models/flashcard.dart';
 import '../../models/flashcard_set.dart';
 import '../../models/user_model.dart';
@@ -11,6 +12,12 @@ import '../../models/daily_mission.dart';
 import '../../services/mission_service.dart';
 import '../../services/user_service.dart';
 import 'flashcards_screen.dart';
+import 'summary_screen.dart';
+import 'quiz_screen.dart';
+import '../../models/local_summary.dart';
+import '../../models/local_quiz.dart';
+import '../../models/local_flashcard_set.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
@@ -70,11 +77,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.uid;
     if (userId == null) return [];
 
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    // Fetch all sets (MVP optimization: assume not too many sets)
-    final sets = await firestoreService.streamFlashcardSets(userId).first;
-    final allCards = sets.expand((s) => s.flashcards).toList();
+    final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
+
+    // Fetch all local sets
+    final sets = await localDb.getAllFlashcardSets(userId);
+
+    // Flatten and Map LocalFlashcard -> Flashcard
+    final allCards = sets.expand((s) => s.flashcards).map((localCard) {
+      return Flashcard(
+        id: localCard.id,
+        question: localCard.question,
+        answer: localCard.answer,
+      );
+    }).toList();
 
     return allCards.where((c) => cardIds.contains(c.id)).toList();
   }
@@ -159,10 +174,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Mission Control'),
+        title: const Text('Study Dashboard'),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              context.push('/settings');
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -265,6 +288,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
           // Mission Card
           Expanded(
+            flex: 2,
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -285,36 +309,36 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(isCompleted ? Icons.check_circle : Icons.rocket_launch,
-                      size: 80,
+                      size: 60,
                       color: isCompleted
                           ? Colors.green
                           : theme.colorScheme.primary),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Text(
                     isCompleted ? 'Mission Complete!' : "Today's Mission",
-                    style: theme.textTheme.headlineMedium,
+                    style: theme.textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   if (!isCompleted) ...[
                     _buildMissionDetail(theme, Icons.timelapse,
                         "${_dailyMission!.estimatedTimeMinutes} min"),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     _buildMissionDetail(theme, Icons.filter_none,
                         "${_dailyMission!.flashcardIds.length} cards"),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     _buildMissionDetail(theme, Icons.speed,
                         "Reward: +${_dailyMission!.momentumReward}"),
                   ] else ...[
                     Text(
                       "Great job! You've kept your momentum alive.",
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge,
+                      style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "Score: ${(_dailyMission!.completionScore * 100).toStringAsFixed(0)}%",
-                      style: theme.textTheme.titleLarge
+                      style: theme.textTheme.titleMedium
                           ?.copyWith(color: theme.colorScheme.primary),
                     ),
                   ],
@@ -325,7 +349,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       onPressed:
                           isCompleted ? null : _startMission, // Disable if done
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: isCompleted
                             ? Colors.grey
                             : theme.colorScheme.primary,
@@ -336,7 +360,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       child: Text(
                         isCompleted ? 'Come back tomorrow' : 'Start Mission',
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -344,9 +368,133 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          // Recent Activity Header
+          Text('Jump Back In',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          // Recent Activity List
+          Expanded(
+            flex: 1,
+            child: _buildRecentActivity(theme, user),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRecentActivity(ThemeData theme, UserModel? user) {
+    if (user == null) return const SizedBox();
+    final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
+
+    return StreamBuilder(
+      stream: Rx.combineLatest3(
+        localDb.watchAllFlashcardSets(user.uid),
+        localDb.watchAllQuizzes(user.uid),
+        localDb.watchAllSummaries(user.uid),
+        (sets, quizzes, summaries) {
+          final all = <dynamic>[...sets, ...quizzes, ...summaries];
+          all.sort(
+              (a, b) => b.timestamp.compareTo(a.timestamp)); // Sort descending
+          return all.take(5).toList(); // Take top 5
+        },
+      ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        final items = snapshot.data as List<dynamic>;
+
+        if (items.isEmpty) {
+          return Center(
+              child: Text('No recent activity',
+                  style: theme.textTheme.bodyMedium));
+        }
+
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            String title = item.title;
+            IconData icon = Icons.article;
+            Color color = Colors.blue;
+            String type = 'Summary';
+
+            if (item is LocalFlashcardSet) {
+              icon = Icons.style;
+              color = Colors.orange;
+              type = 'Flashcards';
+            } else if (item is LocalQuiz) {
+              icon = Icons.quiz;
+              color = Colors.green;
+              type = 'Quiz';
+            }
+
+            return Container(
+              width: 160,
+              margin: const EdgeInsets.only(right: 12),
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                child: InkWell(
+                  onTap: () {
+                    if (item is LocalFlashcardSet) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => FlashcardsScreen(
+                                  flashcardSet: FlashcardSet(
+                                      id: item.id,
+                                      title: item.title,
+                                      flashcards: item.flashcards
+                                          .map((f) => Flashcard(
+                                              id: f.id,
+                                              question: f.question,
+                                              answer: f.answer))
+                                          .toList(),
+                                      timestamp: Timestamp.fromDate(
+                                          item.timestamp)))));
+                    } else if (item is LocalQuiz) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => QuizScreen(quiz: item)));
+                    } else if (item is LocalSummary) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => SummaryScreen(summary: item)));
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: color.withOpacity(0.1),
+                          child: Icon(icon, color: color),
+                        ),
+                        const Spacer(),
+                        Text(title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 4),
+                        Text(type, style: theme.textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

@@ -1,122 +1,37 @@
 import 'package:sumquiz/services/ai_service.dart';
-import 'package:sumquiz/services/local_database_service.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import 'dart:typed_data';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-import 'package:uuid/uuid.dart';
-import 'dart:developer' as developer;
-
-import '../models/folder.dart';
-import '../models/local_summary.dart';
-import '../models/local_quiz.dart';
-import '../models/local_quiz_question.dart';
-import '../models/local_flashcard_set.dart';
-import '../models/local_flashcard.dart';
 
 class ContentExtractionService {
   final YoutubeExplode _yt = YoutubeExplode();
   final AIService _aiService;
-  final LocalDatabaseService _localDb;
 
-  ContentExtractionService(this._aiService, this._localDb);
+  ContentExtractionService(this._aiService);
 
-  Future<String> extractAndGenerate(
-      String source, String title, List<String> requestedOutputs, String userId) async {
-    String text;
-    if (_isYoutubeUrl(source)) {
-      text = await _extractYoutubeTranscript(source);
-    } else {
-      text = await _extractWebContent(source);
+  Future<String> extractContent({
+    required String type, // 'text', 'link', 'pdf', 'image'
+    dynamic input,
+  }) async {
+    switch (type) {
+      case 'text':
+        return input as String;
+      case 'link':
+        final url = input as String;
+        if (_isYoutubeUrl(url)) {
+          return await _extractYoutubeTranscript(url);
+        } else {
+          return await _extractWebContent(url);
+        }
+      case 'pdf':
+        return await _extractFromPdfBytes(input as Uint8List);
+      case 'image':
+        return await _extractFromImageBytes(input as Uint8List);
+      default:
+        throw Exception('Unknown content type: $type');
     }
-
-    final folderId = await _generateAndSaveContent(text, title, requestedOutputs, userId);
-    return folderId;
-  }
-
-  Future<String> _generateAndSaveContent(
-      String text, String title, List<String> requestedOutputs, String userId) async {
-    final allContent = await _aiService.generateAll(text, requestedOutputs: requestedOutputs);
-
-    final folderId = const Uuid().v4();
-    final folder = Folder(
-      id: folderId,
-      name: title,
-      userId: userId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    await _localDb.saveFolder(folder);
-
-    if (requestedOutputs.contains('summary') && allContent.containsKey('summary')) {
-      final summaryData = allContent['summary'] as Map<String, dynamic>;
-      final summaryId = const Uuid().v4();
-      final summary = LocalSummary(
-        id: summaryId,
-        userId: userId,
-        title: summaryData['title'] ?? title,
-        content: summaryData['content'] ?? '',
-        tags: List<String>.from(summaryData['tags'] ?? []),
-        timestamp: DateTime.now(),
-        isSynced: false,
-      );
-      await _localDb.saveSummary(summary);
-      await _localDb.assignContentToFolder(summaryId, folderId, 'summary', userId);
-    }
-
-    if (requestedOutputs.contains('quiz') && allContent.containsKey('quiz')) {
-      final quizData = allContent['quiz'] as Map<String, dynamic>;
-      final questionsData = quizData['questions'] as List;
-      final questions = questionsData.map((data) {
-        final questionText = data['question'] as String;
-        final options = List<String>.from(data['options'] as List);
-        final correctAnswer = data['correctAnswer'] as String;
-        return LocalQuizQuestion(
-          question: questionText,
-          options: options,
-          correctAnswer: correctAnswer,
-        );
-      }).toList();
-
-      final quizId = const Uuid().v4();
-      final localQuiz = LocalQuiz(
-        id: quizId,
-        userId: userId,
-        title: title,
-        questions: questions,
-        timestamp: DateTime.now(),
-        scores: [],
-        isSynced: false,
-      );
-      await _localDb.saveQuiz(localQuiz);
-      await _localDb.assignContentToFolder(quizId, folderId, 'quiz', userId);
-    }
-
-    if (requestedOutputs.contains('flashcards') && allContent.containsKey('flashcards')) {
-      final flashcardsData = allContent['flashcards'] as Map<String, dynamic>;
-      final cardsData = flashcardsData['flashcards'] as List;
-
-      if (cardsData.isNotEmpty) {
-        final setId = const Uuid().v4();
-        final flashcardSet = LocalFlashcardSet(
-          id: setId,
-          userId: userId,
-          title: title,
-          flashcards: cardsData
-              .map((c) => LocalFlashcard(
-                  question: c['question'] as String,
-                  answer: c['answer'] as String))
-              .toList(),
-          timestamp: DateTime.now(),
-          isSynced: false,
-        );
-        await _localDb.saveFlashcardSet(flashcardSet);
-        await _localDb.assignContentToFolder(setId, folderId, 'flashcards', userId);
-      }
-    }
-
-    return folderId;
   }
 
   bool _isYoutubeUrl(String url) {
@@ -169,6 +84,26 @@ class ContentExtractionService {
     }
   }
 
+  Future<String> _extractFromPdfBytes(Uint8List pdfBytes) async {
+    try {
+      final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
+      final String text = PdfTextExtractor(document).extractText();
+      document.dispose();
+      return text.isNotEmpty ? text : '[No text found in PDF]';
+    } catch (e) {
+      throw Exception('PDF text extraction failed: $e');
+    }
+  }
+
+  Future<String> _extractFromImageBytes(Uint8List imageBytes) async {
+    try {
+      return await _aiService.extractTextFromImage(imageBytes);
+    } catch (e) {
+      throw Exception('OCR failed: $e');
+    }
+  }
+
+  // Static helpers for simplified usage if needed, though instance methods are preferred for DI
   static Future<String> extractFromPdfBytes(Uint8List pdfBytes) async {
     try {
       final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
@@ -178,10 +113,6 @@ class ContentExtractionService {
     } catch (e) {
       return '[PDF text extraction failed: $e]';
     }
-  }
-
-  static Future<String> extractFromImageBytes(Uint8List imageBytes) async {
-    return '[OCR Text Extracted from Image]';
   }
 
   void dispose() {

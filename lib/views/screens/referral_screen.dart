@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
 import '../../services/referral_service.dart';
 
-/// A completely redesigned screen for the referral program.
-///
-/// This screen provides a modern, interactive, and informative UI for the user
-/// to engage with the referral system. It displays their unique referral code,
-/// allows for easy copying and sharing, and shows real-time statistics on their
-/// referral performance.
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
 
@@ -24,8 +19,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch the referral code when the screen initializes.
-    // This is a one-time fetch, ideal for data that doesn't change during the screen's lifecycle.
     final authService = Provider.of<AuthService>(context, listen: false);
     final referralService =
         Provider.of<ReferralService>(context, listen: false);
@@ -41,164 +34,195 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final uid = authService.currentUser!.uid;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Refer a Friend'),
-        backgroundColor: theme.colorScheme.surface,
+        title: Text('Refer a Friend',
+            style: theme.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.volunteer_activism,
+                          size: 80, color: theme.colorScheme.primary),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Invite Friends, Get Rewards!',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Give 7 days of Pro, Get 7 days of Pro!',
+                        style: theme.textTheme.bodyLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Share your unique code. When friends sign up, they get 7 free Pro days. You earn 7 days for every 2 friends who join!',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildReferralCodeCard(theme, _referralCodeFuture),
+                const SizedBox(height: 40),
+                Text(
+                  'Your Progress',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                _buildStatsGrid(theme, referralService, uid),
+                const SizedBox(height: 40),
+                _buildHowItWorks(theme),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReferralCodeCard(ThemeData theme, Future<String> codeFuture) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+      ),
+      color: theme.cardColor,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Header Section ---
             Text(
-              'Invite Friends, Get Rewards!',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Share your unique code with friends. When they sign up, they get 7 free Pro days, and you earn rewards after just 2 referrals!',
-              style: theme.textTheme.bodyLarge
-                  ?.copyWith(color: theme.textTheme.bodySmall?.color),
-            ),
-            const SizedBox(height: 32),
-
-            // --- Referral Code Card ---
-            _buildReferralCodeCard(theme, _referralCodeFuture),
-
-            const SizedBox(height: 40),
-
-            // --- Stats Section ---
-            Text(
-              'Your Progress',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              'YOUR UNIQUE CODE',
+              style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2),
             ),
             const SizedBox(height: 16),
-            _buildStatsGrid(theme, referralService, uid),
-
-            const SizedBox(height: 40),
-
-            // --- How It Works Section ---
-            _buildHowItWorks(theme),
+            FutureBuilder<String>(
+              future: codeFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                if (snapshot.hasError ||
+                    !snapshot.hasData ||
+                    snapshot.data!.isEmpty) {
+                  return const Text('Could not load code');
+                }
+                final code = snapshot.data!;
+                return InkWell(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: code));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Referral code copied to clipboard!')),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
+                    decoration: BoxDecoration(
+                      color:
+                          theme.colorScheme.primaryContainer.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.5),
+                          width: 1.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          code,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(
+                          Icons.copy_all_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.share_rounded),
+                label: const Text('Share Code',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                onPressed: () async {
+                  final code = await _referralCodeFuture;
+                  Share.share(
+                      'Join me on SumQuiz and get 7 free Pro days! Use my code: $code\n\nDownload the app here: [App Store Link]',
+                      subject: 'Get Free Pro Days on SumQuiz!');
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// Builds the interactive card displaying the user's referral code.
-  Widget _buildReferralCodeCard(ThemeData theme, Future<String> codeFuture) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'YOUR UNIQUE CODE',
-            style: theme.textTheme.labelMedium
-                ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
-          ),
-          const SizedBox(height: 16),
-          FutureBuilder<String>(
-            future: codeFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              }
-              if (snapshot.hasError ||
-                  !snapshot.hasData ||
-                  snapshot.data!.isEmpty) {
-                return const Text('Could not load code');
-              }
-              final code = snapshot.data!;
-              return InkWell(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: code));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Referral code copied to clipboard!')),
-                  );
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        code,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.copy_all_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.share_rounded),
-            label: const Text('Share Code'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () async {
-              final code = await _referralCodeFuture;
-              Share.share(
-                  'Join me on SumQuiz and get 7 free Pro days! Use my code: $code\n\nDownload the app here: [App Store Link]',
-                  subject: 'Get Free Pro Days on SumQuiz!');
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds the grid displaying real-time referral statistics.
   Widget _buildStatsGrid(
       ThemeData theme, ReferralService referralService, String uid) {
     return GridView.count(
       crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 0.8,
       children: [
         _buildStatCard(theme, 'Pending', referralService.getReferralCount(uid),
-            Icons.people_outline_rounded),
+            Icons.hourglass_empty_rounded),
         _buildStatCard(
             theme,
             'Total Friends',
@@ -213,20 +237,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  /// Builds a single card for a statistic.
   Widget _buildStatCard(
       ThemeData theme, String label, Stream<int> stream, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 28, color: theme.colorScheme.primary),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           StreamBuilder<int>(
             stream: stream,
             builder: (context, snapshot) {
@@ -244,13 +268,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  /// Builds the section explaining how the referral process works.
   Widget _buildHowItWorks(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,25 +286,40 @@ class _ReferralScreenState extends State<ReferralScreen> {
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        _buildStep(theme, Icons.one_k, 'Share Your Code',
-            'Send your unique code to friends via text, email, or social media.'),
-        _buildStep(theme, Icons.two_k, 'Friend Signs Up',
-            'Your friend enters your code during signup and instantly receives 7 Pro days.'),
-        _buildStep(theme, Icons.three_k, 'You Get Rewarded',
-            'After 2 friends sign up, you earn a reward: 7 extra days of Pro subscription!'),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+          color: theme.cardColor,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                _buildStep(theme, Icons.looks_one_rounded, 'Share Your Code',
+                    'Send your unique code to friends via text, email, or social media.'),
+                const Divider(),
+                _buildStep(theme, Icons.looks_two_rounded, 'Friend Signs Up',
+                    'Your friend enters your code during signup and instantly receives 7 Pro days.'),
+                const Divider(),
+                _buildStep(theme, Icons.looks_3_rounded, 'You Get Rewarded',
+                    'After 2 friends sign up, you earn a reward: 7 extra days of Pro subscription!'),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  /// Builds a single step in the 'How It Works' section.
   Widget _buildStep(
       ThemeData theme, IconData icon, String title, String description) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: theme.colorScheme.primary, size: 32),
+          Icon(icon, color: theme.colorScheme.primary, size: 28),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

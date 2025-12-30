@@ -107,9 +107,8 @@ class _AuthScreenState extends State<AuthScreen>
     } catch (e) {
       // Check if this is a referral-related error
       String errorMessage = 'Authentication Failed: ${e.toString()}';
-      if (e.toString().contains('referral')) {
-        errorMessage =
-            'Referral code error: ${e.toString().replaceAll('Exception:', '').trim()}';
+      if (e.toString().toLowerCase().contains('referral')) {
+        errorMessage = e.toString().replaceAll('Exception:', '').trim();
       }
 
       if (mounted) {
@@ -160,10 +159,9 @@ class _AuthScreenState extends State<AuthScreen>
       } else if (e.toString().contains('Google Sign-In is disabled')) {
         errorMessage =
             'Google Sign-In is currently disabled. Please try again later.';
-      } else if (e.toString().contains('referral')) {
+      } else if (e.toString().toLowerCase().contains('referral')) {
         // Handle referral-related errors
-        errorMessage =
-            'Referral code error: ${e.toString().replaceAll('Exception:', '').trim()}';
+        errorMessage = e.toString().replaceAll('Exception:', '').trim();
       } else {
         // Use the actual error message from the exception
         errorMessage = e.toString().replaceAll('Exception:', '').trim();
@@ -362,7 +360,12 @@ class _AuthScreenState extends State<AuthScreen>
       style: TextStyle(color: theme.colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: TextStyle(color: Color.fromRGBO(theme.colorScheme.onSurface.red, theme.colorScheme.onSurface.green, theme.colorScheme.onSurface.blue, 0.6)),
+        labelStyle: TextStyle(
+            color: Color.fromRGBO(
+                theme.colorScheme.onSurface.red,
+                theme.colorScheme.onSurface.green,
+                theme.colorScheme.onSurface.blue,
+                0.6)),
       ),
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -370,7 +373,8 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  Widget _buildAuthButton(String text, VoidCallback onPressed, ThemeData theme) {
+  Widget _buildAuthButton(
+      String text, VoidCallback onPressed, ThemeData theme) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -380,7 +384,8 @@ class _AuthScreenState extends State<AuthScreen>
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.onPrimary),
                     strokeWidth: 3))
             : Text(
                 text,
@@ -395,7 +400,12 @@ class _AuthScreenState extends State<AuthScreen>
       child: OutlinedButton.icon(
         icon: SvgPicture.asset('assets/icons/google_logo.svg', height: 20),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Color.fromRGBO(theme.colorScheme.onSurface.red, theme.colorScheme.onSurface.green, theme.colorScheme.onSurface.blue, 0.4)),
+          side: BorderSide(
+              color: Color.fromRGBO(
+                  theme.colorScheme.onSurface.red,
+                  theme.colorScheme.onSurface.green,
+                  theme.colorScheme.onSurface.blue,
+                  0.4)),
           padding: const EdgeInsets.symmetric(vertical: 18),
         ),
         onPressed: _isLoading ? null : _googleSignIn,

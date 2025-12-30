@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -35,8 +37,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _navigateToNextPage() {
     if (_currentPage < 2) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
       );
     } else {
       _finishOnboarding();
@@ -46,6 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -55,19 +58,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPageChanged: _onPageChanged,
                 children: const [
                   OnboardingPage(
-                    title: 'From Lecture to Legend. Instantly.',
-                    subtitle: 'Drop in your notes, and let our AI create perfect summaries and practice quizzes for you in seconds.',
+                    title: 'From Lecture to Legend',
+                    subtitle:
+                        'Transform raw notes into powerful summaries and quizzes instantly.',
                     imagePath: 'assets/images/onboarding_learn.svg',
+                    highlightColor: Color(0xFF1A237E), // Deep Indigo
                   ),
                   OnboardingPage(
-                    title: 'Your Notes, Now a Superpower.',
-                    subtitle: 'Generate flashcards, track your progress, and conquer any subject with a personalized learning toolkit.',
+                    title: 'Your Knowledge, Supercharged',
+                    subtitle:
+                        'Generate flashcards, track momentum, and conquer any subject.',
                     imagePath: 'assets/images/onboarding_notes.svg',
+                    highlightColor: Color(0xFF00695C), // Teal
                   ),
                   OnboardingPage(
-                    title: 'Master Any Subject.',
-                    subtitle: 'Start your first SumQuiz for free and transform the way you study, forever.',
+                    title: 'Master It All',
+                    subtitle:
+                        'Start for free today. Upgrade your study strategy forever.',
                     imagePath: 'assets/images/onboarding_rocket.svg',
+                    highlightColor: Color(0xFFC62828), // Red
                   ),
                 ],
               ),
@@ -81,18 +90,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildBottomControls() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(3, (index) => _buildDot(index)),
           ),
-          const SizedBox(height: 48),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-            child: _currentPage == 2 ? _buildGetStartedButtons() : _buildNextButton(),
+          const SizedBox(height: 56),
+
+          // Adaptive Button Area
+          SizedBox(
+            height: 120, // Fixed height to prevent layout jumps
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: _currentPage == 2
+                  ? _buildGetStartedButtons()
+                  : _buildNextButton(),
+            ),
           ),
         ],
       ),
@@ -101,42 +116,77 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildGetStartedButtons() {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
       key: const ValueKey('getStartedButtons'),
       children: [
-        ElevatedButton(
-          onPressed: _finishOnboarding,
-          child: const Text('Get Started Free'),
-        ),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _finishOnboarding,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E), // Brand Color
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shadowColor: const Color(0xFF1A237E).withOpacity(0.4),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              textStyle:
+                  GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            child: const Text('Get Started Free'),
+          ),
+        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
         const SizedBox(height: 16),
         TextButton(
           onPressed: _finishOnboarding,
-          child: const Text('Already have an account? Sign In'),
-        ),
+          child: Text(
+            'Already have an account? Sign In',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+        ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
       ],
     );
   }
 
   Widget _buildNextButton() {
-    return SizedBox(
-      key: const ValueKey('nextButton'),
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _navigateToNextPage,
-        child: const Text('Next'),
-      ),
-    );
+    return Align(
+        alignment: Alignment.bottomCenter,
+        key: const ValueKey('nextButton'),
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _navigateToNextPage,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[100],
+              foregroundColor: Colors.black87,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: Colors.grey.shade300)),
+              textStyle:
+                  GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            child: const Text('Next'),
+          ),
+        ));
   }
 
   Widget _buildDot(int index) {
-    final theme = Theme.of(context);
+    bool isActive = _currentPage == index;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 6),
       height: 8,
-      width: _currentPage == index ? 24 : 8,
+      width: isActive ? 32 : 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? theme.colorScheme.primary : theme.colorScheme.onSurface.withOpacity(0.4),
+        color: isActive ? const Color(0xFF1A237E) : Colors.grey.shade300,
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -147,50 +197,72 @@ class OnboardingPage extends StatelessWidget {
   final String title;
   final String subtitle;
   final String imagePath;
+  final Color highlightColor;
 
   const OnboardingPage({
     super.key,
     required this.title,
     required this.subtitle,
     required this.imagePath,
+    required this.highlightColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
+      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Illustration with Animation
+          Expanded(
+            flex: 5,
+            child: Center(
+              child: SvgPicture.asset(
                 imagePath,
-                height: 250,
                 width: double.infinity,
-                placeholderBuilder: (BuildContext context) => Container(
-                  padding: const EdgeInsets.all(30.0),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 56),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.displaySmall,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ),
-            ],
+                placeholderBuilder: (context) =>
+                    const Center(child: CircularProgressIndicator()),
+              ).animate(target: 1).scale(
+                  duration: 600.ms,
+                  curve: Curves.easeOutBack,
+                  begin: const Offset(0.9, 0.9)),
+            ),
           ),
-        ),
+
+          Expanded(
+            flex: 3,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 32),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    height: 1.2,
+                  ),
+                ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 16),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 100.ms)
+                    .slideY(begin: 0.2, end: 0),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

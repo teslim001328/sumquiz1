@@ -23,13 +23,16 @@ class LocalFlashcardSetAdapter extends TypeAdapter<LocalFlashcardSet> {
       timestamp: fields[3] as DateTime,
       isSynced: fields[4] as bool,
       userId: fields[5] as String,
+      isReadOnly: fields[6] as bool,
+      publicDeckId: fields[7] as String?,
+      creatorName: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalFlashcardSet obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +44,13 @@ class LocalFlashcardSetAdapter extends TypeAdapter<LocalFlashcardSet> {
       ..writeByte(4)
       ..write(obj.isSynced)
       ..writeByte(5)
-      ..write(obj.userId);
+      ..write(obj.userId)
+      ..writeByte(6)
+      ..write(obj.isReadOnly)
+      ..writeByte(7)
+      ..write(obj.publicDeckId)
+      ..writeByte(8)
+      ..write(obj.creatorName);
   }
 
   @override

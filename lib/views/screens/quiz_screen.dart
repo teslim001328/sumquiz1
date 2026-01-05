@@ -14,6 +14,7 @@ import '../../services/usage_service.dart';
 import '../../view_models/quiz_view_model.dart';
 import '../widgets/upgrade_dialog.dart';
 import '../widgets/quiz_view.dart';
+import '../../services/firestore_service.dart';
 
 enum QuizState { creation, loading, inProgress, finished, error }
 
@@ -209,6 +210,14 @@ class _QuizScreenState extends State<QuizScreen> {
 
     try {
       await _localDbService.saveQuiz(quizToSave);
+
+      // Increment public deck completion if applicable
+      if (quizToSave.publicDeckId != null) {
+        final firestoreService = FirestoreService();
+        await firestoreService.incrementDeckMetric(
+            quizToSave.publicDeckId!, 'completedCount');
+      }
+
       quizViewModel.refresh();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -267,6 +276,22 @@ class _QuizScreenState extends State<QuizScreen> {
                 tooltip: 'Save Progress',
               )
           ],
+          bottom: widget.quiz?.creatorName != null
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(20),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      'Created by ${widget.quiz!.creatorName}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
+                            fontStyle: FontStyle.italic,
+                          ),
+                    ),
+                  ),
+                )
+              : null,
         ),
         body: Stack(
           children: [

@@ -24,13 +24,14 @@ class LocalSummaryAdapter extends TypeAdapter<LocalSummary> {
       isSynced: fields[3] as bool,
       userId: fields[4] as String,
       tags: (fields[6] as List).cast<String>(),
+      isReadOnly: fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalSummary obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class LocalSummaryAdapter extends TypeAdapter<LocalSummary> {
       ..writeByte(5)
       ..write(obj.title)
       ..writeByte(6)
-      ..write(obj.tags);
+      ..write(obj.tags)
+      ..writeByte(7)
+      ..write(obj.isReadOnly);
   }
 
   @override

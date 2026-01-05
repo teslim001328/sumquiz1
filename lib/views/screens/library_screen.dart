@@ -83,7 +83,8 @@ class LibraryScreenState extends State<LibraryScreen>
             id: s.id,
             title: s.title,
             type: LibraryItemType.summary,
-            timestamp: Timestamp.fromDate(s.timestamp)))
+            timestamp: Timestamp.fromDate(s.timestamp),
+            isReadOnly: s.isReadOnly))
         .toList());
 
     final firestoreSummaries =
@@ -107,7 +108,8 @@ class LibraryScreenState extends State<LibraryScreen>
                 id: f.id,
                 title: f.title,
                 type: LibraryItemType.flashcards,
-                timestamp: Timestamp.fromDate(f.timestamp)))
+                timestamp: Timestamp.fromDate(f.timestamp),
+                isReadOnly: f.isReadOnly))
             .toList());
 
     final firestoreFlashcards =
@@ -129,7 +131,8 @@ class LibraryScreenState extends State<LibraryScreen>
             id: q.id,
             title: q.title,
             type: LibraryItemType.quiz,
-            timestamp: Timestamp.fromDate(q.timestamp)))
+            timestamp: Timestamp.fromDate(q.timestamp),
+            isReadOnly: q.isReadOnly))
         .toList());
 
     // All Items
@@ -238,6 +241,11 @@ class LibraryScreenState extends State<LibraryScreen>
               fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
       centerTitle: true,
       actions: [
+        IconButton(
+            icon:
+                Icon(Icons.keyboard_outlined, color: theme.colorScheme.primary),
+            tooltip: 'Enter Code',
+            onPressed: () => _showJoinCodeDialog(context)),
         IconButton(
             icon:
                 Icon(Icons.settings_outlined, color: theme.colorScheme.primary),
@@ -480,7 +488,8 @@ class LibraryScreenState extends State<LibraryScreen>
                 id: quiz.id,
                 title: quiz.title,
                 type: LibraryItemType.quiz,
-                timestamp: Timestamp.fromDate(quiz.timestamp)))
+                timestamp: Timestamp.fromDate(quiz.timestamp),
+                isReadOnly: quiz.isReadOnly))
             .toList();
 
         return _buildContentList(quizItems, userId, theme);
@@ -906,17 +915,18 @@ class LibraryScreenState extends State<LibraryScreen>
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Wrap(
         children: [
-          ListTile(
-            leading: Icon(Icons.edit_outlined,
-                color: Theme.of(context).colorScheme.onSurface),
-            title: Text('Edit',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-            onTap: () {
-              Navigator.pop(ctx);
-              _editContent(userId, item);
-            },
-          ),
+          if (!item.isReadOnly)
+            ListTile(
+              leading: Icon(Icons.edit_outlined,
+                  color: Theme.of(context).colorScheme.onSurface),
+              title: Text('Edit',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _editContent(userId, item);
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
             title:
@@ -935,25 +945,27 @@ class LibraryScreenState extends State<LibraryScreen>
     Widget? screen;
     switch (item.type) {
       case LibraryItemType.summary:
-        if (_isOfflineMode) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Navigation is disabled in offline mode.')));
+        // Try Local First
+        final localSummary = await _localDb.getSummary(item.id);
+        if (mounted && localSummary != null) {
+          screen = SummaryScreen(summary: localSummary);
+        } else if (!_isOfflineMode) {
+          // Fallback to Firestore
+          final content = await _firestoreService.getSpecificItem(userId, item);
+          if (mounted && content != null) {
+            final summary = content as Summary;
+            screen = SummaryScreen(
+                summary: LocalSummary(
+                    id: summary.id,
+                    title: summary.title,
+                    content: summary.content,
+                    tags: summary.tags,
+                    timestamp: summary.timestamp.toDate(),
+                    userId: userId,
+                    isReadOnly: item
+                        .isReadOnly // Should be false if from Firestore usually
+                    ));
           }
-          return;
-        }
-        final content = await _firestoreService.getSpecificItem(userId, item);
-        if (!mounted) return;
-
-        if (content != null) {
-          final summary = content as Summary;
-          screen = SummaryScreen(
-              summary: LocalSummary(
-                  id: summary.id,
-                  title: summary.title,
-                  content: summary.content,
-                  timestamp: summary.timestamp.toDate(),
-                  userId: userId));
         }
         break;
       case LibraryItemType.quiz:
@@ -964,17 +976,31 @@ class LibraryScreenState extends State<LibraryScreen>
         }
         break;
       case LibraryItemType.flashcards:
-        if (_isOfflineMode) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Navigation is disabled in offline mode.')));
+        // Try Local First
+        final localSet = await _localDb.getFlashcardSet(item.id);
+        if (mounted && localSet != null) {
+          screen = FlashcardsScreen(
+              flashcardSet: FlashcardSet(
+                // Map Local to Model because FlashcardsScreen expects Model?
+                id: localSet.id,
+                title: localSet.title,
+                flashcards: localSet.flashcards
+                    .map((f) =>
+                        Flashcard(question: f.question, answer: f.answer))
+                    .toList(),
+                timestamp: Timestamp.fromDate(localSet.timestamp),
+              ),
+              isReadOnly: localSet.isReadOnly,
+              publicDeckId: localSet.publicDeckId);
+          // Note: FlashcardsScreen might need update to handle isReadOnly if it has edit buttons.
+          // For now we just ensure navigation works.
+        } else if (!_isOfflineMode) {
+          final content = await _firestoreService.getSpecificItem(userId, item);
+          if (mounted && content != null) {
+            screen = FlashcardsScreen(
+                flashcardSet: content as FlashcardSet,
+                isReadOnly: item.isReadOnly);
           }
-          return;
-        }
-        final content = await _firestoreService.getSpecificItem(userId, item);
-        if (!mounted) return;
-        if (content != null) {
-          screen = FlashcardsScreen(flashcardSet: content as FlashcardSet);
         }
         break;
     }
@@ -1122,5 +1148,82 @@ class LibraryScreenState extends State<LibraryScreen>
             .showSnackBar(SnackBar(content: Text('Error deleting item: $e')));
       }
     }
+  }
+
+  void _showJoinCodeDialog(BuildContext context) {
+    final TextEditingController codeController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Join via Code'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                    'Enter the 6-character code shared by your creator.'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: codeController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Code',
+                    border: OutlineInputBorder(),
+                    hintText: 'e.g. AB1234',
+                  ),
+                  maxLength: 6,
+                ),
+                if (isLoading) const LinearProgressIndicator(),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: isLoading ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final code = codeController.text.trim();
+                        if (code.length < 4) return;
+
+                        setState(() => isLoading = true);
+                        try {
+                          final firestoreService = FirestoreService();
+                          final deck = await firestoreService
+                              .fetchPublicDeckByCode(code);
+
+                          if (!context.mounted) return;
+                          Navigator.pop(context); // Close dialog
+
+                          if (deck != null) {
+                            context.push('/public_deck/${deck.id}',
+                                extra: deck);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Deck not found.')));
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')));
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => isLoading = false);
+                          }
+                        }
+                      },
+                child: const Text('Join'),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 }

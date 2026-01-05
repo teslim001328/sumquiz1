@@ -25,6 +25,9 @@ class LocalSummary extends HiveObject {
   @HiveField(6)
   late List<String> tags;
 
+  @HiveField(7)
+  late bool isReadOnly;
+
   LocalSummary({
     required this.id,
     required this.title,
@@ -33,6 +36,7 @@ class LocalSummary extends HiveObject {
     this.isSynced = false,
     required this.userId,
     this.tags = const [],
+    this.isReadOnly = false,
   });
 
   factory LocalSummary.fromJson(Map<String, dynamic> json) => LocalSummary(
@@ -42,6 +46,7 @@ class LocalSummary extends HiveObject {
         tags: List<String>.from(json['tags'] ?? []),
         userId: ' ',
         timestamp: DateTime.now(),
+        isReadOnly: false,
       );
 
   LocalSummary copyWith({
@@ -52,6 +57,7 @@ class LocalSummary extends HiveObject {
     bool? isSynced,
     String? userId,
     List<String>? tags,
+    bool? isReadOnly,
   }) {
     return LocalSummary(
       id: id ?? this.id,
@@ -61,6 +67,7 @@ class LocalSummary extends HiveObject {
       isSynced: isSynced ?? this.isSynced,
       userId: userId ?? this.userId,
       tags: tags ?? this.tags,
+      isReadOnly: isReadOnly ?? this.isReadOnly,
     );
   }
 
@@ -72,5 +79,6 @@ class LocalSummary extends HiveObject {
     isSynced = false;
     userId = '';
     tags = [];
+    isReadOnly = false;
   }
 }

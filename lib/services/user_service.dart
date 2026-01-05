@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
 
 import '../models/user_model.dart';
+import '../services/time_sync_service.dart';
 
 class UserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -61,35 +62,45 @@ class UserService {
       final userDoc = await _db.collection('users').doc(userId).get();
       if (!userDoc.exists) return;
 
-      final userData = userDoc.data();
-      if (userData == null) return;
+      final user = UserModel.fromFirestore(userDoc);
+      final now = TimeSyncService.now;
+      final lastReset = user.lastWeeklyReset ?? now;
 
-      // Check if we have the lastWeeklyReset field
-      if (userData.containsKey('lastWeeklyReset')) {
-        final lastReset = (userData['lastWeeklyReset'] as Timestamp).toDate();
-        final now = DateTime.now();
-        
-        // Check if a week has passed since the last reset
-        final difference = now.difference(lastReset);
-        if (difference.inDays >= 7) {
-          // Reset weekly uploads
-          await resetWeeklyUploads(userId);
-          
-          // Update the last reset timestamp
-          await _db.collection('users').doc(userId).update({
-            'lastWeeklyReset': FieldValue.serverTimestamp(),
-          });
-          
-          developer.log('Weekly uploads reset for user: $userId');
-        }
-      } else {
-        // If there's no lastWeeklyReset field, set it to now
+      // Check if 7 days have passed since last reset
+      if (now.difference(lastReset).inDays >= 7) {
         await _db.collection('users').doc(userId).update({
+          'weeklyUploads': 0,
           'lastWeeklyReset': FieldValue.serverTimestamp(),
         });
+        developer.log('Weekly usage reset for user: $userId',
+            name: 'UserService');
       }
     } catch (e) {
-      developer.log('Error checking/resetting weekly uploads', error: e);
+      developer.log('Error checking weekly reset: $e', name: 'UserService');
     }
+  }
+
+  /// Upgrade user to Pro
+  Future<void> upgradeToPro(String userId, {Duration? duration}) async {
+    final expiryDate = duration != null ? DateTime.now().add(duration) : null;
+
+    // If upgrading to Lifetime, expiryDate could be set to distant future or handled by logic
+    // For now we'll just set it. Null might imply Lifetime in some logic, or we need a specific flag.
+    // UserModel uses expiry date check for 'isPro'.
+
+    final Map<String, dynamic> updateData = {
+      'subscriptionExpiry':
+          expiryDate != null ? Timestamp.fromDate(expiryDate) : null,
+      // Ensure we might want a field like 'isLifetime' if duration is null/infinite
+    };
+
+    // If lifetime (no duration passed, or special handling)
+    // Let's assume for this specific implementation, if duration is NULL it is NOT lifetime, but just "indefinite" or handled elsewhere.
+    // But typically payments have specific durations.
+    // Let's just update the expiry.
+
+    await _db.collection('users').doc(userId).update(updateData);
+    developer.log('User $userId upgraded to Pro until $expiryDate',
+        name: 'UserService');
   }
 }

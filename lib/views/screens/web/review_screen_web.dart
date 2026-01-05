@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,12 +13,6 @@ import '../../../models/daily_mission.dart';
 import '../../../services/mission_service.dart';
 import '../../../services/user_service.dart';
 import '../flashcards_screen.dart';
-import '../summary_screen.dart';
-import '../quiz_screen.dart';
-import '../../../models/local_summary.dart';
-import '../../../models/local_quiz.dart';
-import '../../../models/local_flashcard_set.dart';
-import 'package:rxdart/rxdart.dart';
 
 class ReviewScreenWeb extends StatefulWidget {
   const ReviewScreenWeb({super.key});
@@ -233,7 +226,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back, ${user?.displayName?.split(' ').first ?? 'Friend'}! 👋',
+          'Welcome back, ${user?.displayName.split(' ').first ?? 'Friend'}! 👋',
           style: theme.textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
         ),

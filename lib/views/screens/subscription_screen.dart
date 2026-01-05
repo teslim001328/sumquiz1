@@ -4,6 +4,8 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/web_payment_service.dart';
+import 'package:sumquiz/services/user_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -25,40 +27,143 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> _loadProducts() async {
     final iapService = context.read<IAPService?>();
-    if (iapService != null) {
-      // Create display products wrapper or just use raw list
-      // We expect 3 products.
-      final products = await iapService.getAvailableProducts();
-      // Sort them to match order: Monthly, Yearly, Lifetime
-      // Monthly < Yearly < Lifetime usually by price or ID logic
-      products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
+    // Check platform
+    final isWeb = Theme.of(context).platform != TargetPlatform.android &&
+        Theme.of(context).platform != TargetPlatform.iOS;
+
+    if (!isWeb && iapService != null) {
+      // Mobile Flow
+      final products = await iapService.getAvailableProducts();
+      products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
       if (mounted) {
         setState(() {
           _products = products;
-          // Default to Annual (Best Value) if available, or first
-          // Usually Monthly is low price, Yearly mid, Lifetime high
-          // If we have 3, index 1 is likely Yearly.
-          if (_products.isNotEmpty) {
-            // Try to find yearly
-            _selectedProduct = _products.firstWhere(
-                (p) => p.id.contains('yearly'),
-                orElse: () =>
-                    _products.length > 1 ? _products[1] : _products.first);
-          }
+          _setDefaultSelection();
           _isLoading = false;
         });
       }
     } else {
-      setState(() => _isLoading = false);
+      // Web / Mock Flow
+      // Create mock ProductDetails for Web
+      final mockProducts = [
+        ProductDetails(
+          id: 'sumquiz_pro_monthly',
+          title: 'SumQuiz Pro Monthly',
+          description: 'Monthly Subscription',
+          price: '\$4.99',
+          rawPrice: 4.99,
+          currencyCode: 'USD',
+        ),
+        ProductDetails(
+          id: 'sumquiz_pro_yearly',
+          title: 'SumQuiz Pro Annual',
+          description: 'Annual Subscription',
+          price: '\$39.99',
+          rawPrice: 39.99,
+          currencyCode: 'USD',
+        ),
+        ProductDetails(
+          id: 'sumquiz_pro_lifetime',
+          title: 'SumQuiz Pro Lifetime',
+          description: 'Lifetime Access',
+          price: '\$99.99',
+          rawPrice: 99.99,
+          currencyCode: 'USD',
+        ),
+      ];
+      if (mounted) {
+        setState(() {
+          _products = mockProducts;
+          _setDefaultSelection();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _setDefaultSelection() {
+    if (_products.isNotEmpty) {
+      _selectedProduct = _products.firstWhere((p) => p.id.contains('yearly'),
+          orElse: () => _products.length > 1 ? _products[1] : _products.first);
     }
   }
 
   Future<void> _buyProduct() async {
     if (_selectedProduct == null) return;
-    final iapService = context.read<IAPService?>();
-    if (iapService != null) {
-      await iapService.purchaseProduct(_selectedProduct!.id);
+    final productId = _selectedProduct!.id;
+
+    if (Theme.of(context).platform == TargetPlatform.android ||
+        Theme.of(context).platform == TargetPlatform.iOS) {
+      final iapService = context.read<IAPService?>();
+      if (iapService != null) {
+        await iapService.purchaseProduct(productId);
+      }
+    } else {
+      // Web Payment Flow
+      final user = context.read<UserModel?>();
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to subscribe')),
+        );
+        return;
+      }
+
+      final webPaymentService = WebPaymentService();
+      // Assuming user has email and displayName, otherwise provide fallbacks
+      final email = user.email.isNotEmpty ? user.email : 'customer@sumquiz.app';
+      final name =
+          user.displayName.isNotEmpty ? user.displayName : 'Valued Customer';
+
+      setState(() => _isLoading = true);
+
+      final success = await webPaymentService.handlePaymentInitialization(
+        context: context,
+        email: email,
+        fullName: name,
+        phoneNumber: "0000000000", // Optional or request from user
+        productId: productId,
+      );
+
+      if (success) {
+        // Determine duration based on product ID
+        Duration? duration;
+        if (productId.contains('monthly')) duration = const Duration(days: 30);
+        if (productId.contains('yearly')) duration = const Duration(days: 365);
+        // Lifetime might be null or 100 years
+        if (productId.contains('lifetime'))
+          duration = const Duration(days: 36500);
+
+        // Update User to Pro
+        // We need UserService here.
+        // Assuming UserService is accessible or we create one.
+        try {
+          await UserService().upgradeToPro(user.uid, duration: duration);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Upgrade Successful! Refreshing...')),
+            );
+            // Force refresh or navigation?
+            // The user stream should update automatically if listening to firestore
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Payment successful but upgrade failed: $e')),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment Cancelled or Failed')),
+          );
+        }
+      }
+
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

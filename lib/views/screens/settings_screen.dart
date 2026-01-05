@@ -4,15 +4,57 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/services/auth_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../models/user_model.dart';
+import '../../services/firestore_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
+  Future<void> _toggleCreatorMode(
+      BuildContext context, UserModel? user, bool value) async {
+    if (user == null) return;
+
+    if (value) {
+      // Confirm enabling
+      final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: const Text('Become a Creator?'),
+                content: const Text(
+                    'This will enable "Publish" buttons on your content. You can share your decks with anyone!'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Enable')),
+                ],
+              ));
+      if (confirm != true) return;
+    }
+
+    try {
+      await FirestoreService().updateUserRole(
+          user.uid, value ? UserRole.creator : UserRole.student);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                value ? 'Creator Tools Enabled!' : 'Creator Tools Disabled')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final user = context.watch<UserModel?>();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -118,9 +160,29 @@ class SettingsScreen extends StatelessWidget {
                         theme: theme,
                       ),
                       const SizedBox(height: 32),
+                      _buildSectionTitle('Creator Studio', theme)
+                          .animate()
+                          .fadeIn(delay: 330.ms),
+                      Consumer<UserModel?>(
+                        builder: (context, user, _) {
+                          final isCreator = user?.role == UserRole.creator;
+                          return _buildToggleCard(
+                            context,
+                            icon: Icons.create,
+                            title: 'Enable Creator Tools',
+                            subtitle: 'Publish and share decks',
+                            value: isCreator,
+                            onChanged: (val) =>
+                                _toggleCreatorMode(context, user, val),
+                            delay: 350.ms,
+                            theme: theme,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 32),
                       _buildSectionTitle('Support', theme)
                           .animate()
-                          .fadeIn(delay: 400.ms),
+                          .fadeIn(delay: 350.ms),
                       _buildSettingsCard(
                         context,
                         icon: Icons.info_outline,
@@ -140,6 +202,18 @@ class SettingsScreen extends StatelessWidget {
                         delay: 500.ms,
                         theme: theme,
                       ),
+                      if (user?.role == UserRole.creator) ...[
+                        _buildSettingsCard(
+                          context,
+                          icon: Icons.person_pin,
+                          title: 'Creator Profile',
+                          subtitle: 'Edit your public presence',
+                          onTap: () => context.push('/edit_profile'),
+                          delay: 800.ms,
+                          theme: theme,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       const SizedBox(height: 48),
                       _buildLogoutButton(context, theme)
                           .animate()
@@ -308,6 +382,88 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+    required Duration delay,
+    required ThemeData theme,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onChanged(!value),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+              border: Border.all(
+                color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeColor: theme.colorScheme.primary,
+                ),
+              ],
+            ),
+          )
+              .animate(delay: delay)
+              .fadeIn(curve: Curves.easeOut)
+              .slideX(begin: 0.2, curve: Curves.easeOut),
         ),
       ),
     );

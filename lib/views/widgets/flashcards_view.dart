@@ -11,6 +11,7 @@ class FlashcardsView extends StatefulWidget {
   final List<Flashcard> flashcards;
   final Function(int index, bool knewIt) onReview;
   final VoidCallback onFinish;
+  final String? creatorName;
 
   const FlashcardsView({
     super.key,
@@ -18,6 +19,7 @@ class FlashcardsView extends StatefulWidget {
     required this.flashcards,
     required this.onReview,
     required this.onFinish,
+    this.creatorName,
   });
 
   @override
@@ -79,6 +81,18 @@ class _FlashcardsViewState extends State<FlashcardsView> {
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onPrimary)),
+                if (widget.creatorName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      'Created by ${widget.creatorName}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            theme.colorScheme.onPrimary.withValues(alpha: 0.7),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [

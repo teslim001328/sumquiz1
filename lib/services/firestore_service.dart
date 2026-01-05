@@ -14,6 +14,8 @@ import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_quiz_question.dart';
 import 'package:sumquiz/models/local_flashcard.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
+import 'package:sumquiz/models/local_flashcard_set.dart';
+import 'package:sumquiz/models/public_deck.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 
 class FirestoreService {
@@ -55,9 +57,13 @@ class FirestoreService {
   }
 
   Future<void> incrementUsage(String uid, String feature) {
-    return _db.collection('users').doc(uid).set({
-      'daily_usage': {feature: FieldValue.increment(1)}
-    }, SetOptions(merge: true));
+    return _db.collection('users').doc(uid).set({}, SetOptions(merge: true));
+  }
+
+  Future<void> updateUserRole(String uid, UserRole role) async {
+    await _db.collection('users').doc(uid).update({
+      'role': role.name,
+    });
   }
 
   Stream<List<Summary>> streamSummaries(String uid) {
@@ -378,6 +384,103 @@ class FirestoreService {
       case LibraryItemType.flashcards:
         await deleteFlashcardSet(userId, item.id);
         break;
+    }
+  }
+
+  // CREATOR TOOLS
+
+  Future<String> publishDeck(PublicDeck deck) async {
+    final docRef = _db.collection('public_decks').doc();
+    // We ignore deck.id if provided and generate new one for public listing?
+    // Or we use doc.id.
+    // Let's create a new doc.
+
+    // We need to ensure deck.id matches docRef.id before saving if we want consistency
+    final deckToSave = PublicDeck(
+      id: docRef.id,
+      creatorId: deck.creatorId,
+      creatorName: deck.creatorName,
+      title: deck.title,
+      description: deck.description,
+      shareCode: deck.shareCode,
+      summaryData: deck.summaryData,
+      quizData: deck.quizData,
+      flashcardData: deck.flashcardData,
+      publishedAt: DateTime.now(),
+    );
+
+    await docRef.set(deckToSave.toFirestore());
+    return docRef.id;
+  }
+
+  Future<List<PublicDeck>> fetchCreatorDecks(String creatorId) async {
+    try {
+      final snapshot = await _db
+          .collection('public_decks')
+          .where('creatorId', isEqualTo: creatorId)
+          .orderBy('publishedAt', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) => PublicDeck.fromFirestore(doc)).toList();
+    } catch (e) {
+      debugPrint('Error fetching creator decks: $e');
+      return [];
+    }
+  }
+
+  Future<PublicDeck?> fetchPublicDeck(String deckId) async {
+    try {
+      final doc = await _db.collection('public_decks').doc(deckId).get();
+      if (doc.exists) {
+        return PublicDeck.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching public deck: $e');
+      return null;
+    }
+  }
+
+  Future<PublicDeck?> fetchPublicDeckByCode(String code) async {
+    try {
+      final snapshot = await _db
+          .collection('public_decks')
+          .where('shareCode', isEqualTo: code.toUpperCase())
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return PublicDeck.fromFirestore(snapshot.docs.first);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching public deck by code: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateCreatorProfile(
+      String uid, Map<String, dynamic> profile) async {
+    try {
+      await _db.collection('users').doc(uid).update({
+        'creatorProfile': profile,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Error updating creator profile: $e');
+      throw e;
+    }
+  }
+
+  Future<void> incrementDeckMetric(String deckId, String metric) async {
+    // metric: 'startedCount' or 'completedCount'
+    try {
+      await _db
+          .collection('public_decks')
+          .doc(deckId)
+          .update({metric: FieldValue.increment(1)});
+    } catch (e) {
+      debugPrint('Error incrementing metric: $e');
     }
   }
 }

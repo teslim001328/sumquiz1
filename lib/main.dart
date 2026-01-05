@@ -54,7 +54,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await LocalDatabaseService().init();
+
+  try {
+    await LocalDatabaseService().init();
+  } catch (e) {
+    debugPrint('Database initialization failed: $e');
+    // Consider reporting this error or showing a fatal error screen if DB is critical
+    // but for now allow app to launch to at least show 'something'
+  }
 
   final notificationService = NotificationService();
   await notificationService.initialize();
@@ -68,11 +75,12 @@ void main() async {
 
   final authService = AuthService(FirebaseAuth.instance);
 
-  try {
-    await TimeSyncService.syncWithServer().timeout(const Duration(seconds: 3));
-  } catch (e) {
-    debugPrint('Startup time sync skipped: $e');
-  }
+  // Non-blocking TimeSync
+  TimeSyncService.syncWithServer().then((_) {
+    debugPrint('Time synced successfully');
+  }).catchError((e) {
+    debugPrint('Startup time sync failed: $e');
+  });
 
   runApp(MyApp(
       authService: authService, notificationService: notificationService));

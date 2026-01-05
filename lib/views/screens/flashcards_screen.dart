@@ -17,6 +17,7 @@ import '../../services/usage_service.dart';
 import '../../models/user_model.dart';
 import '../../models/flashcard.dart';
 import '../../models/flashcard_set.dart';
+import '../../models/local_flashcard_set.dart';
 import '../widgets/upgrade_dialog.dart';
 import 'package:sumquiz/views/widgets/flashcards_view.dart';
 
@@ -24,7 +25,16 @@ enum FlashcardState { creation, loading, review, finished, error }
 
 class FlashcardsScreen extends StatefulWidget {
   final FlashcardSet? flashcardSet;
-  const FlashcardsScreen({super.key, this.flashcardSet});
+  final bool isReadOnly;
+  final String? publicDeckId;
+  final String? creatorName;
+
+  const FlashcardsScreen(
+      {super.key,
+      this.flashcardSet,
+      this.isReadOnly = false,
+      this.publicDeckId,
+      this.creatorName});
 
   @override
   State<FlashcardsScreen> createState() => _FlashcardsScreenState();
@@ -120,6 +130,13 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
           });
         },
       );
+
+      // Tracking completion for public decks
+      if (widget.publicDeckId != null) {
+        final firestoreService = FirestoreService();
+        await firestoreService.incrementDeckMetric(
+            widget.publicDeckId!, 'completedCount');
+      }
 
       if (!userModel.isPro) {
         await usageService.recordAction('flashcards');
@@ -498,6 +515,9 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
     return FlashcardsView(
       title: _titleController.text,
       flashcards: _flashcards,
+      creatorName: widget.flashcardSet is LocalFlashcardSet
+          ? (widget.flashcardSet as LocalFlashcardSet).creatorName
+          : widget.creatorName,
       onReview: (index, knewIt) {
         final flashcardId = _flashcards[index].id;
         _srsService.updateReview(flashcardId, knewIt);

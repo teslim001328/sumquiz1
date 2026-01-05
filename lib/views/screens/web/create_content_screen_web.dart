@@ -162,10 +162,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
 
       if (extractedText.isNotEmpty) {
         // Record Usage
-        if (user != null) {
-          await UsageService().recordDeckGeneration(user.uid);
-        }
-
+        await UsageService().recordDeckGeneration(user.uid);
+      
         if (mounted) {
           context.go('/create/extraction-view', extra: extractedText);
         }

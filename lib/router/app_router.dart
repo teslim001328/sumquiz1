@@ -18,6 +18,8 @@ import 'package:sumquiz/views/screens/summary_screen.dart';
 import 'package:sumquiz/views/screens/quiz_screen.dart';
 import 'package:sumquiz/views/screens/flashcards_screen.dart';
 import 'package:sumquiz/views/screens/edit_screen.dart';
+import 'package:sumquiz/views/screens/edit_creator_profile_screen.dart';
+import 'package:sumquiz/views/screens/creator_dashboard_screen.dart';
 import 'package:sumquiz/views/screens/edit_quiz_screen.dart';
 import 'package:sumquiz/views/screens/edit_flashcards_screen.dart';
 import 'package:sumquiz/views/screens/preferences_screen.dart';
@@ -40,6 +42,7 @@ import 'package:sumquiz/views/screens/web/results_view_screen_web.dart';
 import 'package:sumquiz/views/screens/web/landing_page_web.dart';
 import 'package:sumquiz/views/screens/web/review_screen_web.dart';
 import 'package:sumquiz/views/screens/web/extraction_view_screen_web.dart';
+import 'package:sumquiz/views/screens/public_deck_screen.dart';
 
 // GoRouterRefreshStream class
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -308,6 +311,24 @@ GoRouter createAppRouter(AuthService authService) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/deck',
+        builder: (context, state) {
+          final id = state.uri.queryParameters['id'];
+          if (id == null)
+            return const Scaffold(
+                body: Center(child: Text('Invalid Deck Link')));
+          return PublicDeckScreen(deckId: id);
+        },
+      ),
+      GoRoute(
+        path: '/edit_profile',
+        builder: (context, state) => const EditCreatorProfileScreen(),
+      ),
+      GoRoute(
+        path: '/creator_dashboard',
+        builder: (context, state) => const CreatorDashboardScreen(),
       ),
     ],
   );

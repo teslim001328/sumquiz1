@@ -26,6 +26,15 @@ class LocalQuiz extends HiveObject {
   @HiveField(6)
   late List<double> scores;
 
+  @HiveField(7)
+  late bool isReadOnly;
+
+  @HiveField(8)
+  String? publicDeckId;
+
+  @HiveField(9)
+  String? creatorName;
+
   LocalQuiz({
     required this.id,
     required this.title,
@@ -34,6 +43,9 @@ class LocalQuiz extends HiveObject {
     this.isSynced = false,
     required this.userId,
     List<double>? scores,
+    this.isReadOnly = false,
+    this.publicDeckId,
+    this.creatorName,
   }) : scores = scores ?? [];
 
   LocalQuiz.empty() {
@@ -44,5 +56,8 @@ class LocalQuiz extends HiveObject {
     isSynced = false;
     userId = '';
     scores = [];
+    isReadOnly = false;
+    publicDeckId = null;
+    creatorName = null;
   }
 }

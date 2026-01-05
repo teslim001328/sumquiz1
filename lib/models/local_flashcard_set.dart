@@ -23,6 +23,15 @@ class LocalFlashcardSet extends HiveObject {
   @HiveField(5)
   late String userId;
 
+  @HiveField(6)
+  late bool isReadOnly;
+
+  @HiveField(7)
+  String? publicDeckId;
+
+  @HiveField(8)
+  String? creatorName;
+
   LocalFlashcardSet({
     required this.id,
     required this.title,
@@ -30,6 +39,9 @@ class LocalFlashcardSet extends HiveObject {
     required this.timestamp,
     this.isSynced = false,
     required this.userId,
+    this.isReadOnly = false,
+    this.publicDeckId,
+    this.creatorName,
   });
 
   LocalFlashcardSet.empty() {
@@ -39,5 +51,8 @@ class LocalFlashcardSet extends HiveObject {
     timestamp = DateTime.now();
     isSynced = false;
     userId = '';
+    isReadOnly = false;
+    publicDeckId = null;
+    creatorName = null;
   }
 }

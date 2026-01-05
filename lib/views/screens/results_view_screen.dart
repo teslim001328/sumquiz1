@@ -12,6 +12,11 @@ import 'package:sumquiz/views/widgets/summary_view.dart';
 import 'package:sumquiz/views/widgets/quiz_view.dart';
 import 'package:sumquiz/views/widgets/flashcards_view.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sumquiz/models/public_deck.dart';
+import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/firestore_service.dart';
+import 'package:uuid/uuid.dart';
 
 class ResultsViewScreen extends StatefulWidget {
   final String folderId;
@@ -61,6 +66,109 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
     }
   }
 
+  Future<void> _publishDeck() async {
+    final user = context.read<UserModel?>();
+    if (user == null || user.role != UserRole.creator) return;
+
+    if (_summary == null || _quiz == null || _flashcardSet == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Wait for content to finish loading.')));
+      return;
+    }
+
+    try {
+      final firestoreService = FirestoreService(); // Or context.read
+      final publicDeckId = const Uuid().v4();
+
+      final publicDeck = PublicDeck(
+        id: publicDeckId,
+        creatorId: user.uid,
+        creatorName: user.email.split('@')[0], // Simple name logic
+        title: _summary!.title,
+        description:
+            "Generated from ${_summary!.title}", // Could be better, but good default
+        summaryData: {
+          'id': _summary!.id,
+          'title': _summary!.title,
+          'content': _summary!.content,
+          'tags': _summary!.tags ?? [], // Ensure tags are handled
+          'timestamp': Timestamp.fromDate(_summary!.timestamp),
+        },
+        quizData: {
+          'id': _quiz!.id,
+          'title': _quiz!.title,
+          'questions': _quiz!.questions.map((q) => q.toMap()).toList(),
+          'timestamp': Timestamp.fromDate(_quiz!.timestamp),
+        },
+        flashcardData: {
+          'id': _flashcardSet!.id,
+          'title': _flashcardSet!.title,
+          'flashcards':
+              _flashcardSet!.flashcards.map((f) => f.toMap()).toList(),
+          'timestamp': Timestamp.fromDate(_flashcardSet!.timestamp),
+        },
+        publishedAt: DateTime.now(),
+        shareCode: publicDeckId.substring(0, 6).toUpperCase(),
+      );
+
+      await firestoreService.publishDeck(publicDeck);
+
+      if (!mounted) return;
+
+      final shareUrl = 'https://sumquiz.app/deck?id=$publicDeckId';
+      final shareCode =
+          publicDeckId.substring(0, 6).toUpperCase(); // Simple code
+
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: const Text('Published Successfully!'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 48),
+                    const SizedBox(height: 16),
+                    SelectableText(shareUrl,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text('Share this link with your students.'),
+                    const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                    Text('Or share this Code',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    SelectableText(shareCode,
+                        style: Theme.of(context)
+                            .textTheme
+                            .displaySmall
+                            ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                                color: Theme.of(context).colorScheme.primary)),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(
+                            text: 'Code: $shareCode\nLink: $shareUrl'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Details Copied!')));
+                      },
+                      child: const Text('Copy All')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close')),
+                ],
+              ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error publishing: $e')));
+      }
+    }
+  }
+
   void _saveToLibrary() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -93,6 +201,16 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
         ),
         centerTitle: true,
         actions: [
+          Consumer<UserModel?>(builder: (context, user, _) {
+            if (user?.role == UserRole.creator) {
+              return IconButton(
+                icon: Icon(Icons.public, color: theme.colorScheme.primary),
+                tooltip: 'Publish Deck',
+                onPressed: _publishDeck,
+              );
+            }
+            return const SizedBox.shrink();
+          }),
           IconButton(
             icon: Icon(Icons.library_add_check_outlined,
                 color: theme.colorScheme.primary),

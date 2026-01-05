@@ -29,4 +29,12 @@ class LocalFlashcard extends HiveObject {
     answer = '';
     id = const Uuid().v4();
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'question': question,
+      'answer': answer,
+      'id': id,
+    };
+  }
 }

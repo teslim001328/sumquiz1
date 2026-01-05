@@ -1,0 +1,228 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sumquiz/models/public_deck.dart';
+import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/firestore_service.dart';
+import 'package:sumquiz/services/local_database_service.dart';
+import 'package:sumquiz/models/local_summary.dart';
+import 'package:sumquiz/models/local_quiz.dart';
+import 'package:sumquiz/models/local_flashcard_set.dart';
+import 'package:sumquiz/models/local_quiz_question.dart';
+import 'package:sumquiz/models/local_flashcard.dart';
+import 'package:uuid/uuid.dart';
+
+class PublicDeckScreen extends StatefulWidget {
+  final String deckId;
+
+  const PublicDeckScreen({super.key, required this.deckId});
+
+  @override
+  State<PublicDeckScreen> createState() => _PublicDeckScreenState();
+}
+
+class _PublicDeckScreenState extends State<PublicDeckScreen> {
+  bool _isLoading = true;
+  PublicDeck? _deck;
+  String? _error;
+  bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDeck();
+  }
+
+  Future<void> _fetchDeck() async {
+    try {
+      final deck = await FirestoreService().fetchPublicDeck(widget.deckId);
+      if (mounted) {
+        setState(() {
+          _deck = deck;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load deck';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _importDeck() async {
+    if (_deck == null) return;
+
+    final user = context.read<UserModel?>();
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to import decks.')));
+      // Typically redirect to auth, but for now just show msg
+      return;
+    }
+
+    setState(() => _isImporting = true);
+
+    try {
+      final localDb = LocalDatabaseService();
+      // Ensure DB initialized? Usually done in main. assume yes.
+
+      // 1. Save Summary
+      if (_deck!.summaryData.isNotEmpty) {
+        final summary = LocalSummary(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          title: _deck!.title,
+          content: _deck!.summaryData['content'] ?? '',
+          tags: List<String>.from(_deck!.summaryData['tags'] ?? []),
+          timestamp: DateTime.now(),
+          isSynced: false,
+          isReadOnly: true,
+        );
+        await localDb.saveSummary(summary);
+      }
+
+      // 2. Save Quiz
+      if (_deck!.quizData.isNotEmpty) {
+        final questionsList = (_deck!.quizData['questions'] as List?) ?? [];
+        final questions = questionsList
+            .map((q) => LocalQuizQuestion(
+                  question: q['question'] ?? '',
+                  options: List<String>.from(q['options'] ?? []),
+                  correctAnswer: q['correctAnswer'] ?? '',
+                ))
+            .toList();
+
+        final quiz = LocalQuiz(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          title: _deck!.title, // Use deck title
+          questions: questions,
+          timestamp: DateTime.now(),
+          isSynced: false,
+          isReadOnly: true,
+          publicDeckId: _deck!.id,
+          creatorName: _deck!.creatorName,
+        );
+        await localDb.saveQuiz(quiz);
+      }
+
+      // 3. Save Flashcards
+      if (_deck!.flashcardData.isNotEmpty) {
+        final cardsList = (_deck!.flashcardData['flashcards'] as List?) ?? [];
+        final cards = cardsList
+            .map((c) => LocalFlashcard(
+                  question: c['question'] ?? '',
+                  answer: c['answer'] ?? '',
+                ))
+            .toList();
+
+        final flashcards = LocalFlashcardSet(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          title: _deck!.title,
+          flashcards: cards,
+          timestamp: DateTime.now(),
+          isSynced: false,
+          isReadOnly: true,
+          publicDeckId: _deck!.id,
+          creatorName: _deck!.creatorName,
+        );
+        await localDb.saveFlashcardSet(flashcards);
+      }
+
+      // 4. Update Metrics
+      await FirestoreService()
+          .incrementDeckMetric(widget.deckId, 'startedCount');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Deck imported to Library!')));
+        context.go('/library');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error importing deck: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isImporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_error != null || _deck == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(child: Text(_error ?? 'Deck not found')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Public Deck')),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(_deck!.title,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text('Created by ${_deck!.creatorName}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 32),
+              _buildContentCard(
+                  Icons.summarize, 'Summary', _deck!.summaryData.isNotEmpty),
+              _buildContentCard(Icons.quiz, 'Quiz', _deck!.quizData.isNotEmpty),
+              _buildContentCard(
+                  Icons.style, 'Flashcards', _deck!.flashcardData.isNotEmpty),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: _isImporting ? null : _importDeck,
+                icon: _isImporting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.download),
+                label: Text(_isImporting ? 'Importing...' : 'Add to Library'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                  textStyle: const TextStyle(fontSize: 18),
+                ),
+              )
+            ],
+          ).animate().fadeIn().scale(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentCard(IconData icon, String label, bool exists) {
+    if (!exists) return const SizedBox.shrink();
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue),
+        title: Text(label),
+        trailing: const Icon(Icons.check_circle, color: Colors.green),
+      ),
+    );
+  }
+}

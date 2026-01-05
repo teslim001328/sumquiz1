@@ -7,7 +7,6 @@ import 'package:sumquiz/services/content_extraction_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:typed_data';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
 
 import '../../models/user_model.dart';

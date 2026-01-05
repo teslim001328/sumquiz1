@@ -31,4 +31,12 @@ class LocalQuizQuestion extends HiveObject {
     options = [];
     correctAnswer = '';
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'question': question,
+      'options': options,
+      'correctAnswer': correctAnswer,
+    };
+  }
 }

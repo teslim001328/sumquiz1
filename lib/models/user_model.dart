@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/time_sync_service.dart';
 
+enum UserRole {
+  student,
+  creator,
+}
+
 class UserModel {
   final String uid;
   final String email;
@@ -25,11 +30,16 @@ class UserModel {
   final int folderCount;
   final int srsCardCount;
   final DateTime? lastWeeklyReset;
+  final UserRole role;
+
+  // Creator Profile
+  final Map<String, dynamic> creatorProfile;
 
   UserModel({
     required this.uid,
     required this.email,
     required this.displayName,
+    this.role = UserRole.student,
     this.subscriptionExpiry,
     this.currentMomentum = 0.0,
     this.momentumDecayRate = 0.05,
@@ -46,6 +56,7 @@ class UserModel {
     this.totalDecksGenerated = 0,
     this.lastDeckGenerationDate,
     this.updatedAt,
+    this.creatorProfile = const {},
   });
 
   bool get isPro {
@@ -82,6 +93,11 @@ class UserModel {
       lastDeckGenerationDate:
           (data['lastDeckGenerationDate'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      role: UserRole.values.firstWhere(
+        (e) => e.name == (data['role'] ?? 'student'),
+        orElse: () => UserRole.student,
+      ),
+      creatorProfile: data['creatorProfile'] ?? {},
     );
   }
 
@@ -89,6 +105,7 @@ class UserModel {
     return {
       'email': email,
       'displayName': displayName,
+      'role': role.name,
       if (subscriptionExpiry != null)
         'subscriptionExpiry': Timestamp.fromDate(subscriptionExpiry!),
       'currentMomentum': currentMomentum,
@@ -108,6 +125,7 @@ class UserModel {
       if (lastWeeklyReset != null)
         'lastWeeklyReset': Timestamp.fromDate(lastWeeklyReset!),
       if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      'creatorProfile': creatorProfile,
     };
   }
 
@@ -131,11 +149,14 @@ class UserModel {
     DateTime? lastDeckGenerationDate,
     DateTime? lastWeeklyReset,
     DateTime? updatedAt,
+    UserRole? role,
+    Map<String, dynamic>? creatorProfile,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
+      role: role ?? this.role,
       subscriptionExpiry: subscriptionExpiry ?? this.subscriptionExpiry,
       currentMomentum: currentMomentum ?? this.currentMomentum,
       momentumDecayRate: momentumDecayRate ?? this.momentumDecayRate,
@@ -154,6 +175,7 @@ class UserModel {
           lastDeckGenerationDate ?? this.lastDeckGenerationDate,
       lastWeeklyReset: lastWeeklyReset ?? this.lastWeeklyReset,
       updatedAt: updatedAt ?? this.updatedAt,
+      creatorProfile: creatorProfile ?? this.creatorProfile,
     );
   }
 }

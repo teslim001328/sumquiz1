@@ -31,6 +31,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
   int _selectedTab = 0;
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isSaved = false; // Track save status
 
   LocalSummary? _summary;
   LocalQuiz? _quiz;
@@ -45,6 +46,12 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
   Future<void> _loadData() async {
     try {
       final db = context.read<LocalDatabaseService>();
+
+      // Load folder to check if it's already saved
+      final folder = await db.getFolder(widget.folderId);
+      if (folder != null) {
+        _isSaved = folder.isSaved;
+      }
 
       final contents = await db.getFolderContents(widget.folderId);
 
@@ -77,21 +84,20 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
     }
 
     try {
-      final firestoreService = FirestoreService(); // Or context.read
+      final firestoreService = FirestoreService();
       final publicDeckId = const Uuid().v4();
 
       final publicDeck = PublicDeck(
         id: publicDeckId,
         creatorId: user.uid,
-        creatorName: user.email.split('@')[0], // Simple name logic
+        creatorName: user.email.split('@')[0],
         title: _summary!.title,
-        description:
-            "Generated from ${_summary!.title}", // Could be better, but good default
+        description: "Generated from ${_summary!.title}",
         summaryData: {
           'id': _summary!.id,
           'title': _summary!.title,
           'content': _summary!.content,
-          'tags': _summary!.tags ?? [], // Ensure tags are handled
+          'tags': _summary!.tags ?? [],
           'timestamp': Timestamp.fromDate(_summary!.timestamp),
         },
         quizData: {
@@ -116,8 +122,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
       if (!mounted) return;
 
       final shareUrl = 'https://sumquiz.app/deck?id=$publicDeckId';
-      final shareCode =
-          publicDeckId.substring(0, 6).toUpperCase(); // Simple code
+      final shareCode = publicDeckId.substring(0, 6).toUpperCase();
 
       showDialog(
           context: context,
@@ -133,7 +138,6 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     const Text('Share this link with your students.'),
-                    const SizedBox(height: 16),
                     const SizedBox(height: 16),
                     Text('Or share this Code',
                         style: Theme.of(context).textTheme.titleMedium),
@@ -169,14 +173,42 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
     }
   }
 
-  void _saveToLibrary() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Content saved to your library!'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-      ),
-    );
-    context.go('/library');
+  Future<void> _saveToLibrary() async {
+    try {
+      final db = context.read<LocalDatabaseService>();
+      final folder = await db.getFolder(widget.folderId);
+      
+      if (folder != null) {
+        // Mark the folder as saved
+        folder.isSaved = true;
+        await db.saveFolder(folder);
+        
+        if (mounted) {
+          setState(() => _isSaved = true);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Content saved to your library!'),
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              action: SnackBarAction(
+                label: 'View Library',
+                textColor: Colors.white,
+                onPressed: () => context.go('/library'),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -211,11 +243,14 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
             }
             return const SizedBox.shrink();
           }),
+          // Show different icon based on save status
           IconButton(
-            icon: Icon(Icons.library_add_check_outlined,
-                color: theme.colorScheme.primary),
-            tooltip: 'Save to Library',
-            onPressed: _saveToLibrary,
+            icon: Icon(
+              _isSaved ? Icons.library_add_check : Icons.library_add_check_outlined,
+              color: _isSaved ? Colors.green : theme.colorScheme.primary,
+            ),
+            tooltip: _isSaved ? 'Saved to Library' : 'Save to Library',
+            onPressed: _isSaved ? null : _saveToLibrary,
           ),
         ],
       ),
@@ -240,11 +275,11 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
                                     theme.colorScheme.primaryContainer, value)!,
                               ]
                             : [
-                                const Color(0xFFE0F7FA), // Cyan 50
+                                const Color(0xFFE0F7FA),
                                 Color.lerp(
                                     const Color(0xFFE0F7FA),
                                     const Color(0xFFB2EBF2),
-                                    value)!, // Cyan 100
+                                    value)!,
                               ],
                       ),
                     ),
@@ -289,11 +324,11 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       height: 48,
       decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.8),
+        color: theme.cardColor.withOpacity(0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -382,7 +417,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
     return QuizView(
       title: _quiz!.title,
       questions: _quiz!.questions,
-      onAnswer: (isCorrect) {}, // Optional: track score locally if needed
+      onAnswer: (isCorrect) {},
       onFinish: () {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Quiz practice finished!')),

@@ -409,14 +409,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+4"
-  firebase_ai:
-    dependency: "direct main"
-    description:
-      name: firebase_ai
-      sha256: f2037222b3658aafe461044a954fc6b1dea4d3598b3b46ada2f45465ed35f1ef
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.6.1"
   firebase_app_check:
     dependency: "direct main"
     description:
@@ -853,6 +845,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.3.3"
+  google_generative_ai:
+    dependency: "direct main"
+    description:
+      name: google_generative_ai
+      sha256: "71f613d0247968992ad87a0eb21650a566869757442ba55a31a81be6746e0d1f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.7"
   google_identity_services_web:
     dependency: transitive
     description:

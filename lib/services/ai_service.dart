@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_ai/firebase_ai.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -31,8 +31,8 @@ class AIServiceException implements Exception {
 }
 
 class AIConfig {
-  static const String textModel = 'gemini-2.0-flash-exp';
-  static const String visionModel = 'gemini-2.0-flash-exp';
+  static const String textModel = 'gemini-2.5-flash';
+  static const String visionModel = 'gemini-2.5-flash';
   static const int maxRetries = 3;
   static const int requestTimeout = 45;
   static const int maxInputLength = 15000;
@@ -40,6 +40,7 @@ class AIConfig {
 }
 
 class AIService {
+  static const String _apiKey = 'AIzaSyBmHJxcu_m_yiL_rCJqFuk1J7mFY_PG9RM';
   final GenerativeModel _textModel;
   final GenerativeModel _visionModel;
   final ImagePicker _imagePicker;
@@ -50,18 +51,21 @@ class AIService {
     GenerativeModel? visionModel,
     ImagePicker? imagePicker,
     IAPService? iapService,
-  })  : _textModel = textModel ?? 
-          FirebaseAI.googleAI().generativeModel(
+  })  : _textModel = textModel ??
+          GenerativeModel(
             model: AIConfig.textModel,
+            apiKey: _apiKey,
             generationConfig: GenerationConfig(
               temperature: 0.7,
               topP: 0.8,
               topK: 40,
+              responseMimeType: 'application/json',
             ),
           ),
         _visionModel = visionModel ??
-          FirebaseAI.googleAI().generativeModel(
+          GenerativeModel(
             model: AIConfig.visionModel,
+            apiKey: _apiKey,
             generationConfig: GenerationConfig(
               temperature: 0.7,
               topP: 0.8,
@@ -189,14 +193,6 @@ class AIService {
       }
       final jsonString = _cleanJsonResponse(response.text!);
 
-      // Update usage count for FREE tier users
-      if (_iapService != null && userId != null) {
-        final isPro = await _iapService.hasProAccess();
-        if (!isPro) {
-          await _incrementWeeklyUploads(userId);
-        }
-      }
-
       return jsonString;
     } on FormatException catch (e) {
       developer.log('JSON parsing error in summary',
@@ -315,7 +311,7 @@ class AIService {
   }
 
   Future<String> describeImage(Uint8List imageBytes) async {
-    final imagePart = InlineDataPart('image/jpeg', imageBytes);
+    final imagePart = DataPart('image/jpeg', imageBytes);
     final promptPart = TextPart('Describe this image.');
 
     try {
@@ -354,14 +350,6 @@ class AIService {
       String text = PdfTextExtractor(document).extractText();
       document.dispose();
 
-      // Update usage count for FREE tier users
-      if (_iapService != null && userId != null) {
-        final isPro = await _iapService.hasProAccess();
-        if (!isPro) {
-          await _incrementWeeklyUploads(userId);
-        }
-      }
-
       return text;
     } catch (e) {
       developer.log('Error extracting text from PDF',
@@ -385,7 +373,7 @@ class AIService {
       }
     }
 
-    final imagePart = InlineDataPart('image/jpeg', imageBytes);
+    final imagePart = DataPart('image/jpeg', imageBytes);
     final promptPart = TextPart(
         'Transcribe all the text from this image exactly as it appears. Do not add any introductory or concluding remarks.');
 
@@ -396,14 +384,6 @@ class AIService {
 
       if (response.text == null || response.text!.isEmpty) {
         throw AIServiceException('No text found in image.');
-      }
-
-      // Update usage count for FREE tier users
-      if (_iapService != null && userId != null) {
-        final isPro = await _iapService.hasProAccess();
-        if (!isPro) {
-          await _incrementWeeklyUploads(userId);
-        }
       }
 
       return response.text!;
@@ -540,28 +520,7 @@ class AIService {
       }
     }
 
-    // Update usage count for FREE tier users
-    if (_iapService != null) {
-      final isPro = await _iapService.hasProAccess();
-      if (!isPro) {
-        await _incrementWeeklyUploads(userId);
-      }
-    }
-
     return folderId;
-  }
-
-  Future<void> _incrementWeeklyUploads(String userId) async {
-    try {
-      final userDoc =
-          FirebaseFirestore.instance.collection('users').doc(userId);
-      await userDoc.update({
-        'weeklyUploads': FieldValue.increment(1),
-      });
-    } catch (e) {
-      developer.log('Failed to increment weekly uploads',
-          name: 'my_app.ai_service', error: e);
-    }
   }
 
   Future generateAll(String text, {required List<String> requestedOutputs}) async {}

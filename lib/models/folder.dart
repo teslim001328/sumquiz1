@@ -19,19 +19,23 @@ class Folder extends HiveObject {
   @HiveField(4)
   late DateTime updatedAt;
 
+  @HiveField(5)
+  bool isSaved;
+
   Folder({
     required this.id,
     required this.name,
     required this.userId,
     required this.createdAt,
     required this.updatedAt,
+    this.isSaved = false,
   });
 
-  Folder.empty() {
-    id = '';
-    name = '';
-    userId = '';
-    createdAt = DateTime.now();
-    updatedAt = DateTime.now();
-  }
+  Folder.empty()
+      : id = '',
+        name = '',
+        userId = '',
+        createdAt = DateTime.now(),
+        updatedAt = DateTime.now(),
+        isSaved = false;
 }

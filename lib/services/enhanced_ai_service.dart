@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:firebase_ai/firebase_ai.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:sumquiz/models/folder.dart';
 import 'package:sumquiz/models/local_flashcard.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
@@ -24,10 +24,10 @@ class EnhancedAIServiceException implements Exception {
 
 // --- CONFIG ---
 class EnhancedAIConfig {
-  // Updated to stable Gemini 2.5 models (as of January 2026)
-  static const String textModel = 'gemini-2.5-flash-lite'; // Stable, cost-efficient
-  static const String fallbackModel = 'gemini-2.5-flash'; // Stable, more capable
-  static const String visionModel = 'gemini-2.5-flash'; // Better vision capabilities
+  // Updated to Jan 2026 standards
+  static const String textModel = 'gemini-2.5-flash'; // Free-tier model
+  static const String fallbackModel = 'gemini-2.5-flash'; // Paid, more capable
+  static const String visionModel = 'gemini-2.5-flash'; // Free-tier vision model
   static const int maxRetries = 2;
   static const int requestTimeoutSeconds = 60;
   static const int maxInputLength = 30000;
@@ -35,30 +35,34 @@ class EnhancedAIConfig {
 
 // --- SERVICE ---
 class EnhancedAIService {
+  static const String _apiKey = 'AIzaSyBmHJxcu_m_yiL_rCJqFuk1J7mFY_PG9RM';
   final GenerativeModel _model;
   final GenerativeModel _fallbackModel;
   final GenerativeModel _visionModel;
 
   EnhancedAIService({GenerativeModel? model})
       : _model = model ??
-            FirebaseAI.vertexAI().generativeModel(
+            GenerativeModel(
               model: EnhancedAIConfig.textModel,
+              apiKey: _apiKey,
               generationConfig: GenerationConfig(
                 temperature: 0.3,
                 maxOutputTokens: 8192,
                 responseMimeType: 'application/json',
               ),
             ),
-        _fallbackModel = FirebaseAI.vertexAI().generativeModel(
+        _fallbackModel = GenerativeModel(
           model: EnhancedAIConfig.fallbackModel,
+          apiKey: _apiKey,
           generationConfig: GenerationConfig(
             temperature: 0.3,
             maxOutputTokens: 8192,
             responseMimeType: 'application/json',
           ),
         ),
-        _visionModel = FirebaseAI.vertexAI().generativeModel(
+        _visionModel = GenerativeModel(
           model: EnhancedAIConfig.visionModel,
+          apiKey: _apiKey,
           generationConfig: GenerationConfig(
             temperature: 0.1,
             maxOutputTokens: 2048,
@@ -67,11 +71,11 @@ class EnhancedAIService {
 
   Future<String> _generateWithFallback(String prompt) async {
     try {
-      return await _generateWithModel(_model, prompt, 'Gemini 2.5 Flash-Lite');
+      return await _generateWithModel(_model, prompt, 'Gemini 1.5 Flash');
     } catch (e) {
-      developer.log('Gemini 2.5 Flash-Lite failed, falling back to 2.5 Flash',
+      developer.log('Gemini 1.5 Flash failed, falling back to 1.5 Flash',
           name: 'EnhancedAIService', error: e);
-      return await _generateWithModel(_fallbackModel, prompt, 'Gemini 2.5 Flash');
+      return await _generateWithModel(_fallbackModel, prompt, 'Gemini 1.5 Flash');
     }
   }
 
@@ -151,7 +155,7 @@ $sanitizedText''';
   Future<String> extractTextFromImage(var imageBytes) async {
     // Note: imageBytes is typically Uint8List
     try {
-      final imagePart = InlineDataPart('image/jpeg', imageBytes);
+      final imagePart = DataPart('image/jpeg', imageBytes);
       final promptPart = TextPart(
           'Transcribe all text from this image exactly as it appears. Ignore visuals.');
 
@@ -372,12 +376,6 @@ $sanitizedText''';
 
       if (e is EnhancedAIServiceException) {
         rethrow;
-      }
-
-      // Check for specific Vertex AI API error
-      if (e.toString().contains('Vertex AI API has not been used')) {
-        throw EnhancedAIServiceException(
-            'Vertex AI API is not enabled. Please enable it in your Google Cloud Console for project sumquiz-158f3.');
       }
 
       throw EnhancedAIServiceException(

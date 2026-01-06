@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:sumquiz/widgets/activity_chart.dart';
 import 'package:sumquiz/widgets/daily_goal_tracker.dart';
 import 'package:sumquiz/widgets/goal_setting_dialog.dart';
 import 'package:sumquiz/services/user_service.dart';
+import 'package:sumquiz/models/library_item.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -43,32 +45,47 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final progressService = ProgressService();
 
       final srsStatsFuture = srsService.getStatistics(userId);
-      // Handle case where stream might be empty carefully
-      final firestoreStatsStream = firestoreService.streamAllItems(userId);
-      final firestoreStatsFuture =
-          await firestoreStatsStream.first.catchError((e) {
-        return {'summaries': [], 'quizzes': [], 'flashcards': []};
-      });
+      
+      // FIX: Handle empty stream properly
+      Map<String, List<LibraryItem>> firestoreStats = {
+        'summaries': [],
+        'quizzes': [],
+        'flashcards': [],
+      };
+      
+      try {
+        final streamResult = await firestoreService.streamAllItems(userId)
+            .timeout(const Duration(seconds: 5))
+            .first;
+        firestoreStats = streamResult;
+      } on TimeoutException {
+        developer.log('Firestore stream timeout - returning empty data', 
+            name: 'ProgressScreen');
+      } catch (error) {
+        developer.log('Error fetching firestore stats: $error', 
+            name: 'ProgressScreen');
+      }
 
       final accuracyFuture = progressService.getAverageAccuracy(userId);
       final timeSpentFuture = progressService.getTotalTimeSpent(userId);
 
       final results = await Future.wait([
         srsStatsFuture,
-        Future.value(firestoreStatsFuture),
+        Future.value(firestoreStats),
         accuracyFuture,
         timeSpentFuture
       ]);
+      
       final srsStats = results[0] as Map<String, dynamic>;
-      final firestoreStats = results[1] as Map<String, List<dynamic>>;
+      final firestoreStatsResult = results[1] as Map<String, List<LibraryItem>>;
       final averageAccuracy = results[2] as double;
       final totalTimeSpent = results[3] as int;
 
       final result = {
         ...srsStats,
-        'summariesCount': firestoreStats['summaries']?.length ?? 0,
-        'quizzesCount': firestoreStats['quizzes']?.length ?? 0,
-        'flashcardsCount': firestoreStats['flashcards']?.length ?? 0,
+        'summariesCount': firestoreStatsResult['summaries']?.length ?? 0,
+        'quizzesCount': firestoreStatsResult['quizzes']?.length ?? 0,
+        'flashcardsCount': firestoreStatsResult['flashcards']?.length ?? 0,
         'averageAccuracy': averageAccuracy,
         'totalTimeSpent': totalTimeSpent,
       };
@@ -78,7 +95,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
     } catch (e, s) {
       developer.log('Error loading stats',
           name: 'ProgressScreen', error: e, stackTrace: s);
-      rethrow;
+      // Return default stats instead of rethrowing
+      return {
+        'summariesCount': 0,
+        'quizzesCount': 0,
+        'flashcardsCount': 0,
+        'averageAccuracy': 0.0,
+        'totalTimeSpent': 0,
+        'dueForReviewCount': 0,
+        'upcomingReviews': <MapEntry<DateTime, int>>[],
+      };
     }
   }
 
@@ -149,14 +175,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (snapshot.hasError) {
-                  return _buildErrorState(user.uid, snapshot.error!, theme);
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return _buildEmptyState(user.uid, theme);
-                }
-
-                final stats = snapshot.data!;
+                
+                // Always show data, even if empty
+                final stats = snapshot.data ?? {
+                  'summariesCount': 0,
+                  'quizzesCount': 0,
+                  'flashcardsCount': 0,
+                  'averageAccuracy': 0.0,
+                  'totalTimeSpent': 0,
+                  'dueForReviewCount': 0,
+                  'upcomingReviews': <MapEntry<DateTime, int>>[],
+                };
+                
                 return RefreshIndicator(
                   onRefresh: () async {
                     setState(() {
@@ -227,13 +257,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
         child: Container(
           padding: padding ?? const EdgeInsets.all(0),
           decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: 0.65),
+            color: theme.cardColor.withOpacity(0.65),
             borderRadius: BorderRadius.circular(20),
             border:
-                Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
+                Border.all(color: theme.dividerColor.withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -279,82 +309,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface)),
       ],
-    );
-  }
-
-  Widget _buildErrorState(String userId, Object error, ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded,
-                color: theme.colorScheme.error, size: 60),
-            const SizedBox(height: 16),
-            Text('Something went wrong.',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text('Could not load your progress. Please try again later.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () =>
-                  setState(() => _statsFuture = _loadStats(userId)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Retry'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String userId, ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.leaderboard_outlined,
-              size: 80,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-          const SizedBox(height: 16),
-          Text('No Progress Data Yet',
-              style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0),
-            child: Text(
-              'Complete some quizzes or flashcard reviews to see your progress here.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => setState(() => _statsFuture = _loadStats(userId)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Refresh'),
-          )
-        ],
-      ),
     );
   }
 
@@ -430,7 +384,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -447,7 +401,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Text(label,
               style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 13,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                   fontWeight: FontWeight.w500)),
         ],
       ),
@@ -472,7 +426,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
+                color: Colors.amber.withOpacity(0.2),
                 shape: BoxShape.circle),
             child: const Icon(Icons.notifications_active_rounded,
                 color: Colors.amber, size: 24),
@@ -491,7 +445,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 13,
                         color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.6))),
+                            .withOpacity(0.6))),
               ],
             ),
           ),

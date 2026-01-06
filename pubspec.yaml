@@ -19,7 +19,7 @@ dependencies:
   google_sign_in: ^7.2.0
   firebase_app_check: ^0.4.1+1
   firebase_messaging: ^16.0.3
-  firebase_ai: ^3.6.1 # Corrected version
+  google_generative_ai: ^0.4.0
 
   # Notification Packages (Updated notifications to latest for better compatibility)
   flutter_local_notifications: ^19.5.0

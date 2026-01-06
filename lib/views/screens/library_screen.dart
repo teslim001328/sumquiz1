@@ -37,7 +37,7 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class LibraryScreenState extends State<LibraryScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
   final FirestoreService _firestoreService = FirestoreService();
   final LocalDatabaseService _localDb = LocalDatabaseService();
@@ -45,24 +45,36 @@ class LibraryScreenState extends State<LibraryScreen>
 
   bool _isOfflineMode = false;
   String _searchQuery = '';
+  bool _isInitialized = false;
 
   Stream<List<LibraryItem>>? _allItemsStream;
   Stream<List<LibraryItem>>? _summariesStream;
   Stream<List<LibraryItem>>? _flashcardsStream;
+  Stream<List<Folder>>? _foldersStream;
   String? _userIdForStreams;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
     _searchController.addListener(_onSearchChanged);
-    _localDb.init();
-    _loadOfflineModePreference();
+    _initializeDatabase();
+  }
+
+  Future<void> _initializeDatabase() async {
+    await _localDb.init();
+    await _loadOfflineModePreference();
+    setState(() => _isInitialized = true);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_isInitialized) return;
+
     final user = Provider.of<UserModel?>(context);
     if (user != null && user.uid != _userIdForStreams) {
       _userIdForStreams = user.uid;
@@ -77,6 +89,9 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   void _initializeStreams(String userId) {
+    // Folders Stream - Show ALL folders, not just saved ones
+    _foldersStream = _localDb.watchAllFolders(userId).asBroadcastStream();
+
     // Summaries: Merge Firestore & Local
     final localSummaries = _localDb.watchAllSummaries(userId).map((list) => list
         .map((s) => LibraryItem(
@@ -93,8 +108,7 @@ class LibraryScreenState extends State<LibraryScreen>
     _summariesStream = Rx.combineLatest2<List<LibraryItem>, List<LibraryItem>,
         List<LibraryItem>>(
       localSummaries,
-      firestoreSummaries.handleError(
-          (_) => <LibraryItem>[]), // Handle offline/error gracefully
+      firestoreSummaries.handleError((_) => <LibraryItem>[]),
       (local, cloud) {
         final ids = local.map((e) => e.id).toSet();
         return [...local, ...cloud.where((c) => !ids.contains(c.id))];
@@ -152,6 +166,7 @@ class LibraryScreenState extends State<LibraryScreen>
       _allItemsStream = null;
       _summariesStream = null;
       _flashcardsStream = null;
+      _foldersStream = null;
     });
   }
 
@@ -173,6 +188,18 @@ class LibraryScreenState extends State<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
+    if (!_isInitialized) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      );
+    }
+
     final user = Provider.of<UserModel?>(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -279,7 +306,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 'Log in to access your synchronized library across all your devices.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
               ),
             ],
           ),
@@ -308,7 +335,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 'You are currently in offline mode. Only locally stored content is available.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
               ),
             ],
           ),
@@ -348,11 +375,11 @@ class LibraryScreenState extends State<LibraryScreen>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: theme.cardColor.withValues(alpha: 0.7),
+              color: theme.cardColor.withOpacity(0.7),
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -365,9 +392,9 @@ class LibraryScreenState extends State<LibraryScreen>
               decoration: InputDecoration(
                 hintText: 'Search Library...',
                 hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
                 prefixIcon: Icon(Icons.search,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
@@ -397,7 +424,7 @@ class LibraryScreenState extends State<LibraryScreen>
       ),
       labelStyle:
           theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-      unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+      unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 153), // 0.6 * 255 = 153
       labelColor: theme.colorScheme.onPrimary,
       dividerColor: Colors.transparent,
       splashFactory: NoSplash.splashFactory,
@@ -412,37 +439,72 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildFolderList(String userId, ThemeData theme) {
-    return FutureBuilder<List<Folder>>(
-      future: _localDb.getAllFolders(userId),
+    return StreamBuilder<List<Folder>>(
+      stream: _foldersStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: theme.colorScheme.primary,
+            ),
+          );
         }
+        
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 64,
+                    color: theme.colorScheme.error.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text('Error loading folders',
+                    style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Text('${snapshot.error}',
+                    style: theme.textTheme.bodySmall,
+                    textAlign: TextAlign.center),
+              ],
+            ),
+          );
         }
 
         final folders = snapshot.data ?? [];
+        
         if (folders.isEmpty) {
           return _buildNoContentState('folders', theme);
         }
 
+        // Sort by creation date (most recent first)
         folders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        // Filter by search query
+        final filteredFolders = _searchQuery.isEmpty
+            ? folders
+            : folders.where((folder) =>
+                folder.name.toLowerCase().contains(_searchQuery)).toList();
+
+        if (filteredFolders.isEmpty && _searchQuery.isNotEmpty) {
+          return _buildNoSearchResultsState(theme);
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: folders.length,
+          itemCount: filteredFolders.length,
           itemBuilder: (context, index) {
-            final folder = folders[index];
+            final folder = filteredFolders[index];
             return _buildGlassListTile(
               title: folder.name,
               subtitle: 'Created: ${folder.createdAt.toString().split(' ')[0]}',
-              icon: Icons.folder,
-              iconColor: Colors.amber,
+              icon: folder.isSaved ? Icons.folder : Icons.folder_open,
+              iconColor: folder.isSaved ? Colors.amber : Colors.grey,
               theme: theme,
               onTap: () {
                 context.push('/library/results-view/${folder.id}');
               },
+              // Removed bookmark toggle until we have the proper methods
             )
                 .animate()
                 .fadeIn(delay: (50 * index).ms)
@@ -459,7 +521,27 @@ class LibraryScreenState extends State<LibraryScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: theme.colorScheme.primary,
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 64,
+                    color: theme.colorScheme.error.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text('Error loading content',
+                    style: theme.textTheme.titleMedium),
+              ],
+            ),
+          );
         }
 
         final allItems = snapshot.data ?? [];
@@ -476,7 +558,11 @@ class LibraryScreenState extends State<LibraryScreen>
     return Consumer<QuizViewModel>(
       builder: (context, quizViewModel, child) {
         if (quizViewModel.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: theme.colorScheme.primary,
+            ),
+          );
         }
 
         if (quizViewModel.quizzes.isEmpty) {
@@ -504,8 +590,29 @@ class LibraryScreenState extends State<LibraryScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: theme.colorScheme.primary,
+            ),
+          );
         }
+        
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 64,
+                    color: theme.colorScheme.error.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text('Error loading $type',
+                    style: theme.textTheme.titleMedium),
+              ],
+            ),
+          );
+        }
+        
         if (!snapshot.hasData ||
             snapshot.data == null ||
             snapshot.data!.isEmpty) {
@@ -530,6 +637,7 @@ class LibraryScreenState extends State<LibraryScreen>
           _tabController.index == 0
               ? 'all'
               : [
+                  'all',
                   'summaries',
                   'quizzes',
                   'flashcards'
@@ -594,7 +702,7 @@ class LibraryScreenState extends State<LibraryScreen>
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 0.8),
+          color: Colors.redAccent.withValues(alpha: 204), // 0.8 * 255 = 204
           borderRadius: BorderRadius.circular(15),
         ),
         child: const Icon(Icons.delete, color: Colors.white),
@@ -604,10 +712,12 @@ class LibraryScreenState extends State<LibraryScreen>
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: theme.dialogBackgroundColor,
-              title: Text("Confirm Delete", style: theme.textTheme.titleLarge),
+              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? 
+                  Theme.of(context).colorScheme.surface,
+              title: Text("Confirm Delete", 
+                  style: Theme.of(context).textTheme.titleLarge),
               content: Text("Are you sure you want to delete this item?",
-                  style: theme.textTheme.bodyMedium),
+                  style: Theme.of(context).textTheme.bodyMedium),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -624,7 +734,7 @@ class LibraryScreenState extends State<LibraryScreen>
         );
       },
       onDismissed: (direction) {
-        _deleteContent(userId, item);
+        _deleteContent(userId, item, theme);
       },
       child: _buildGlassListTile(
         title: item.title,
@@ -635,8 +745,8 @@ class LibraryScreenState extends State<LibraryScreen>
         onTap: () => _navigateToContent(userId, item),
         trailing: IconButton(
           icon: Icon(Icons.more_horiz,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-          onPressed: () => _showItemMenu(userId, item),
+              color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
+          onPressed: () => _showItemMenu(userId, item, theme),
         ),
       ),
     );
@@ -654,13 +764,13 @@ class LibraryScreenState extends State<LibraryScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.6),
+        color: theme.cardColor.withOpacity(0.6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: theme.cardColor.withValues(alpha: 0.7), width: 1.5),
+            color: theme.cardColor.withOpacity(0.7), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -678,7 +788,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
+                    color: iconColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: iconColor, size: 24),
@@ -700,7 +810,7 @@ class LibraryScreenState extends State<LibraryScreen>
                           style: theme.textTheme.bodyMedium?.copyWith(
                               fontSize: 12,
                               color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.6),
+                                  .withValues(alpha: 153), // 0.6 * 255 = 153
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -710,7 +820,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 else
                   Icon(Icons.chevron_right,
                       color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                          theme.colorScheme.onSurface.withValues(alpha: 77)), // 0.3 * 255 = 77
               ],
             ),
           ),
@@ -729,18 +839,20 @@ class LibraryScreenState extends State<LibraryScreen>
           children: [
             Icon(Icons.school_outlined,
                 size: 100,
-                color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                color: theme.colorScheme.primary.withValues(alpha: 51)), // 0.2 * 255 = 51
             const SizedBox(height: 24),
             Text('No $typeName yet',
                 style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
             const SizedBox(height: 12),
             Text(
-              'Tap the + button to create your first set of study materials!',
+              type == 'folders'
+                  ? 'Create your first folder to organize your study materials!'
+                  : 'Tap the + button to create your first set of study materials!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
             ),
           ],
         ),
@@ -757,18 +869,18 @@ class LibraryScreenState extends State<LibraryScreen>
           children: [
             Icon(Icons.search_off_outlined,
                 size: 100,
-                color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                color: theme.colorScheme.primary.withValues(alpha: 51)), // 0.2 * 255 = 51
             const SizedBox(height: 24),
             Text('No Results Found',
                 style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
             const SizedBox(height: 12),
             Text(
               'Your search for "$_searchQuery" did not match any content. Try a different search term.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
             ),
           ],
         ),
@@ -856,7 +968,7 @@ class LibraryScreenState extends State<LibraryScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 28),
@@ -872,7 +984,7 @@ class LibraryScreenState extends State<LibraryScreen>
               Text(subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
                       color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
             ],
           )
         ],
@@ -889,13 +1001,13 @@ class LibraryScreenState extends State<LibraryScreen>
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: 0.7),
+            color: theme.cardColor.withOpacity(0.7),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-                color: theme.cardColor.withValues(alpha: 0.9), width: 1.5),
+                color: theme.cardColor.withOpacity(0.9), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -907,10 +1019,10 @@ class LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  void _showItemMenu(String userId, LibraryItem item) {
+  void _showItemMenu(String userId, LibraryItem item, ThemeData theme) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: theme.cardColor,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Wrap(
@@ -918,10 +1030,9 @@ class LibraryScreenState extends State<LibraryScreen>
           if (!item.isReadOnly)
             ListTile(
               leading: Icon(Icons.edit_outlined,
-                  color: Theme.of(context).colorScheme.onSurface),
+                  color: theme.colorScheme.onSurface),
               title: Text('Edit',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface)),
+                  style: TextStyle(color: theme.colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(ctx);
                 _editContent(userId, item);
@@ -933,7 +1044,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 const Text('Delete', style: TextStyle(color: Colors.redAccent)),
             onTap: () {
               Navigator.pop(ctx);
-              _deleteContent(userId, item);
+              _deleteContent(userId, item, theme);
             },
           ),
         ],
@@ -945,12 +1056,10 @@ class LibraryScreenState extends State<LibraryScreen>
     Widget? screen;
     switch (item.type) {
       case LibraryItemType.summary:
-        // Try Local First
         final localSummary = await _localDb.getSummary(item.id);
         if (mounted && localSummary != null) {
           screen = SummaryScreen(summary: localSummary);
         } else if (!_isOfflineMode) {
-          // Fallback to Firestore
           final content = await _firestoreService.getSpecificItem(userId, item);
           if (mounted && content != null) {
             final summary = content as Summary;
@@ -962,9 +1071,7 @@ class LibraryScreenState extends State<LibraryScreen>
                     tags: summary.tags,
                     timestamp: summary.timestamp.toDate(),
                     userId: userId,
-                    isReadOnly: item
-                        .isReadOnly // Should be false if from Firestore usually
-                    ));
+                    isReadOnly: item.isReadOnly));
           }
         }
         break;
@@ -976,12 +1083,10 @@ class LibraryScreenState extends State<LibraryScreen>
         }
         break;
       case LibraryItemType.flashcards:
-        // Try Local First
         final localSet = await _localDb.getFlashcardSet(item.id);
         if (mounted && localSet != null) {
           screen = FlashcardsScreen(
               flashcardSet: FlashcardSet(
-                // Map Local to Model because FlashcardsScreen expects Model?
                 id: localSet.id,
                 title: localSet.title,
                 flashcards: localSet.flashcards
@@ -992,8 +1097,6 @@ class LibraryScreenState extends State<LibraryScreen>
               ),
               isReadOnly: localSet.isReadOnly,
               publicDeckId: localSet.publicDeckId);
-          // Note: FlashcardsScreen might need update to handle isReadOnly if it has edit buttons.
-          // For now we just ensure navigation works.
         } else if (!_isOfflineMode) {
           final content = await _firestoreService.getSpecificItem(userId, item);
           if (mounted && content != null) {
@@ -1018,7 +1121,6 @@ class LibraryScreenState extends State<LibraryScreen>
   Future<void> _editContent(String userId, LibraryItem item) async {
     EditableContent? editableContent;
 
-    // Fetch from Local DB first
     switch (item.type) {
       case LibraryItemType.summary:
         var summary = await _localDb.getSummary(item.id);
@@ -1125,7 +1227,7 @@ class LibraryScreenState extends State<LibraryScreen>
     }
   }
 
-  Future<void> _deleteContent(String userId, LibraryItem item) async {
+  Future<void> _deleteContent(String userId, LibraryItem item, ThemeData theme) async {
     try {
       if (!_isOfflineMode) {
         await _firestoreService.deleteItem(userId, item);
@@ -1141,6 +1243,15 @@ class LibraryScreenState extends State<LibraryScreen>
         case LibraryItemType.flashcards:
           await _localDb.deleteFlashcardSet(item.id);
           break;
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Item deleted successfully'),
+            backgroundColor: theme.colorScheme.secondary,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1197,7 +1308,7 @@ class LibraryScreenState extends State<LibraryScreen>
                               .fetchPublicDeckByCode(code);
 
                           if (!context.mounted) return;
-                          Navigator.pop(context); // Close dialog
+                          Navigator.pop(context);
 
                           if (deck != null) {
                             context.push('/public_deck/${deck.id}',

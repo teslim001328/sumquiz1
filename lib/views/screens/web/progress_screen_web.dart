@@ -23,6 +23,8 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
   int _flashcardsCount = 0;
   double _averageAccuracy = 0;
   List<FlSpot> _weeklyActivity = [];
+  String _mostActiveDay = 'N/A';
+  String _totalTimeDisplay = '0m';
   bool _isLoading = true;
 
   @override
@@ -47,17 +49,16 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
       // Calculate Quiz Stats
       double totalAccuracy = 0.0;
       int quizCountWithScores = 0;
-      // Note: Model currently doesn't expose scores directly as a list in the getter if not added
-      // But we added `scores` and `timeSpent` to LocalQuiz.
-      // We need to cast or access properties.
+      int totalSeconds = 0;
 
-      // Let's assume LocalQuiz has these fields as we verified earlier.
       for (var quiz in quizzes) {
         if (quiz.scores.isNotEmpty) {
           final avgQ = quiz.scores.reduce((a, b) => a + b) / quiz.scores.length;
           totalAccuracy += avgQ;
           quizCountWithScores++;
         }
+        // Accumulate time spent
+        totalSeconds += quiz.timeSpent;
       }
 
       final accuracy =
@@ -66,6 +67,48 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
       // Calculate Weekly Activity locally
       final activity = _calculateWeeklyActivity(summaries, quizzes, flashcards);
 
+      // Determine Most Active Day
+      // activity is [Mon, Tue, ... Sun] (0..6) logic in _calculateWeeklyActivity?
+      // Wait, _calculateWeeklyActivity implementation below uses diff from today.
+      // diff 0 = Today. diff 1 = Yesterday.
+      // So index 0 is Today, index 1 is Yesterday.
+      // We need to map that back to day names.
+      // Let's refine _calculateWeeklyActivity logic to be clear about indices.
+      // Current implementation: `activity[diff]++` where diff is days ago.
+      // So index 0 = Today, index 6 = 6 days ago.
+
+      int maxActivityIndex = 0;
+      double maxVal = -1;
+      for (int i = 0; i < activity.length; i++) {
+        if (activity[i].y > maxVal) {
+          maxVal = activity[i].y;
+          maxActivityIndex = i;
+        }
+      }
+
+      // Map index (days ago) to Day Name
+      final activeDate =
+          DateTime.now().subtract(Duration(days: maxActivityIndex));
+      // Simple day name
+      const days = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday'
+      ];
+      // DateTime.weekday: 1=Mon, 7=Sun.
+      // days[weekday-1]
+      String activeDayName = maxVal > 0 ? days[activeDate.weekday - 1] : 'None';
+
+      // Format Time
+      final minutes = (totalSeconds / 60).floor();
+      final hours = (minutes / 60).floor();
+      final displayTime =
+          hours > 0 ? '${hours}h ${minutes % 60}m' : '${minutes}m';
+
       if (mounted) {
         setState(() {
           _summariesCount = summaries.length;
@@ -73,6 +116,8 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           _flashcardsCount = flashcards.length;
           _averageAccuracy = accuracy;
           _weeklyActivity = activity;
+          _mostActiveDay = activeDayName;
+          _totalTimeDisplay = displayTime;
           _isLoading = false;
         });
       }
@@ -170,7 +215,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                   child: _buildActivityChart(theme),
                 ),
                 const SizedBox(width: 24),
-                // Placeholder for another chart or breakdown
+                // Insight Column
                 Expanded(
                   flex: 1,
                   child: Container(
@@ -191,12 +236,14 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                             style: theme.textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
-                        _buildInsightRow("Most Active Day", "Wednesday",
-                            theme), // Placeholder logic
-                        _buildInsightRow("Best Subject", "Physics",
-                            theme), // Placeholder logic
-                        _buildInsightRow("Learning Streak", "5 Days",
-                            theme), // Placeholder logic
+                        _buildInsightRow(
+                            "Most Active Day", _mostActiveDay, theme),
+                        _buildInsightRow(
+                            "Total Study Time", _totalTimeDisplay, theme),
+                        _buildInsightRow(
+                            "Learning Streak",
+                            "${Provider.of<UserModel?>(context)?.missionCompletionStreak ?? 0} Days",
+                            theme),
                       ],
                     ),
                   ),

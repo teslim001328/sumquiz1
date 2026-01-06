@@ -321,17 +321,23 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
   }
 
   Widget _buildStatsOverview(ThemeData theme) {
+    // Access user from Provider via context reference in build method
+    final user = Provider.of<UserModel?>(context);
+
     return Row(
       children: [
         Expanded(
-          child:
-              _buildStatCard('Streak', '🔥 5 Days', Colors.orangeAccent, theme),
+          child: _buildStatCard(
+              'Streak',
+              '🔥 ${user?.missionCompletionStreak ?? 0} Days',
+              Colors.orangeAccent,
+              theme),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
-            'Mastered',
-            '📚 12 Sets',
+            'Studied Today',
+            '📚 ${user?.itemsCompletedToday ?? 0} Items',
             Colors.greenAccent,
             theme,
           ),

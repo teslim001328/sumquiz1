@@ -163,7 +163,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
       if (extractedText.isNotEmpty) {
         // Record Usage
         await UsageService().recordDeckGeneration(user.uid);
-      
+        if (!mounted) return;
+
         if (mounted) {
           context.go('/create/extraction-view', extra: extractedText);
         }
@@ -196,11 +197,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: isDark ? Colors.white : const Color(0xFF1A237E)),
-          onPressed: () => context.go('/'),
-        ),
+        // Removed leading back button for sidebar navigation consistency
       ),
       body: Stack(
         children: [
@@ -279,7 +276,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
                                   "Import content to generate summaries and quizzes",
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                       color: theme.colorScheme.onSurface
-                                          .withOpacity(0.7))),
+                                          .withValues(alpha: 0.7))),
                               const SizedBox(height: 48),
 
                               // Input Methods Grid
@@ -497,7 +494,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
           decoration: InputDecoration(
               hintText: "Paste your text here...",
               hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
               filled: true,
               fillColor: theme.cardColor,
               border: OutlineInputBorder(
@@ -515,7 +512,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
                   prefixIcon: const Icon(Icons.link),
                   hintText: "Paste URL (Article, YouTube, etc.)",
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.4)),
                   filled: true,
                   fillColor: theme.cardColor,
                   border: OutlineInputBorder(

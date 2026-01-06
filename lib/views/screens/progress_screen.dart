@@ -8,13 +8,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/services/spaced_repetition_service.dart';
-import 'package:sumquiz/services/firestore_service.dart';
-import 'package:sumquiz/services/progress_service.dart';
 import 'package:sumquiz/widgets/activity_chart.dart';
 import 'package:sumquiz/widgets/daily_goal_tracker.dart';
 import 'package:sumquiz/widgets/goal_setting_dialog.dart';
 import 'package:sumquiz/services/user_service.dart';
-import 'package:sumquiz/models/library_item.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -41,55 +38,41 @@ class _ProgressScreenState extends State<ProgressScreen> {
       await dbService.init();
       final srsService =
           SpacedRepetitionService(dbService.getSpacedRepetitionBox());
-      final firestoreService = FirestoreService();
-      final progressService = ProgressService();
 
-      final srsStatsFuture = srsService.getStatistics(userId);
-      
-      // FIX: Handle empty stream properly
-      Map<String, List<LibraryItem>> firestoreStats = {
-        'summaries': [],
-        'quizzes': [],
-        'flashcards': [],
-      };
-      
-      try {
-        final streamResult = await firestoreService.streamAllItems(userId)
-            .timeout(const Duration(seconds: 5))
-            .first;
-        firestoreStats = streamResult;
-      } on TimeoutException {
-        developer.log('Firestore stream timeout - returning empty data', 
-            name: 'ProgressScreen');
-      } catch (error) {
-        developer.log('Error fetching firestore stats: $error', 
-            name: 'ProgressScreen');
+      // Fetch Local Data
+      final srsStats = await srsService.getStatistics(userId);
+      final summaries = await dbService.getAllSummaries(userId);
+      final quizzes = await dbService.getAllQuizzes(userId);
+      final flashcards = await dbService.getAllFlashcardSets(userId);
+
+      // Calculate Quiz Stats Locally
+      double totalAccuracy = 0.0;
+      int quizCountWithscores = 0;
+      int totalTimeSpent = 0;
+
+      for (var quiz in quizzes) {
+        if (quiz.scores.isNotEmpty) {
+          // Average score for this quiz
+          final avgQuizScore =
+              quiz.scores.reduce((a, b) => a + b) / quiz.scores.length;
+          totalAccuracy += avgQuizScore;
+          quizCountWithscores++;
+        }
+        totalTimeSpent += quiz.timeSpent;
       }
 
-      final accuracyFuture = progressService.getAverageAccuracy(userId);
-      final timeSpentFuture = progressService.getTotalTimeSpent(userId);
-
-      final results = await Future.wait([
-        srsStatsFuture,
-        Future.value(firestoreStats),
-        accuracyFuture,
-        timeSpentFuture
-      ]);
-      
-      final srsStats = results[0] as Map<String, dynamic>;
-      final firestoreStatsResult = results[1] as Map<String, List<LibraryItem>>;
-      final averageAccuracy = results[2] as double;
-      final totalTimeSpent = results[3] as int;
+      final averageAccuracy =
+          quizCountWithscores > 0 ? totalAccuracy / quizCountWithscores : 0.0;
 
       final result = {
         ...srsStats,
-        'summariesCount': firestoreStatsResult['summaries']?.length ?? 0,
-        'quizzesCount': firestoreStatsResult['quizzes']?.length ?? 0,
-        'flashcardsCount': firestoreStatsResult['flashcards']?.length ?? 0,
+        'summariesCount': summaries.length,
+        'quizzesCount': quizzes.length,
+        'flashcardsCount': flashcards.length,
         'averageAccuracy': averageAccuracy,
         'totalTimeSpent': totalTimeSpent,
       };
-      developer.log('Stats loaded successfully: $result',
+      developer.log('Stats loaded successfully from LOCAL DB: $result',
           name: 'ProgressScreen');
       return result;
     } catch (e, s) {
@@ -175,18 +158,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 // Always show data, even if empty
-                final stats = snapshot.data ?? {
-                  'summariesCount': 0,
-                  'quizzesCount': 0,
-                  'flashcardsCount': 0,
-                  'averageAccuracy': 0.0,
-                  'totalTimeSpent': 0,
-                  'dueForReviewCount': 0,
-                  'upcomingReviews': <MapEntry<DateTime, int>>[],
-                };
-                
+                final stats = snapshot.data ??
+                    {
+                      'summariesCount': 0,
+                      'quizzesCount': 0,
+                      'flashcardsCount': 0,
+                      'averageAccuracy': 0.0,
+                      'totalTimeSpent': 0,
+                      'dueForReviewCount': 0,
+                      'upcomingReviews': <MapEntry<DateTime, int>>[],
+                    };
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     setState(() {
@@ -259,8 +243,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           decoration: BoxDecoration(
             color: theme.cardColor.withOpacity(0.65),
             borderRadius: BorderRadius.circular(20),
-            border:
-                Border.all(color: theme.dividerColor.withOpacity(0.4)),
+            border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -426,8 +409,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.2),
-                shape: BoxShape.circle),
+                color: Colors.amber.withOpacity(0.2), shape: BoxShape.circle),
             child: const Icon(Icons.notifications_active_rounded,
                 color: Colors.amber, size: 24),
           ),
@@ -444,8 +426,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 Text('Review now to retain better',
                     style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 13,
-                        color: theme.colorScheme.onSurface
-                            .withOpacity(0.6))),
+                        color: theme.colorScheme.onSurface.withOpacity(0.6))),
               ],
             ),
           ),

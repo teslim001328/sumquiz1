@@ -7,6 +7,7 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/services/usage_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
+import 'package:sumquiz/services/auth_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class ExtractionViewScreen extends StatefulWidget {
@@ -101,7 +102,16 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
     try {
       final aiService = context.read<EnhancedAIService>();
       final localDb = context.read<LocalDatabaseService>();
-      final userId = user?.uid ?? 'unknown_user';
+
+      // Fix: Get userId directly from AuthService to avoid 'unknown_user' if UserModel stream is lagging
+      final authService = context.read<AuthService>();
+      final currentUser = authService.currentUser;
+
+      if (currentUser == null) {
+        throw Exception('User is not logged in');
+      }
+
+      final userId = currentUser.uid;
 
       final requestedOutputs = _selectedOutputs.map((e) => e.name).toList();
 

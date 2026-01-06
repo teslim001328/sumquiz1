@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'dart:developer' as developer;
 
 import 'package:sumquiz/services/spaced_repetition_service.dart';
+import 'package:sumquiz/services/sync_service.dart';
 
 // --- EXCEPTIONS ---
 class EnhancedAIServiceException implements Exception {
@@ -27,7 +28,8 @@ class EnhancedAIConfig {
   // Updated to Jan 2026 standards
   static const String textModel = 'gemini-2.5-flash'; // Free-tier model
   static const String fallbackModel = 'gemini-2.5-flash'; // Paid, more capable
-  static const String visionModel = 'gemini-2.5-flash'; // Free-tier vision model
+  static const String visionModel =
+      'gemini-2.5-flash'; // Free-tier vision model
   static const int maxRetries = 2;
   static const int requestTimeoutSeconds = 60;
   static const int maxInputLength = 30000;
@@ -75,7 +77,8 @@ class EnhancedAIService {
     } catch (e) {
       developer.log('Gemini 1.5 Flash failed, falling back to 1.5 Flash',
           name: 'EnhancedAIService', error: e);
-      return await _generateWithModel(_fallbackModel, prompt, 'Gemini 1.5 Flash');
+      return await _generateWithModel(
+          _fallbackModel, prompt, 'Gemini 1.5 Flash');
     }
   }
 
@@ -145,11 +148,24 @@ Clean, organize, and structure the text.
 - Organize the content into clear, logical sections with headers if needed.
 - Maintain ALL factual information, data, and key concepts. Do not summarize yet, just clean and structure.
 - If the text is already clean, just return it as is.
-- Return ONLY the cleaned text.
+- Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks (no ```json).
+
+Structure:
+{
+  "cleanedText": "The refined and organized text content..."
+}
 
 Raw Text:
 $sanitizedText''';
-    return _generateWithFallback(prompt);
+
+    final jsonString = await _generateWithFallback(prompt);
+    try {
+      final data = json.decode(jsonString);
+      return data['cleanedText'] ?? jsonString;
+    } catch (e) {
+      // If parsing fails, return the raw string (fallback)
+      return jsonString;
+    }
   }
 
   Future<String> extractTextFromImage(var imageBytes) async {
@@ -367,6 +383,11 @@ $sanitizedText''';
       }
 
       onProgress('Done!');
+
+      // Trigger background sync to backup new content
+      // Don't await this so UI can return immediately
+      SyncService(localDb).syncAllData();
+
       return folderId;
     } catch (e) {
       onProgress('An error occurred. Cleaning up...');

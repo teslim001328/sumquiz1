@@ -46,6 +46,7 @@ class LibraryScreenState extends State<LibraryScreen>
   bool _isOfflineMode = false;
   String _searchQuery = '';
   bool _isInitialized = false;
+  String? _errorMessage;
 
   Stream<List<LibraryItem>>? _allItemsStream;
   Stream<List<LibraryItem>>? _summariesStream;
@@ -65,9 +66,23 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   Future<void> _initializeDatabase() async {
-    await _localDb.init();
-    await _loadOfflineModePreference();
-    setState(() => _isInitialized = true);
+    try {
+      await _localDb.init();
+      await _loadOfflineModePreference();
+      if (mounted) {
+        setState(() => _isInitialized = true);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error initializing LibraryScreen: $e');
+      debugPrint(stackTrace.toString());
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load library: $e';
+          _isInitialized =
+              true; // Set to true to stop loading spinner and show error
+        });
+      }
+    }
   }
 
   @override
@@ -189,12 +204,50 @@ class LibraryScreenState extends State<LibraryScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     if (!_isInitialized) {
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(
             color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Something went wrong',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _errorMessage = null;
+                      _isInitialized = false;
+                    });
+                    _initializeDatabase();
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -306,7 +359,8 @@ class LibraryScreenState extends State<LibraryScreen>
                 'Log in to access your synchronized library across all your devices.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 153)), // 0.6 * 255 = 153
               ),
             ],
           ),
@@ -335,7 +389,8 @@ class LibraryScreenState extends State<LibraryScreen>
                 'You are currently in offline mode. Only locally stored content is available.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 153)), // 0.6 * 255 = 153
               ),
             ],
           ),
@@ -392,9 +447,11 @@ class LibraryScreenState extends State<LibraryScreen>
               decoration: InputDecoration(
                 hintText: 'Search Library...',
                 hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 128)), // 0.5 * 255 = 128
                 prefixIcon: Icon(Icons.search,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 128)), // 0.5 * 255 = 128
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
@@ -424,7 +481,8 @@ class LibraryScreenState extends State<LibraryScreen>
       ),
       labelStyle:
           theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-      unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 153), // 0.6 * 255 = 153
+      unselectedLabelColor:
+          theme.colorScheme.onSurface.withValues(alpha: 153), // 0.6 * 255 = 153
       labelColor: theme.colorScheme.onPrimary,
       dividerColor: Colors.transparent,
       splashFactory: NoSplash.splashFactory,
@@ -450,15 +508,14 @@ class LibraryScreenState extends State<LibraryScreen>
             ),
           );
         }
-        
+
         if (snapshot.hasError) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error.withOpacity(0.5)),
+                    size: 64, color: theme.colorScheme.error.withOpacity(0.5)),
                 const SizedBox(height: 16),
                 Text('Error loading folders',
                     style: theme.textTheme.titleMedium),
@@ -472,7 +529,7 @@ class LibraryScreenState extends State<LibraryScreen>
         }
 
         final folders = snapshot.data ?? [];
-        
+
         if (folders.isEmpty) {
           return _buildNoContentState('folders', theme);
         }
@@ -483,8 +540,10 @@ class LibraryScreenState extends State<LibraryScreen>
         // Filter by search query
         final filteredFolders = _searchQuery.isEmpty
             ? folders
-            : folders.where((folder) =>
-                folder.name.toLowerCase().contains(_searchQuery)).toList();
+            : folders
+                .where((folder) =>
+                    folder.name.toLowerCase().contains(_searchQuery))
+                .toList();
 
         if (filteredFolders.isEmpty && _searchQuery.isNotEmpty) {
           return _buildNoSearchResultsState(theme);
@@ -534,8 +593,7 @@ class LibraryScreenState extends State<LibraryScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error.withOpacity(0.5)),
+                    size: 64, color: theme.colorScheme.error.withOpacity(0.5)),
                 const SizedBox(height: 16),
                 Text('Error loading content',
                     style: theme.textTheme.titleMedium),
@@ -596,23 +654,21 @@ class LibraryScreenState extends State<LibraryScreen>
             ),
           );
         }
-        
+
         if (snapshot.hasError) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error.withOpacity(0.5)),
+                    size: 64, color: theme.colorScheme.error.withOpacity(0.5)),
                 const SizedBox(height: 16),
-                Text('Error loading $type',
-                    style: theme.textTheme.titleMedium),
+                Text('Error loading $type', style: theme.textTheme.titleMedium),
               ],
             ),
           );
         }
-        
+
         if (!snapshot.hasData ||
             snapshot.data == null ||
             snapshot.data!.isEmpty) {
@@ -712,9 +768,9 @@ class LibraryScreenState extends State<LibraryScreen>
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? 
+              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
                   Theme.of(context).colorScheme.surface,
-              title: Text("Confirm Delete", 
+              title: Text("Confirm Delete",
                   style: Theme.of(context).textTheme.titleLarge),
               content: Text("Are you sure you want to delete this item?",
                   style: Theme.of(context).textTheme.bodyMedium),
@@ -745,7 +801,8 @@ class LibraryScreenState extends State<LibraryScreen>
         onTap: () => _navigateToContent(userId, item),
         trailing: IconButton(
           icon: Icon(Icons.more_horiz,
-              color: theme.colorScheme.onSurface.withValues(alpha: 153)), // 0.6 * 255 = 153
+              color: theme.colorScheme.onSurface
+                  .withValues(alpha: 153)), // 0.6 * 255 = 153
           onPressed: () => _showItemMenu(userId, item, theme),
         ),
       ),
@@ -766,8 +823,7 @@ class LibraryScreenState extends State<LibraryScreen>
       decoration: BoxDecoration(
         color: theme.cardColor.withOpacity(0.6),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: theme.cardColor.withOpacity(0.7), width: 1.5),
+        border: Border.all(color: theme.cardColor.withOpacity(0.7), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
@@ -819,8 +875,8 @@ class LibraryScreenState extends State<LibraryScreen>
                   trailing
                 else
                   Icon(Icons.chevron_right,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 77)), // 0.3 * 255 = 77
+                      color: theme.colorScheme.onSurface
+                          .withValues(alpha: 77)), // 0.3 * 255 = 77
               ],
             ),
           ),
@@ -839,12 +895,14 @@ class LibraryScreenState extends State<LibraryScreen>
           children: [
             Icon(Icons.school_outlined,
                 size: 100,
-                color: theme.colorScheme.primary.withValues(alpha: 51)), // 0.2 * 255 = 51
+                color: theme.colorScheme.primary
+                    .withValues(alpha: 51)), // 0.2 * 255 = 51
             const SizedBox(height: 24),
             Text('No $typeName yet',
                 style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 153))), // 0.6 * 255 = 153
             const SizedBox(height: 12),
             Text(
               type == 'folders'
@@ -852,7 +910,8 @@ class LibraryScreenState extends State<LibraryScreen>
                   : 'Tap the + button to create your first set of study materials!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
+                  color: theme.colorScheme.onSurface
+                      .withValues(alpha: 128)), // 0.5 * 255 = 128
             ),
           ],
         ),
@@ -869,18 +928,21 @@ class LibraryScreenState extends State<LibraryScreen>
           children: [
             Icon(Icons.search_off_outlined,
                 size: 100,
-                color: theme.colorScheme.primary.withValues(alpha: 51)), // 0.2 * 255 = 51
+                color: theme.colorScheme.primary
+                    .withValues(alpha: 51)), // 0.2 * 255 = 51
             const SizedBox(height: 24),
             Text('No Results Found',
                 style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 153))), // 0.6 * 255 = 153
             const SizedBox(height: 12),
             Text(
               'Your search for "$_searchQuery" did not match any content. Try a different search term.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 128)), // 0.5 * 255 = 128
+                  color: theme.colorScheme.onSurface
+                      .withValues(alpha: 128)), // 0.5 * 255 = 128
             ),
           ],
         ),
@@ -983,8 +1045,8 @@ class LibraryScreenState extends State<LibraryScreen>
                       color: theme.colorScheme.onSurface)),
               Text(subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 153))), // 0.6 * 255 = 153
+                      color: theme.colorScheme.onSurface
+                          .withValues(alpha: 153))), // 0.6 * 255 = 153
             ],
           )
         ],
@@ -1003,8 +1065,8 @@ class LibraryScreenState extends State<LibraryScreen>
           decoration: BoxDecoration(
             color: theme.cardColor.withOpacity(0.7),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-                color: theme.cardColor.withOpacity(0.9), width: 1.5),
+            border:
+                Border.all(color: theme.cardColor.withOpacity(0.9), width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
@@ -1029,8 +1091,8 @@ class LibraryScreenState extends State<LibraryScreen>
         children: [
           if (!item.isReadOnly)
             ListTile(
-              leading: Icon(Icons.edit_outlined,
-                  color: theme.colorScheme.onSurface),
+              leading:
+                  Icon(Icons.edit_outlined, color: theme.colorScheme.onSurface),
               title: Text('Edit',
                   style: TextStyle(color: theme.colorScheme.onSurface)),
               onTap: () {
@@ -1227,7 +1289,8 @@ class LibraryScreenState extends State<LibraryScreen>
     }
   }
 
-  Future<void> _deleteContent(String userId, LibraryItem item, ThemeData theme) async {
+  Future<void> _deleteContent(
+      String userId, LibraryItem item, ThemeData theme) async {
     try {
       if (!_isOfflineMode) {
         await _firestoreService.deleteItem(userId, item);
@@ -1244,7 +1307,7 @@ class LibraryScreenState extends State<LibraryScreen>
           await _localDb.deleteFlashcardSet(item.id);
           break;
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

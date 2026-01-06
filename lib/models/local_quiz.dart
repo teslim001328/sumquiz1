@@ -35,6 +35,9 @@ class LocalQuiz extends HiveObject {
   @HiveField(9)
   String? creatorName;
 
+  @HiveField(10)
+  late int timeSpent; // In seconds
+
   LocalQuiz({
     required this.id,
     required this.title,
@@ -46,6 +49,7 @@ class LocalQuiz extends HiveObject {
     this.isReadOnly = false,
     this.publicDeckId,
     this.creatorName,
+    this.timeSpent = 0,
   }) : scores = scores ?? [];
 
   LocalQuiz.empty() {
@@ -59,5 +63,6 @@ class LocalQuiz extends HiveObject {
     isReadOnly = false;
     publicDeckId = null;
     creatorName = null;
+    timeSpent = 0;
   }
 }

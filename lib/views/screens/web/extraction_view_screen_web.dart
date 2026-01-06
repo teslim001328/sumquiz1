@@ -7,6 +7,7 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/services/usage_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
+import 'package:sumquiz/services/auth_service.dart';
 
 class ExtractionViewScreenWeb extends StatefulWidget {
   final String? initialText;
@@ -100,7 +101,16 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
     try {
       final aiService = context.read<EnhancedAIService>();
       final localDb = context.read<LocalDatabaseService>();
-      final userId = user?.uid ?? 'unknown_user';
+
+      // Fix: Get userId directly from AuthService for reliability
+      final authService = context.read<AuthService>();
+      final currentUser = authService.currentUser;
+
+      if (currentUser == null) {
+        throw Exception('User is not logged in');
+      }
+
+      final userId = currentUser.uid;
       final requestedOutputs = _selectedOutputs.map((e) => e.name).toList();
 
       final folderId = await aiService.generateAndStoreOutputs(

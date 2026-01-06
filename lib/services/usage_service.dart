@@ -34,36 +34,18 @@ class UsageService {
 
       int currentUsage = isNewDay ? 0 : user.dailyDecksGenerated;
 
-      // Determine Limit
       int limit = UsageConfig.freeDecksPerDay;
-      if (user.isPro) {
-        // If "Pro" via trial (referral), strictly limit.
-        // If "Pro" via payment (subscription), high cap.
-        // We assume 'subscriptionExpiry' means trial/sub.
-        // The prompt says "Cap deck generation during trial (3-5 decks/day)".
-        // We can't easily distinguish Trial vs Sub in UserModel yet unless we add a flag,
-        // or just assume all 'time-limited' Pro is subject to 'trial' cap if we want to be safe,
-        // OR we just set a high cap for everyone for simplicity as 'Pro' usually means paid.
-        // However, the prompt specifically asked for safeguards during referrals.
-        // Let's assume for now:
-        // If isPro is true:
-        //   limit = UsageConfig.proDecksPerDay;
-        // BUT strict safeguards for "referral/trial" users.
-        // Since we don't have a specific 'isTrial' flag, let's look at `referralAppliedAt`.
-        // If they have `referralAppliedAt` and it's within the last 7 days AND no `stripeId`?
-        // Simpler approach: Set a 'Trial' limit for everyone, but huge for Paid.
-        // For now, let's just use the PRO limit (100) which is safe for costs.
-        // If we want to be stricter for referrals:
-        // limit = UsageConfig.trialDecksPerDay; (if we knew it was a trial)
-        // Let's stick to the prompt's safeguard: "Cap deck generation during trial".
-        // We will implement this by checking if the user *has* a referredBy field and is currently pro.
-        // Actually, let's just give 100 for now. The 3-5 limit is very low for a "Pro" trial.
-        // Let's stick to 20 for Pro to be safe for now, or 5 if we want to be very strict.
-        // User said: "Cap deck generation during trial (3-5 decks/day) -> controls AI cost"
-        // User said: "Unlimited or high cap" for Premium.
-        // We need to know if they are paid or trial.
-        // I'll add `isTrial` to Usermodel later if needed. For now, let's assume 100 for Pro.
+
+      // 1. Creator Bonus or Lifetime/Paid Pro (non-trial) gets high limit
+      if (user.isCreatorPro) {
         limit = UsageConfig.proDecksPerDay;
+      } else if (user.isPro) {
+        // 2. Trial Pro check
+        if (user.isTrial) {
+          limit = UsageConfig.trialDecksPerDay; // 3 decks per day
+        } else {
+          limit = UsageConfig.proDecksPerDay; // 100 decks per day (Paid)
+        }
       }
 
       return currentUsage < limit;

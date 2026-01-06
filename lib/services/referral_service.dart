@@ -128,6 +128,7 @@ class ReferralService {
               'referredBy': referrerDocRef.id,
               'referralAppliedAt': FieldValue.serverTimestamp(),
               'isPro': true,
+              'isTrial': true, // MARK AS TRIAL USER
               'subscriptionExpiry': Timestamp.fromDate(newExpiryDateForNewUser),
             },
             SetOptions(merge: true));

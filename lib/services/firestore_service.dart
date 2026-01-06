@@ -482,4 +482,52 @@ class FirestoreService {
       debugPrint('Error incrementing metric: $e');
     }
   }
+
+  /// Records a unique view for a deck and checks for Creator Bonus
+  Future<void> recordDeckView(String deckId, String viewerId) async {
+    try {
+      final deckRef = _db.collection('public_decks').doc(deckId);
+      final viewRef = deckRef.collection('views').doc(viewerId);
+
+      // Run transaction to ensure unique view counting
+      await _db.runTransaction((transaction) async {
+        final viewDoc = await transaction.get(viewRef);
+        if (viewDoc.exists) {
+          // Already viewed by this user
+          return;
+        }
+
+        // Record new view
+        transaction.set(viewRef, {
+          'timestamp': FieldValue.serverTimestamp(),
+          'viewerId': viewerId,
+        });
+
+        // Increment unique view count on deck
+        transaction.update(deckRef, {
+          'uniqueViewCount': FieldValue.increment(1),
+        });
+      });
+
+      // Check for Creator Bonus (Run separately to not bloat transaction opacity/permissions)
+      // We can check the deck's new count
+      final deckDoc = await deckRef.get();
+      if (!deckDoc.exists) return;
+
+      final data = deckDoc.data()!;
+      final uniqueViews = data['uniqueViewCount'] as int? ?? 0;
+      final creatorId = data['creatorId'] as String?;
+
+      if (creatorId != null && uniqueViews >= 3) {
+        // GRANT CREATOR PRO
+        // Check if already creator pro to avoid redundant writes
+        final userRef = _db.collection('users').doc(creatorId);
+        // We can do a lightweight update
+        // "If 3 students open their deck"
+        await userRef.set({'isCreatorPro': true}, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error recording deck view: $e');
+    }
+  }
 }

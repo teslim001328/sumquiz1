@@ -37,6 +37,20 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
   Future<void> _fetchDeck() async {
     try {
       final deck = await FirestoreService().fetchPublicDeck(widget.deckId);
+
+      // Record View for Creator Bonus
+      // Fire and forget - don't block UI
+      // Note: reading context in async method after await is risky for mounted check,
+      // but we need the user ID.
+      // Safer to rely on FirebaseAuth if we don't want to depend on Provider readiness here, matches other services
+      // But let's use the Provider if mounted.
+      if (mounted && deck != null) {
+        final user = context.read<UserModel?>();
+        if (user != null) {
+          FirestoreService().recordDeckView(widget.deckId, user.uid);
+        }
+      }
+
       if (mounted) {
         setState(() {
           _deck = deck;

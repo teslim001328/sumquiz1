@@ -6,7 +6,6 @@ import 'package:sumquiz/models/editable_content.dart';
 import 'package:sumquiz/models/flashcard_set.dart';
 import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_summary.dart';
-import 'package:sumquiz/models/quiz_model.dart';
 import 'package:sumquiz/models/summary_model.dart';
 import 'package:sumquiz/services/auth_service.dart';
 import 'package:sumquiz/views/screens/auth_screen.dart';
@@ -316,9 +315,10 @@ GoRouter createAppRouter(AuthService authService) {
         path: '/deck',
         builder: (context, state) {
           final id = state.uri.queryParameters['id'];
-          if (id == null)
+          if (id == null) {
             return const Scaffold(
                 body: Center(child: Text('Invalid Deck Link')));
+          }
           return PublicDeckScreen(deckId: id);
         },
       ),

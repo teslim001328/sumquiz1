@@ -31,8 +31,8 @@ class AIServiceException implements Exception {
 }
 
 class AIConfig {
-  static const String textModel = 'gemini-2.5-flash';
-  static const String visionModel = 'gemini-2.5-pro';
+  static const String textModel = 'gemini-2.0-flash-exp';
+  static const String visionModel = 'gemini-2.0-flash-exp';
   static const int maxRetries = 3;
   static const int requestTimeout = 45;
   static const int maxInputLength = 15000;
@@ -51,23 +51,21 @@ class AIService {
     ImagePicker? imagePicker,
     IAPService? iapService,
   })  : _textModel = textModel ?? 
-          FirebaseAI.vertexAI().generativeModel(
+          FirebaseAI.googleAI().generativeModel(
             model: AIConfig.textModel,
             generationConfig: GenerationConfig(
               temperature: 0.7,
+              topP: 0.8,
               topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 4096,
             ),
           ),
         _visionModel = visionModel ??
-          FirebaseAI.vertexAI().generativeModel(
+          FirebaseAI.googleAI().generativeModel(
             model: AIConfig.visionModel,
             generationConfig: GenerationConfig(
               temperature: 0.7,
+              topP: 0.8,
               topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 4096,
             ),
           ),
         _imagePicker = imagePicker ?? ImagePicker(),

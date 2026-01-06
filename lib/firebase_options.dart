@@ -41,52 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBXy6tSjdtu5ukcSDHo04mng3RtyKANTFk',
-    appId: '1:370380317647:web:7941890cfdcd4ab3d828ba',
-    messagingSenderId: '370380317647',
-    projectId: 'sumquiz-f56f3',
-    authDomain: 'sumquiz-f56f3.firebaseapp.com',
-    storageBucket: 'sumquiz-f56f3.firebasestorage.app',
-    measurementId: 'G-SFP6KGVPLF',
+    apiKey: 'AIzaSyDqCDcD5jHKhB2WeNScfsYFaqU_SMjv3Gs',
+    appId: '1:1063163612294:web:64ad516526c5b56eedd507',
+    messagingSenderId: '1063163612294',
+    projectId: 'sumquiz-3d54e',
+    authDomain: 'sumquiz-3d54e.firebaseapp.com',
+    storageBucket: 'sumquiz-3d54e.firebasestorage.app',
+    measurementId: 'G-HEMEGYRGSL',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBjFvU2akvhB5JjbhoMAE6SxWtjgmWBft4',
-    appId: '1:370380317647:android:0d5c6aa1e3be9e56d828ba',
-    messagingSenderId: '370380317647',
-    projectId: 'sumquiz-f56f3',
-    storageBucket: 'sumquiz-f56f3.firebasestorage.app',
+    apiKey: 'AIzaSyCrbOH8ycFvKcIiyJ8vXnRvUQF2zBVVnso',
+    appId: '1:1063163612294:android:c2eddda0afa793abedd507',
+    messagingSenderId: '1063163612294',
+    projectId: 'sumquiz-3d54e',
+    storageBucket: 'sumquiz-3d54e.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCOkIaXsWFxYLMbWlI5f7v4qgkHtDxLOIU',
-    appId: '1:370380317647:ios:1c4311ac30d82191d828ba',
-    messagingSenderId: '370380317647',
-    projectId: 'sumquiz-f56f3',
-    storageBucket: 'sumquiz-f56f3.firebasestorage.app',
-    iosClientId:
-        '370380317647-35hovctgu028i1ahvmd8t7fpcp3mcj1t.apps.googleusercontent.com',
-    iosBundleId: 'com.example.myapp',
+    apiKey: 'AIzaSyCU_2umFs5332dy8fiCvy3lHkHiVWztjA4',
+    appId: '1:1063163612294:ios:e65161b2afad0e3bedd507',
+    messagingSenderId: '1063163612294',
+    projectId: 'sumquiz-3d54e',
+    storageBucket: 'sumquiz-3d54e.firebasestorage.app',
+    iosBundleId: 'com.sumquiz.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCOkIaXsWFxYLMbWlI5f7v4qgkHtDxLOIU',
-    appId: '1:370380317647:ios:1c4311ac30d82191d828ba',
-    messagingSenderId: '370380317647',
-    projectId: 'sumquiz-f56f3',
-    storageBucket: 'sumquiz-f56f3.firebasestorage.app',
-    iosClientId:
-        '370380317647-35hovctgu028i1ahvmd8t7fpcp3mcj1t.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCU_2umFs5332dy8fiCvy3lHkHiVWztjA4',
+    appId: '1:1063163612294:ios:84a8828a5917135cedd507',
+    messagingSenderId: '1063163612294',
+    projectId: 'sumquiz-3d54e',
+    storageBucket: 'sumquiz-3d54e.firebasestorage.app',
     iosBundleId: 'com.example.myapp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBXy6tSjdtu5ukcSDHo04mng3RtyKANTFk',
-    appId: '1:370380317647:web:7941890cfdcd4ab3d828ba',
-    messagingSenderId: '370380317647',
-    projectId: 'sumquiz-f56f3',
-    authDomain: 'sumquiz-f56f3.firebaseapp.com',
-    storageBucket: 'sumquiz-f56f3.firebasestorage.app',
-    measurementId: 'G-SFP6KGVPLF',
+    apiKey: 'AIzaSyDqCDcD5jHKhB2WeNScfsYFaqU_SMjv3Gs',
+    appId: '1:1063163612294:web:64ad516526c5b56eedd507',
+    messagingSenderId: '1063163612294',
+    projectId: 'sumquiz-3d54e',
+    authDomain: 'sumquiz-3d54e.firebaseapp.com',
+    storageBucket: 'sumquiz-3d54e.firebasestorage.app',
+    measurementId: 'G-HEMEGYRGSL',
   );
 }

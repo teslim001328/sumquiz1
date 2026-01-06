@@ -131,8 +131,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         if (productId.contains('monthly')) duration = const Duration(days: 30);
         if (productId.contains('yearly')) duration = const Duration(days: 365);
         // Lifetime might be null or 100 years
-        if (productId.contains('lifetime'))
+        if (productId.contains('lifetime')) {
           duration = const Duration(days: 36500);
+        }
 
         // Update User to Pro
         // We need UserService here.

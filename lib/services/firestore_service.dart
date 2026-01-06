@@ -14,7 +14,6 @@ import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_quiz_question.dart';
 import 'package:sumquiz/models/local_flashcard.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
-import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:sumquiz/models/public_deck.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 
@@ -468,7 +467,7 @@ class FirestoreService {
       });
     } catch (e) {
       debugPrint('Error updating creator profile: $e');
-      throw e;
+      rethrow;
     }
   }
 

@@ -24,8 +24,10 @@ class EnhancedAIServiceException implements Exception {
 
 // --- CONFIG ---
 class EnhancedAIConfig {
-  static const String textModel = 'gemini-2.5-flash-lite'; // Lowest tier 2026
-  static const String visionModel = 'gemini-2.5-flash-lite'; // Lowest tier 2026
+  // Updated to stable Gemini 2.5 models (as of January 2026)
+  static const String textModel = 'gemini-2.5-flash-lite'; // Stable, cost-efficient
+  static const String fallbackModel = 'gemini-2.5-flash'; // Stable, more capable
+  static const String visionModel = 'gemini-2.5-flash'; // Better vision capabilities
   static const int maxRetries = 2;
   static const int requestTimeoutSeconds = 60;
   static const int maxInputLength = 30000;
@@ -34,7 +36,7 @@ class EnhancedAIConfig {
 // --- SERVICE ---
 class EnhancedAIService {
   final GenerativeModel _model;
-  final GenerativeModel _stableModel;
+  final GenerativeModel _fallbackModel;
   final GenerativeModel _visionModel;
 
   EnhancedAIService({GenerativeModel? model})
@@ -47,8 +49,8 @@ class EnhancedAIService {
                 responseMimeType: 'application/json',
               ),
             ),
-        _stableModel = FirebaseAI.vertexAI().generativeModel(
-          model: 'gemini-1.5-flash-002', // Validated Stable Fallback
+        _fallbackModel = FirebaseAI.vertexAI().generativeModel(
+          model: EnhancedAIConfig.fallbackModel,
           generationConfig: GenerationConfig(
             temperature: 0.3,
             maxOutputTokens: 8192,
@@ -65,11 +67,11 @@ class EnhancedAIService {
 
   Future<String> _generateWithFallback(String prompt) async {
     try {
-      return await _generateWithModel(_model, prompt, 'Gemini 2.0');
+      return await _generateWithModel(_model, prompt, 'Gemini 2.5 Flash-Lite');
     } catch (e) {
-      developer.log('Gemini 2.0 failed, falling back to 1.5 Flash',
+      developer.log('Gemini 2.5 Flash-Lite failed, falling back to 2.5 Flash',
           name: 'EnhancedAIService', error: e);
-      return await _generateWithModel(_stableModel, prompt, 'Gemini 1.5');
+      return await _generateWithModel(_fallbackModel, prompt, 'Gemini 2.5 Flash');
     }
   }
 
@@ -89,13 +91,14 @@ class EnhancedAIService {
           throw EnhancedAIServiceException('Model returned an empty response.');
         }
 
+        // Extract JSON from markdown code blocks
         final jsonRegex = RegExp(r'```json\s*([\s\S]*?)\s*```');
         final match = jsonRegex.firstMatch(responseText);
         if (match != null && match.group(1) != null) {
           return match.group(1)!.trim();
         }
 
-        // Fallback: Attempt to extract JSON from raw text (find first '{' and last '}')
+        // Fallback: Extract JSON from raw text (find first '{' and last '}')
         final startIndex = responseText.indexOf('{');
         final endIndex = responseText.lastIndexOf('}');
         if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
@@ -164,7 +167,6 @@ $sanitizedText''';
     } catch (e) {
       if (e is EnhancedAIServiceException) rethrow;
       developer.log('Vision API Error', name: 'EnhancedAIService', error: e);
-      // Fallback or rethrow? For vision, fallback to stable text model is impossible.
       throw EnhancedAIServiceException(
           'Failed to extract text from image: ${e.toString()}');
     }
@@ -196,8 +198,8 @@ $sanitizedText''';
     final sanitizedText = _sanitizeInput(text);
     final prompt =
         '''Create a challenging multiple-choice exam quiz based on the text.
-    - Determine the number of questions based on the length and depth of the content (aim for comprehensive coverage).
-    - Questions should mimic real exam questions (application of knowledge, not just keyword matching).
+- Determine the number of questions based on the length and depth of the content (aim for comprehensive coverage).
+- Questions should mimic real exam questions (application of knowledge, not just keyword matching).
 - Focus on high-yield facts, common misconceptions, and critical details.
 - Each question must have exactly 4 options.
 - The "correctAnswer" must be one of the options.
@@ -224,8 +226,8 @@ $sanitizedText''';
     final sanitizedText = _sanitizeInput(text);
     final prompt =
         '''Generate high-quality flashcards for Active Recall study based on the text.
-    - Determine the number of flashcards based on the amount of key information spread throughout the text.
-    - Focus on the most important facts likely to appear on an exam.
+- Determine the number of flashcards based on the amount of key information spread throughout the text.
+- Focus on the most important facts likely to appear on an exam.
 - Front (Question): A specific prompt, term, or concept.
 - Back (Answer): The precise definition, explanation, or key fact. Avoid vague answers.
 - Cover: Definitions, Dates, Formulas, Key Figures, Cause-Effect relationships.
@@ -245,8 +247,6 @@ Text Source:
 $sanitizedText''';
     return _generateWithFallback(prompt);
   }
-
-// ... (existing code)
 
   Future<String> generateAndStoreOutputs({
     required String text,

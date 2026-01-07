@@ -26,59 +26,31 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Future<void> _loadProducts() async {
-    final iapService = context.read<IAPService?>();
-
-    // Check platform
     final isWeb = Theme.of(context).platform != TargetPlatform.android &&
         Theme.of(context).platform != TargetPlatform.iOS;
 
-    if (!isWeb && iapService != null) {
-      // Mobile Flow
-      final products = await iapService.getAvailableProducts();
-      products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
-      if (mounted) {
-        setState(() {
-          _products = products;
-          _setDefaultSelection();
-          _isLoading = false;
-        });
-      }
+    List<ProductDetails> products = [];
+
+    if (isWeb) {
+      // Web Flow
+      products = await WebPaymentService().getAvailableProducts();
     } else {
-      // Web / Mock Flow
-      // Create mock ProductDetails for Web
-      final mockProducts = [
-        ProductDetails(
-          id: 'sumquiz_pro_monthly',
-          title: 'SumQuiz Pro Monthly',
-          description: 'Monthly Subscription',
-          price: '\$4.99',
-          rawPrice: 4.99,
-          currencyCode: 'USD',
-        ),
-        ProductDetails(
-          id: 'sumquiz_pro_yearly',
-          title: 'SumQuiz Pro Annual',
-          description: 'Annual Subscription',
-          price: '\$39.99',
-          rawPrice: 39.99,
-          currencyCode: 'USD',
-        ),
-        ProductDetails(
-          id: 'sumquiz_pro_lifetime',
-          title: 'SumQuiz Pro Lifetime',
-          description: 'Lifetime Access',
-          price: '\$99.99',
-          rawPrice: 99.99,
-          currencyCode: 'USD',
-        ),
-      ];
-      if (mounted) {
-        setState(() {
-          _products = mockProducts;
-          _setDefaultSelection();
-          _isLoading = false;
-        });
+      // Mobile Flow
+      final iapService = context.read<IAPService?>();
+      if (iapService != null) {
+        products = await iapService.getAvailableProducts();
       }
+    }
+
+    // Sort: Monthly < Yearly < Lifetime
+    products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
+
+    if (mounted) {
+      setState(() {
+        _products = products;
+        _setDefaultSelection();
+        _isLoading = false;
+      });
     }
   }
 
@@ -91,79 +63,61 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> _buyProduct() async {
     if (_selectedProduct == null) return;
-    final productId = _selectedProduct!.id;
+    setState(() => _isLoading = true);
 
-    if (Theme.of(context).platform == TargetPlatform.android ||
-        Theme.of(context).platform == TargetPlatform.iOS) {
-      final iapService = context.read<IAPService?>();
-      if (iapService != null) {
-        await iapService.purchaseProduct(productId);
-      }
-    } else {
-      // Web Payment Flow
-      final user = context.read<UserModel?>();
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please log in to subscribe')),
-        );
-        return;
-      }
+    final isWeb = Theme.of(context).platform != TargetPlatform.android &&
+        Theme.of(context).platform != TargetPlatform.iOS;
 
-      final webPaymentService = WebPaymentService();
-      // Assuming user has email and displayName, otherwise provide fallbacks
-      final email = user.email.isNotEmpty ? user.email : 'customer@sumquiz.app';
-      final name =
-          user.displayName.isNotEmpty ? user.displayName : 'Valued Customer';
-
-      setState(() => _isLoading = true);
-
-      final success = await webPaymentService.handlePaymentInitialization(
-        context: context,
-        email: email,
-        fullName: name,
-        phoneNumber: "0000000000", // Optional or request from user
-        productId: productId,
-      );
-
-      if (success) {
-        // Determine duration based on product ID
-        Duration? duration;
-        if (productId.contains('monthly')) duration = const Duration(days: 30);
-        if (productId.contains('yearly')) duration = const Duration(days: 365);
-        // Lifetime might be null or 100 years
-        if (productId.contains('lifetime')) {
-          duration = const Duration(days: 36500);
+    try {
+      if (isWeb) {
+        // Web Payment Flow
+        final user = context.read<UserModel?>();
+        if (user == null) {
+          throw Exception('User not logged in');
         }
 
-        // Update User to Pro
-        // We need UserService here.
-        // Assuming UserService is accessible or we create one.
-        try {
-          await UserService().upgradeToPro(user.uid, duration: duration);
-          if (mounted) {
+        final result = await WebPaymentService().processWebPurchase(
+          context: context,
+          product: _selectedProduct!,
+          user: user,
+        );
+
+        if (mounted) {
+          if (result.success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('Upgrade Successful! Refreshing...')),
+                content: Text('Upgrade Successful! Refreshing...'),
+                backgroundColor: Colors.green,
+              ),
             );
-            // Force refresh or navigation?
-            // The user stream should update automatically if listening to firestore
-          }
-        } catch (e) {
-          if (mounted) {
+            // Optional: Delay to let user see the checkmark or confetti
+            await Future.delayed(const Duration(seconds: 1));
+            if (mounted) context.pop(); // Go back to main/home
+          } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Payment successful but upgrade failed: $e')),
+                content: Text(result.errorMessage ?? 'Payment Failed'),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         }
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Payment Cancelled or Failed')),
-          );
+        // Mobile Payment Flow
+        final iapService = context.read<IAPService?>();
+        if (iapService != null) {
+          await iapService.purchaseProduct(_selectedProduct!.id);
+          // Note: Mobile IAP flow is async via stream listener in previous setup.
+          // We might want to show some "Processing..." UI until stream updates.
         }
       }
-
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }

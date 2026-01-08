@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import 'dart:typed_data';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'dart:developer' as developer;
 
 class ContentExtractionService {
   final YoutubeExplode _yt = YoutubeExplode();
@@ -23,7 +24,17 @@ class ContentExtractionService {
       case 'link':
         final url = input as String;
         if (_isYoutubeUrl(url)) {
-          rawText = await _extractYoutubeTranscript(url);
+          try {
+            // Priority: Native AI Video Analysis (Visuals + Audio)
+            rawText = await _enhancedAiService.analyzeYoutubeVideo(url);
+          } catch (e) {
+            // Fallback: Transcript Extraction (Text only)
+            developer.log(
+                'Native video analysis failed, falling back to transcript.',
+                error: e,
+                name: 'ContentExtractionService');
+            rawText = await _extractYoutubeTranscript(url);
+          }
         } else {
           rawText = await _extractWebContent(url);
         }

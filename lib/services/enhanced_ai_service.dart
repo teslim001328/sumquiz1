@@ -192,6 +192,31 @@ $sanitizedText''';
     }
   }
 
+  /// Analyzes a YouTube video directly using Gemini's native multimodal capabilities.
+  /// Requires a valid [videoUrl].
+  Future<String> analyzeYoutubeVideo(String videoUrl) async {
+    try {
+      final prompt =
+          '''Analyze the YouTube video at the following URL: $videoUrl
+          
+Goal: Provide a comprehensive, detailed transcript-like summary of the video content.
+- Include key visual details (diagrams, code snippets, on-screen text) that might be missed in a pure audio transcript.
+- Capture the structure and flow of the presentation.
+- Do not summarize yet; just extract and describe the content in full detail so it can be processed into a study guide later.
+''';
+
+      // We use the primary model as Gemini 2.5 Flash is multimodal.
+      return await _generateWithModel(
+          _model, prompt, 'Gemini 2.5 Flash (Video)');
+    } catch (e) {
+      developer.log('Native Video Analysis Failed',
+          name: 'EnhancedAIService', error: e);
+      // Rethrow so the caller can decide to fallback to transcript
+      throw EnhancedAIServiceException(
+          'Native video analysis failed: ${e.toString()}');
+    }
+  }
+
   Future<String> _generateSummaryJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
     final prompt =

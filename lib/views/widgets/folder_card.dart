@@ -27,7 +27,8 @@ class FolderCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(Icons.folder_rounded, size: 40.0, color: theme.colorScheme.primary),
+              Icon(Icons.folder_rounded,
+                  size: 40.0, color: theme.colorScheme.primary),
               const SizedBox(width: 16.0),
               Expanded(
                 child: Column(
@@ -35,20 +36,23 @@ class FolderCard extends StatelessWidget {
                   children: [
                     Text(
                       folder.name,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4.0),
                     Text(
                       'Updated: ${folder.updatedAt.toLocal().toString().split(' ')[0]}',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.grey),
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.grey),
                 onPressed: onDelete,
                 tooltip: 'Delete Folder',
               ),

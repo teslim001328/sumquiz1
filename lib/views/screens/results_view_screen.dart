@@ -177,15 +177,15 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
     try {
       final db = context.read<LocalDatabaseService>();
       final folder = await db.getFolder(widget.folderId);
-      
+
       if (folder != null) {
         // Mark the folder as saved
         folder.isSaved = true;
         await db.saveFolder(folder);
-        
+
         if (mounted) {
           setState(() => _isSaved = true);
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Content saved to your library!'),
@@ -246,7 +246,9 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
           // Show different icon based on save status
           IconButton(
             icon: Icon(
-              _isSaved ? Icons.library_add_check : Icons.library_add_check_outlined,
+              _isSaved
+                  ? Icons.library_add_check
+                  : Icons.library_add_check_outlined,
               color: _isSaved ? Colors.green : theme.colorScheme.primary,
             ),
             tooltip: _isSaved ? 'Saved to Library' : 'Save to Library',
@@ -276,10 +278,8 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
                               ]
                             : [
                                 const Color(0xFFE0F7FA),
-                                Color.lerp(
-                                    const Color(0xFFE0F7FA),
-                                    const Color(0xFFB2EBF2),
-                                    value)!,
+                                Color.lerp(const Color(0xFFE0F7FA),
+                                    const Color(0xFFB2EBF2), value)!,
                               ],
                       ),
                     ),

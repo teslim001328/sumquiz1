@@ -40,13 +40,14 @@ class _EditSummaryScreenState extends State<EditSummaryScreen> {
 
     // Initialize QuillController - use QuillController.basic() for empty document
     _quillController = QuillController.basic();
-    
+
     // Load existing content if available
     if (widget.content.content != null && widget.content.content!.isNotEmpty) {
       try {
         final contentJson = jsonDecode(widget.content.content!);
         // Create document from JSON delta
-        final doc = Document.fromJson(contentJson is List ? contentJson : [contentJson]);
+        final doc = Document.fromJson(
+            contentJson is List ? contentJson : [contentJson]);
         // Replace the controller's document
         _quillController = QuillController(
           document: doc,
@@ -67,7 +68,8 @@ class _EditSummaryScreenState extends State<EditSummaryScreen> {
       _showAiTooltip = false;
     });
     _typingTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && _quillController.document.toPlainText().trim().isNotEmpty) {
+      if (mounted &&
+          _quillController.document.toPlainText().trim().isNotEmpty) {
         setState(() {
           _showAiTooltip = true;
         });
@@ -190,7 +192,9 @@ class _EditSummaryScreenState extends State<EditSummaryScreen> {
             transitionBuilder: (child, animation) =>
                 ScaleTransition(scale: animation, child: child),
             child: _isSaving
-                ? Icon(Icons.check, color: theme.colorScheme.primary, key: const ValueKey('saved'))
+                ? Icon(Icons.check,
+                    color: theme.colorScheme.primary,
+                    key: const ValueKey('saved'))
                 : const Icon(Icons.save_outlined, key: ValueKey('save')),
           ),
           onPressed: _handleSave,
@@ -366,22 +370,20 @@ class _EditSummaryScreenState extends State<EditSummaryScreen> {
         borderRadius: BorderRadius.circular(16.0),
         child: _isAiThinking
             ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 10.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 16, height: 16,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2, 
-                        color: theme.colorScheme.onSecondary
-                      ),
+                          strokeWidth: 2, color: theme.colorScheme.onSecondary),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Thinking...', 
-                      style: TextStyle(color: theme.colorScheme.onSecondary)
-                    ),
+                    Text('Thinking...',
+                        style: TextStyle(color: theme.colorScheme.onSecondary)),
                   ],
                 ),
               )
@@ -390,19 +392,17 @@ class _EditSummaryScreenState extends State<EditSummaryScreen> {
                 highlightColor: theme.colorScheme.secondary.withAlpha(150),
                 period: const Duration(seconds: 3),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 10.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text('✨', style: TextStyle(fontSize: 16)),
                       const SizedBox(width: 8),
-                      Text(
-                        'AI Assist', 
-                        style: TextStyle(
-                          color: theme.colorScheme.onSecondary, 
-                          fontWeight: FontWeight.bold
-                        )
-                      ),
+                      Text('AI Assist',
+                          style: TextStyle(
+                              color: theme.colorScheme.onSecondary,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

@@ -19,7 +19,8 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
   void initState() {
     super.initState();
     _selectedGoal = widget.currentGoal;
-    _customGoalController = TextEditingController(text: _isCustomGoal() ? widget.currentGoal.toString() : '');
+    _customGoalController = TextEditingController(
+        text: _isCustomGoal() ? widget.currentGoal.toString() : '');
   }
 
   bool _isCustomGoal() {
@@ -39,7 +40,9 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
     return AlertDialog(
       backgroundColor: theme.cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Center(child: Text('Set Your Daily Goal', style: theme.textTheme.titleLarge)),
+      title: Center(
+          child:
+              Text('Set Your Daily Goal', style: theme.textTheme.titleLarge)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -52,7 +55,9 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
               return ChoiceChip(
                 label: Text('$goal'),
                 labelStyle: TextStyle(
-                  color: isSelected ? theme.colorScheme.onSecondary : theme.textTheme.bodyLarge?.color,
+                  color: isSelected
+                      ? theme.colorScheme.onSecondary
+                      : theme.textTheme.bodyLarge?.color,
                   fontWeight: FontWeight.bold,
                 ),
                 selected: isSelected,
@@ -66,7 +71,8 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
                 },
                 backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.5),
                 selectedColor: theme.colorScheme.secondary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 side: BorderSide.none,
               );
             }).toList(),
@@ -76,7 +82,8 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
             controller: _customGoalController,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               hintText: 'Custom Goal',
               filled: true,
@@ -105,9 +112,13 @@ class _GoalSettingDialogState extends State<GoalSettingDialog> {
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.secondary,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Save Goal', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSecondary, fontWeight: FontWeight.bold)),
+            child: Text('Save Goal',
+                style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSecondary,
+                    fontWeight: FontWeight.bold)),
           ),
         ),
       ],

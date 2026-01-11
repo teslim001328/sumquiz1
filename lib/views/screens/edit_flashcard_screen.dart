@@ -98,9 +98,9 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
         );
       }
     }
-    
+
     if (updatedFlashcards.isEmpty) {
-        if (mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot save an empty flashcard set.')),
         );
@@ -137,8 +137,12 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
         title: Text('Edit Flashcards'),
         actions: [
           IconButton(
-            icon: _isSaving 
-                ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary))
+            icon: _isSaving
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: theme.colorScheme.onPrimary))
                 : const Icon(Icons.save),
             onPressed: _isSaving ? null : _saveChanges,
             tooltip: 'Save Changes',
@@ -186,7 +190,8 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 16.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -195,9 +200,11 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Card ${index + 1}', style: theme.textTheme.titleMedium),
+                    Text('Card ${index + 1}',
+                        style: theme.textTheme.titleMedium),
                     IconButton(
-                      icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                      icon: Icon(Icons.delete_outline,
+                          color: theme.colorScheme.error),
                       onPressed: () => _removeFlashcard(index),
                     ),
                   ],
@@ -218,7 +225,7 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
                     labelText: 'Answer',
                     border: OutlineInputBorder(),
                   ),
-                   maxLines: null,
+                  maxLines: null,
                 ),
               ],
             ),
@@ -229,7 +236,7 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
   }
 
   Widget _buildAddCardButton(ThemeData theme) {
-     return Padding(
+    return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
         icon: Icon(Icons.add),
@@ -237,7 +244,8 @@ class _EditFlashcardScreenState extends State<EditFlashcardScreen> {
         onPressed: _addFlashcard,
         style: ElevatedButton.styleFrom(
           minimumSize: Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

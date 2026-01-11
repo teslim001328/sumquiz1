@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
 import 'package:uuid/uuid.dart';
 
 import '../../models/user_model.dart';
@@ -211,7 +210,6 @@ class _QuizScreenState extends State<QuizScreen> {
     try {
       await _localDbService.saveQuiz(quizToSave);
 
-      // Increment public deck completion if applicable
       if (quizToSave.publicDeckId != null) {
         final firestoreService = FirestoreService();
         await firestoreService.incrementDeckMetric(
@@ -251,63 +249,56 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          title: Text(widget.quiz == null ? 'Create Quiz' : 'Take Quiz',
-              style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded,
-                color: theme.colorScheme.onSurface),
-            onPressed: () => Navigator.of(context).pop(),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          widget.quiz == null ? 'Create Quiz' : 'Quiz',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
           ),
-          actions: [
-            if (_state == QuizState.inProgress)
-              IconButton(
-                icon: Icon(Icons.save_alt_outlined,
-                    color: theme.colorScheme.onSurface),
-                onPressed: _saveInProgress,
-                tooltip: 'Save Progress',
-              )
-          ],
-          bottom: widget.quiz?.creatorName != null
-              ? PreferredSize(
-                  preferredSize: const Size.fromHeight(20),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Created by ${widget.quiz!.creatorName}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7),
-                            fontStyle: FontStyle.italic,
-                          ),
-                    ),
-                  ),
-                )
-              : null,
         ),
-        body: Stack(
-          children: [
-            // Simple background
-            Container(color: theme.scaffoldBackgroundColor),
-
-            SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: _buildContent(theme),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        leading: BackButton(color: theme.colorScheme.onSurface),
+        actions: [
+          if (_state == QuizState.inProgress)
+            IconButton(
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: _saveInProgress,
+              tooltip: 'Save Progress',
+            )
+        ],
+        bottom: widget.quiz?.creatorName != null
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.person_outline_rounded,
+                          size: 16,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Created by ${widget.quiz!.creatorName}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ));
+              )
+            : null,
+      ),
+      body: _buildContent(theme),
+    );
   }
 
   Widget _buildContent(ThemeData theme) {
@@ -331,26 +322,28 @@ class _QuizScreenState extends State<QuizScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 80,
-            height: 80,
+            width: 64,
+            height: 64,
             child: CircularProgressIndicator(
-              strokeWidth: 6,
+              strokeWidth: 4,
               valueColor:
                   AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
           ),
           const SizedBox(height: 32),
-          Text(_loadingMessage,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary)),
-          const SizedBox(height: 16),
           Text(
-            "Our AI is crafting challenging questions...",
+            _loadingMessage,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "Crafting challenging questions...",
             style: theme.textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
           ),
         ],
       ).animate().fadeIn(),
@@ -360,161 +353,187 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildErrorState(ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: _buildGlassContainer(
-          theme: theme,
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline_rounded,
-                  color: Colors.redAccent, size: 64),
-              const SizedBox(height: 16),
-              Text('Oops! Something went wrong.',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              Text(_errorMessage,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.7))),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _retry,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Try Again'),
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline_rounded,
+                color: theme.colorScheme.error, size: 64),
+            const SizedBox(height: 24),
+            Text(
+              'Something went wrong',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _retry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
         ),
-      ).animate().fadeIn().scale(),
+      ).animate().fadeIn(),
     );
   }
 
   Widget _buildCreationForm(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Text('Create a New Quiz',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary))
-              .animate()
-              .fadeIn()
-              .slideY(begin: -0.2),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ],
-              border: Border.all(color: theme.dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Quiz Title',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _titleController,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'e.g., History Midterm Review',
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.dividerColor)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.dividerColor)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                  ),
+    final canGenerate =
+        _titleController.text.isNotEmpty && _textController.text.isNotEmpty;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Create Quiz',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
                 ),
-                const SizedBox(height: 24),
-                Text('Text to Generate From',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _textController,
-                  maxLines: 12,
-                  style: TextStyle(
-                      fontFamily: 'RobotoMono',
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'Paste your notes or article here.',
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.dividerColor)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.dividerColor)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                  ),
+              ).animate().fadeIn().slideY(begin: -0.2),
+              const SizedBox(height: 12),
+              Text(
+                'Generate a quiz from your study materials',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-              ],
-            ),
-          ).animate().fadeIn().slideY(begin: 0.2),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton.icon(
-                onPressed: _generateQuiz,
-                icon: const Icon(Icons.psychology_alt_outlined),
-                label: const Text('Generate Quiz',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  elevation: 4,
-                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.5),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+              ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2),
+              const SizedBox(height: 48),
+
+              // Title Field
+              Text(
+                'Quiz Title',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            ).animate().fadeIn(delay: 200.ms).scale(),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _titleController,
+                style: theme.textTheme.bodyLarge,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Biology Chapter 5 Quiz',
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: theme.colorScheme.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.all(20),
+                ),
+                onChanged: (_) => setState(() {}),
+              ).animate().fadeIn(delay: 200.ms),
+
+              const SizedBox(height: 32),
+
+              // Content Field
+              Text(
+                'Study Material',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _textController,
+                maxLines: 15,
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+                decoration: InputDecoration(
+                  hintText:
+                      'Paste your notes, article, or study material here...',
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: theme.colorScheme.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.all(20),
+                ),
+                onChanged: (_) => setState(() {}),
+              ).animate().fadeIn(delay: 300.ms),
+
+              const SizedBox(height: 40),
+
+              // Generate Button
+              SizedBox(
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: canGenerate ? _generateQuiz : null,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  label: const Text(
+                    'Generate Quiz',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    disabledBackgroundColor: theme.disabledColor,
+                  ),
+                ),
+              ).animate().fadeIn(delay: 400.ms).scale(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildQuizInterface() {
-    // QuizView handles its own theming now
     return QuizView(
       title: _titleController.text,
       questions: _questions,
@@ -537,106 +556,149 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildResultScreen(ThemeData theme) {
     final percentage =
         _questions.isNotEmpty ? (_score / _questions.length) * 100 : 0;
+    
+    // Determine performance level
+    String performanceText;
+    Color performanceColor;
+    IconData performanceIcon;
+    
+    if (percentage >= 90) {
+      performanceText = 'Outstanding!';
+      performanceColor = Colors.green;
+      performanceIcon = Icons.emoji_events_rounded;
+    } else if (percentage >= 70) {
+      performanceText = 'Great Job!';
+      performanceColor = Colors.blue;
+      performanceIcon = Icons.thumb_up_rounded;
+    } else if (percentage >= 50) {
+      performanceText = 'Good Effort!';
+      performanceColor = Colors.orange;
+      performanceIcon = Icons.star_rounded;
+    } else {
+      performanceText = 'Keep Trying!';
+      performanceColor = Colors.grey;
+      performanceIcon = Icons.sentiment_satisfied_rounded;
+    }
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: _buildGlassContainer(
-          theme: theme,
-          padding: const EdgeInsets.all(32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.emoji_events_rounded,
-                      size: 80, color: Colors.amber)
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: performanceColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  performanceIcon,
+                  size: 80,
+                  color: performanceColor,
+                ),
+              )
                   .animate()
                   .scale(duration: 600.ms, curve: Curves.elasticOut)
                   .then()
                   .shake(),
-              const SizedBox(height: 24),
-              Text('Quiz Results',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface)),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 32),
+
+              // Performance Text
               Text(
-                '${percentage.toStringAsFixed(0)}%',
-                style: theme.textTheme.displayMedium?.copyWith(
-                  fontSize: 64,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                performanceText,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
                 ),
-              ).animate().fadeIn().scale(),
-              const SizedBox(height: 8),
-              Text('Your Score: $_score out of ${_questions.length}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.7))),
-              const SizedBox(height: 48),
+                textAlign: TextAlign.center,
+              ).animate().fadeIn(delay: 200.ms),
+
+              const SizedBox(height: 24),
+
+              // Score Display
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: theme.dividerColor),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${percentage.toStringAsFixed(0)}%',
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontSize: 72,
+                        fontWeight: FontWeight.w800,
+                        color: performanceColor,
+                        height: 1,
+                      ),
+                    ).animate(delay: 300.ms).fadeIn().scale(),
+                    const SizedBox(height: 16),
+                    Text(
+                      '$_score out of ${_questions.length} correct',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.2),
+
+              const SizedBox(height: 40),
+
+              // Action Buttons
               SizedBox(
                 width: double.infinity,
                 height: 56,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: _saveFinalScoreAndExit,
+                  icon: const Icon(Icons.check_circle_rounded),
+                  label: const Text(
+                    'Save & Exit',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Save & Exit',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-              ),
+              ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.2),
+
               const SizedBox(height: 16),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: _resetQuizState,
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                        color: theme.colorScheme.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text(
+                    'Retry Quiz',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                  child: Text('Retry Quiz',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: theme.dividerColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
+              ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.2),
             ],
           ),
         ),
-      ).animate().fadeIn().slideY(begin: 0.2),
-    );
-  }
-
-  Widget _buildGlassContainer(
-      {required Widget child,
-      required ThemeData theme,
-      EdgeInsetsGeometry? padding}) {
-    return Container(
-      padding: padding ?? const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: child,
     );
   }
 }

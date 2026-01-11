@@ -38,7 +38,7 @@ class QuizViewModel with ChangeNotifier {
 
   Future<void> _loadQuizzes(String userId) async {
     _setLoading(true);
-    await _localDatabaseService.init(); 
+    await _localDatabaseService.init();
     _quizzes = await _localDatabaseService.getAllQuizzes(userId);
     _setLoading(false);
   }
@@ -48,9 +48,10 @@ class QuizViewModel with ChangeNotifier {
     _isLoading = loading;
     // Ensure listeners are notified safely after the build phase.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (ChangeNotifier.debugAssertNotDisposed(this)) { // Add safety check
-          notifyListeners();
-        }
+      if (ChangeNotifier.debugAssertNotDisposed(this)) {
+        // Add safety check
+        notifyListeners();
+      }
     });
   }
 

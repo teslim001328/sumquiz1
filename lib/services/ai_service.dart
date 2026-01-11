@@ -52,26 +52,26 @@ class AIService {
     ImagePicker? imagePicker,
     IAPService? iapService,
   })  : _textModel = textModel ??
-          GenerativeModel(
-            model: AIConfig.textModel,
-            apiKey: _apiKey,
-            generationConfig: GenerationConfig(
-              temperature: 0.7,
-              topP: 0.8,
-              topK: 40,
-              responseMimeType: 'application/json',
+            GenerativeModel(
+              model: AIConfig.textModel,
+              apiKey: _apiKey,
+              generationConfig: GenerationConfig(
+                temperature: 0.7,
+                topP: 0.8,
+                topK: 40,
+                responseMimeType: 'application/json',
+              ),
             ),
-          ),
         _visionModel = visionModel ??
-          GenerativeModel(
-            model: AIConfig.visionModel,
-            apiKey: _apiKey,
-            generationConfig: GenerationConfig(
-              temperature: 0.7,
-              topP: 0.8,
-              topK: 40,
+            GenerativeModel(
+              model: AIConfig.visionModel,
+              apiKey: _apiKey,
+              generationConfig: GenerationConfig(
+                temperature: 0.7,
+                topP: 0.8,
+                topK: 40,
+              ),
             ),
-          ),
         _imagePicker = imagePicker ?? ImagePicker(),
         _iapService = iapService;
 
@@ -84,7 +84,8 @@ class AIService {
       } on TimeoutException {
         throw AIServiceException('Request timed out. Please try again.');
       } catch (e) {
-        developer.log('AI Error (Attempt ${attempt + 1})', name: 'EnhancedAIService', error: e);
+        developer.log('AI Error (Attempt ${attempt + 1})',
+            name: 'EnhancedAIService', error: e);
         attempt++;
         if (attempt >= maxRetries) rethrow;
         final delay = Duration(seconds: pow(2, attempt).toInt());
@@ -315,9 +316,10 @@ class AIService {
     final promptPart = TextPart('Describe this image.');
 
     try {
-      final response = await _retryWithBackoff(() => _visionModel.generateContent([
-            Content.multi([promptPart, imagePart])
-          ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
+      final response =
+          await _retryWithBackoff(() => _visionModel.generateContent([
+                Content.multi([promptPart, imagePart])
+              ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
       return response.text ?? 'Could not describe image.';
     } on TimeoutException {
       throw AIServiceException('Request timed out. Please try again.');
@@ -378,9 +380,10 @@ class AIService {
         'Transcribe all the text from this image exactly as it appears. Do not add any introductory or concluding remarks.');
 
     try {
-      final response = await _retryWithBackoff(() => _visionModel.generateContent([
-            Content.multi([promptPart, imagePart])
-          ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
+      final response =
+          await _retryWithBackoff(() => _visionModel.generateContent([
+                Content.multi([promptPart, imagePart])
+              ]).timeout(const Duration(seconds: AIConfig.requestTimeout)));
 
       if (response.text == null || response.text!.isEmpty) {
         throw AIServiceException('No text found in image.');
@@ -504,9 +507,8 @@ class AIService {
             userId: userId,
             title: title,
             flashcards: cards
-                .map((c) => LocalFlashcard(
-                    question: c.question,
-                    answer: c.answer))
+                .map((c) =>
+                    LocalFlashcard(question: c.question, answer: c.answer))
                 .toList(),
             timestamp: DateTime.now(),
             isSynced: false,
@@ -523,5 +525,6 @@ class AIService {
     return folderId;
   }
 
-  Future generateAll(String text, {required List<String> requestedOutputs}) async {}
+  Future generateAll(String text,
+      {required List<String> requestedOutputs}) async {}
 }

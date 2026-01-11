@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/web_payment_service.dart';
-import 'package:sumquiz/services/user_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});

@@ -15,12 +15,14 @@ class UpgradeDialog extends StatelessWidget {
       backgroundColor: theme.colorScheme.surface,
       title: Row(
         children: [
-          Icon(Icons.workspace_premium_outlined, color: theme.colorScheme.primary),
+          Icon(Icons.workspace_premium_outlined,
+              color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Upgrade for Unlimited ${featureName.replaceFirst(featureName[0], featureName[0].toUpperCase())}',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],

@@ -103,9 +103,7 @@ class SpacedRepetitionService {
     var item = _box.get(itemId);
 
     // Fallback: If not found, check if it was stored with a UUID (legacy behavior).
-    if (item == null) {
-      item = _box.values.firstWhereOrNull((i) => i.contentId == itemId);
-    }
+    item ??= _box.values.firstWhereOrNull((i) => i.contentId == itemId);
 
     if (item == null) return;
 

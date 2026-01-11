@@ -19,8 +19,10 @@ class AchievementBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color iconColor = isEarned ? theme.colorScheme.secondary : theme.disabledColor;
-    final Color textColor = isEarned ? theme.textTheme.bodyLarge!.color! : theme.disabledColor;
+    final Color iconColor =
+        isEarned ? theme.colorScheme.secondary : theme.disabledColor;
+    final Color textColor =
+        isEarned ? theme.textTheme.bodyLarge!.color! : theme.disabledColor;
 
     return InkWell(
       onTap: onTap,
@@ -30,7 +32,11 @@ class AchievementBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isEarned ? theme.colorScheme.secondary.withOpacity(0.5) : Colors.transparent, width: 1),
+          border: Border.all(
+              color: isEarned
+                  ? theme.colorScheme.secondary.withOpacity(0.5)
+                  : Colors.transparent,
+              width: 1),
         ),
         child: Row(
           children: [

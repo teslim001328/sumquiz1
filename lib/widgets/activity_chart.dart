@@ -22,22 +22,28 @@ class ActivityChart extends StatelessWidget {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: weeklyData.map((d) => d.value).reduce((a, b) => a > b ? a : b) * 1.2, // Add 20% padding to max Y
+          maxY: weeklyData.map((d) => d.value).reduce((a, b) => a > b ? a : b) *
+              1.2, // Add 20% padding to max Y
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => theme.colorScheme.secondary,
-               getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '${rod.toY.round()}',
-                  TextStyle(color: theme.colorScheme.onSecondary, fontWeight: FontWeight.bold),
+                  TextStyle(
+                      color: theme.colorScheme.onSecondary,
+                      fontWeight: FontWeight.bold),
                 );
               },
             ),
           ),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -46,7 +52,8 @@ class ActivityChart extends StatelessWidget {
                   final day = weeklyData[value.toInt()].key;
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(DateFormat.E().format(day), style: theme.textTheme.bodySmall),
+                    child: Text(DateFormat.E().format(day),
+                        style: theme.textTheme.bodySmall),
                   );
                 },
               ),
@@ -77,13 +84,15 @@ class ActivityChart extends StatelessWidget {
     );
   }
 
-  List<MapEntry<DateTime, int>> _prepareWeeklyData(List<MapEntry<DateTime, int>> rawData) {
+  List<MapEntry<DateTime, int>> _prepareWeeklyData(
+      List<MapEntry<DateTime, int>> rawData) {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final Map<DateTime, int> weeklyActivity = {};
 
     for (int i = 0; i < 7; i++) {
-      final day = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day).add(Duration(days: i));
+      final day = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day)
+          .add(Duration(days: i));
       weeklyActivity[day] = 0;
     }
 

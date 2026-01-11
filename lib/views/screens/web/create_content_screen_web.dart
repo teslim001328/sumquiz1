@@ -1,15 +1,13 @@
-import 'dart:ui';
+
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:provider/provider.dart';
-import 'package:sumquiz/services/content_extraction_service.dart';
-import 'package:sumquiz/widgets/pro_gate.dart';
-import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
 import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/content_extraction_service.dart';
 import 'package:sumquiz/services/usage_service.dart';
+import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
 
 class CreateContentScreenWeb extends StatefulWidget {
   const CreateContentScreenWeb({super.key});
@@ -18,40 +16,38 @@ class CreateContentScreenWeb extends StatefulWidget {
   State<CreateContentScreenWeb> createState() => _CreateContentScreenWebState();
 }
 
-class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
-  int _selectedInputIndex = 0;
+class _CreateContentScreenWebState extends State<CreateContentScreenWeb> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _textController = TextEditingController();
+  final _linkController = TextEditingController();
+  String? _fileName;
+  Uint8List? _fileBytes;
   bool _isLoading = false;
+  String _errorMessage = '';
+  String _selectedInputType = 'text'; // Default to text
 
-  // Controllers
-  final TextEditingController _textInputController = TextEditingController();
-  final TextEditingController _urlInputController = TextEditingController();
-
-  PlatformFile? _selectedFile;
-
-  final List<Map<String, dynamic>> _inputMethods = [
-    {
-      'icon': Icons.description_outlined,
-      'label': 'Text',
-      'description': 'Paste text directly'
-    },
-    {'icon': Icons.link, 'label': 'Link', 'description': 'Article or YouTube'},
-    {
-      'icon': Icons.upload_file,
-      'label': 'PDF',
-      'description': 'Upload document'
-    },
-    {
-      'icon': Icons.image_outlined,
-      'label': 'Image',
-      'description': 'Photo or screenshot'
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
 
   @override
   void dispose() {
-    _textInputController.dispose();
-    _urlInputController.dispose();
+    _tabController.dispose();
+    _textController.dispose();
+    _linkController.dispose();
     super.dispose();
+  }
+
+  void _resetInputs() {
+    _textController.clear();
+    _linkController.clear();
+    setState(() {
+      _fileName = null;
+      _fileBytes = null;
+      _errorMessage = '';
+    });
   }
 
   bool _checkProAccess(String feature) {
@@ -66,117 +62,94 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
     return true;
   }
 
-  Future<void> _handleFileSelection(bool isImage) async {
-    if (!_checkProAccess(isImage ? 'Image Scan' : 'PDF Upload')) return;
+  Future<void> _pickFile(String type) async {
+    if (!_checkProAccess(type == 'pdf' ? 'PDF Upload' : 'Image Scan')) return;
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: isImage ? FileType.image : FileType.custom,
-        allowedExtensions: isImage ? null : ['pdf'],
-        withData: true, // Important for web
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: type == 'pdf' ? FileType.custom : FileType.image,
+        allowedExtensions: type == 'pdf' ? ['pdf'] : ['jpg', 'jpeg', 'png'],
+        withData: true,
       );
 
-      if (result != null) {
+      if (result != null && result.files.single.bytes != null) {
         setState(() {
-          _selectedFile = result.files.first;
+          _fileName = result.files.single.name;
+          _fileBytes = result.files.single.bytes;
+          _selectedInputType = type;
+          _textController.clear();
+          _linkController.clear();
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
-        );
-      }
+      setState(() => _errorMessage = 'Error picking file: $e');
     }
   }
 
-  Future<void> _processContent() async {
+  Future<void> _processAndNavigate() async {
+    if (_isLoading) return;
+
     final user = Provider.of<UserModel?>(context, listen: false);
-
-    // Check Limits
-    // If not logged in? Web create screen might allow guest? No, prompt implies user base building.
-    // If user is null, we can't track.
-
-    if (user != null) {
-      final usageService = UsageService();
-      final canGenerate = await usageService.canGenerateDeck(user.uid);
-
-      if (!canGenerate) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (_) => const UpgradeDialog(featureName: 'Daily Limit'),
-          );
-        }
-        return;
-      }
-    } else {
-      // Force login?
-      // The original code didn't force login in _processContent explicitly but extraction might fail or be allowed?
-      // Let's assume user must be logged in for tracking.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to create content.')),
-      );
+    if (user == null) {
+      setState(() => _errorMessage = 'You must be logged in to create content.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    final usageService = UsageService();
+    final canGenerate = await usageService.canGenerateDeck(user.uid);
+
+    if (!mounted) return;
+    if (!canGenerate) {
+      showDialog(
+        context: context,
+        builder: (_) => const UpgradeDialog(featureName: 'Daily Limit'),
+      );
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
     try {
-      final extractionService = context.read<ContentExtractionService>();
+      final extractionService = Provider.of<ContentExtractionService>(context, listen: false);
       String extractedText = '';
 
-      switch (_selectedInputIndex) {
-        case 0: // Text
-          extractedText = _textInputController.text;
+      switch (_selectedInputType) {
+        case 'text':
+          if (_textController.text.trim().isEmpty) throw Exception('Text field cannot be empty.');
+          extractedText = _textController.text;
           break;
-        case 1: // Link
-          if (!_checkProAccess('Web Link')) {
+        case 'link':
+          if (_linkController.text.trim().isEmpty) throw Exception('URL field cannot be empty.');
+           if (!_checkProAccess('Web Link')) {
             setState(() => _isLoading = false);
             return;
           }
-          extractedText = await extractionService.extractContent(
-            type: 'link',
-            input: _urlInputController.text,
-          );
+          extractedText = await extractionService.extractContent(type: 'link', input: _linkController.text);
           break;
-        case 2: // PDF
-          // Access checked in picker
-          if (_selectedFile != null && _selectedFile!.bytes != null) {
-            extractedText = await extractionService.extractContent(
-              type: 'pdf',
-              input: _selectedFile!.bytes,
-            );
-          }
+        case 'pdf':
+          if (_fileBytes == null) throw Exception('No PDF file selected.');
+          extractedText = await extractionService.extractContent(type: 'pdf', input: _fileBytes!);
           break;
-        case 3: // Image
-          // Access checked in picker
-          if (_selectedFile != null && _selectedFile!.bytes != null) {
-            extractedText = await extractionService.extractContent(
-              type: 'image',
-              input: _selectedFile!.bytes,
-            );
-          }
+        case 'image':
+          if (_fileBytes == null) throw Exception('No image file selected.');
+          extractedText = await extractionService.extractContent(type: 'image', input: _fileBytes!);
           break;
+        default:
+          throw Exception('Please provide some content first.');
+      }
+      
+      if (extractedText.trim().isEmpty) {
+        throw Exception('Could not extract any content from the source.');
       }
 
-      if (extractedText.isNotEmpty) {
-        // Record Usage
-        await UsageService().recordDeckGeneration(user.uid);
-        if (!mounted) return;
+      await usageService.recordDeckGeneration(user.uid);
+      if (mounted) context.go('/create/extraction-view', extra: extractedText);
 
-        if (mounted) {
-          context.go('/create/extraction-view', extra: extractedText);
-        }
-      } else {
-        throw Exception('No content extracted');
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Extraction failed: $e')),
-        );
-      }
+      if (mounted) setState(() => _errorMessage = e.toString().replaceFirst("Exception: ", ""));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -185,296 +158,105 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text('Create Content',
-            style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1A237E))),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        // Removed leading back button for sidebar navigation consistency
-      ),
-      body: Stack(
-        children: [
-          // Animated Background
-          Animate(
-            onPlay: (controller) => controller.repeat(reverse: true),
-            effects: [
-              CustomEffect(
-                duration: 6.seconds,
-                builder: (context, value, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                                const Color(0xFF0F172A),
-                                Color.lerp(const Color(0xFF0F172A),
-                                    const Color(0xFF1E293B), value)!
-                              ]
-                            : [
-                                const Color(0xFFF3F4F6),
-                                Color.lerp(const Color(0xFFE8EAF6),
-                                    const Color(0xFFC5CAE9), value)!
-                              ],
-                      ),
-                    ),
-                    child: child,
-                  );
-                },
-              )
-            ],
-            child: Container(),
-          ),
-
-          SafeArea(
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        backgroundColor: colorScheme.surface, // Use theme color
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
             child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Left Side - Input Selection
-                  Expanded(
-                    flex: 4,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: theme.cardColor
-                                .withValues(alpha: isDark ? 0.5 : 0.7),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                                color:
-                                    theme.dividerColor.withValues(alpha: 0.1),
-                                width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 20,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Create New",
-                                  style: theme.textTheme.displaySmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.colorScheme.primary)),
-                              const SizedBox(height: 8),
-                              Text(
-                                  "Import content to generate summaries and quizzes",
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.7))),
-                              const SizedBox(height: 48),
-
-                              // Input Methods Grid
-                              SizedBox(
-                                height: 120,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _inputMethods.length,
-                                  separatorBuilder: (context, index) =>
-                                      const SizedBox(width: 16),
-                                  itemBuilder: (context, index) {
-                                    final method = _inputMethods[index];
-                                    final isSelected =
-                                        _selectedInputIndex == index;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedInputIndex = index;
-                                          _selectedFile = null;
-                                        });
-                                      },
-                                      child: AnimatedContainer(
-                                        duration: 200.ms,
-                                        width: 140,
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? theme.colorScheme.primary
-                                                : theme.cardColor
-                                                    .withValues(alpha: 0.5),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            border: Border.all(
-                                                color: isSelected
-                                                    ? Colors.transparent
-                                                    : theme.dividerColor),
-                                            boxShadow: isSelected
-                                                ? [
-                                                    BoxShadow(
-                                                        color: theme
-                                                            .colorScheme.primary
-                                                            .withValues(
-                                                                alpha: 0.3),
-                                                        blurRadius: 12,
-                                                        offset:
-                                                            const Offset(0, 4))
-                                                  ]
-                                                : []),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(method['icon'] as IconData,
-                                                color: isSelected
-                                                    ? theme
-                                                        .colorScheme.onPrimary
-                                                    : theme.colorScheme.primary,
-                                                size: 28),
-                                            const SizedBox(height: 8),
-                                            Text(method['label'] as String,
-                                                style: theme
-                                                    .textTheme.labelLarge
-                                                    ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: isSelected
-                                                            ? theme.colorScheme
-                                                                .onPrimary
-                                                            : theme.colorScheme
-                                                                .onSurface)),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              // Divider
-                              Divider(color: theme.dividerColor),
-                              const SizedBox(height: 40),
-
-                              // Input Area
-                              Expanded(
-                                child: AnimatedSwitcher(
-                                  duration: 300.ms,
-                                  child: _buildInputArea(theme),
-                                ),
-                              ),
-
-                              // Action Bar
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _isLoading ? null : _processContent,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.primary,
-                                    foregroundColor:
-                                        theme.colorScheme.onPrimary,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16)),
-                                    elevation: 4,
-                                    shadowColor: theme.colorScheme.primary
-                                        .withValues(alpha: 0.3),
-                                  ),
-                                  child: _isLoading
-                                      ? SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                              color:
-                                                  theme.colorScheme.onPrimary,
-                                              strokeWidth: 2))
-                                      : Text("NEXT STEP",
-                                          style: theme.textTheme.labelLarge
-                                              ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  letterSpacing: 1,
-                                                  color: theme
-                                                      .colorScheme.onPrimary)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                  Text('Generate Study Materials From Anything', style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Pdfs, links, text, and images can be transformed into flashcards, quizzes, and summaries in seconds.',
+                    style: theme.textTheme.titleLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                    textAlign: TextAlign.center,
                   ),
-
-                  const SizedBox(width: 24),
-
-                  // Right Side - Illustration/Preview
-                  Expanded(
-                    flex: 3,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_selectedInputIndex >= 2)
-                            Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: ProGate(
-                                featureName: _inputMethods[_selectedInputIndex]
-                                    ['label'] as String,
-                                proContent: () => _buildSafetyInfo(theme),
-                                freeContent: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                        sigmaX: 10, sigmaY: 10),
-                                    child: Container(
-                                        padding: const EdgeInsets.all(24),
-                                        decoration: BoxDecoration(
-                                          color: theme.cardColor.withValues(
-                                              alpha: isDark ? 0.5 : 0.7),
-                                          borderRadius:
-                                              BorderRadius.circular(24),
-                                          border: Border.all(
-                                              color: theme.dividerColor
-                                                  .withValues(alpha: 0.6)),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            const Icon(Icons.star_border,
-                                                size: 48, color: Colors.amber),
-                                            const SizedBox(height: 16),
-                                            Text("Pro Feature",
-                                                style: theme
-                                                    .textTheme.headlineSmall
-                                                    ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                                "Upload unlimited PDFs and Images with Pro.",
-                                                textAlign: TextAlign.center,
-                                                style:
-                                                    theme.textTheme.bodyMedium),
-                                          ],
-                                        )),
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            _buildSafetyInfo(theme),
-                        ],
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 48),
+                  _buildInputWidget(theme),
+                  const SizedBox(height: 24),
+                  if (_errorMessage.isNotEmpty)
+                    Text(_errorMessage, style: TextStyle(color: colorScheme.error, fontSize: 16)),
+                  const SizedBox(height: 24),
+                  _buildGenerateButton(theme),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputWidget(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface, // Use theme color
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.surface, // Use theme color
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurface.withOpacity(0.6),
+              onTap: (index) {
+                _resetInputs();
+                setState(() {
+                  _selectedInputType = [
+                    'text',
+                    'link',
+                    'pdf',
+                    'image'
+                  ][index];
+                });
+              },
+              tabs: const [
+                Tab(text: 'Paste Text'),
+                Tab(text: 'Add Link'),
+                Tab(text: 'Upload PDF'),
+                Tab(text: 'Upload Image'),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1),
+          SizedBox(
+            height: 200,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTextField(theme),
+                _buildLinkField(theme),
+                _buildFileUpload('pdf', theme),
+                _buildFileUpload('image', theme),
+              ],
             ),
           ),
         ],
@@ -482,139 +264,97 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb> {
     );
   }
 
-  Widget _buildInputArea(ThemeData theme) {
-    switch (_selectedInputIndex) {
-      case 0:
-        return TextField(
-          controller: _textInputController,
-          maxLines: null,
-          expands: true,
-          textAlignVertical: TextAlignVertical.top,
-          style: theme.textTheme.bodyMedium,
-          decoration: InputDecoration(
-              hintText: "Paste your text here...",
-              hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-              filled: true,
-              fillColor: theme.cardColor,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.all(24)),
-        );
-      case 1:
-        return Column(
-          children: [
-            TextField(
-              controller: _urlInputController,
-              style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.link),
-                  hintText: "Paste URL (Article, YouTube, etc.)",
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.all(24)),
-            ),
-          ],
-        );
-      case 2:
-      case 3:
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                  _selectedFile == null
-                      ? Icons.cloud_upload_outlined
-                      : Icons.check_circle_outline,
-                  size: 64,
-                  color: _selectedFile == null
-                      ? theme.disabledColor
-                      : Colors.green),
-              const SizedBox(height: 16),
-              Text(
-                _selectedFile == null
-                    ? "Drag & drop or click to upload"
-                    : _selectedFile!.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                    color: _selectedFile == null
-                        ? theme.disabledColor
-                        : theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 24),
-              OutlinedButton(
-                onPressed: () => _handleFileSelection(_selectedInputIndex == 3),
-                style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    side: BorderSide(color: theme.dividerColor),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8))),
-                child: Text(
-                    _selectedFile == null ? "Select File" : "Change File",
-                    style: TextStyle(color: theme.colorScheme.primary)),
-              )
-            ],
-          ),
-        );
-      default:
-        return const SizedBox();
-    }
+  Widget _buildTextField(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        controller: _textController,
+        maxLines: null,
+        expands: true,
+        style: TextStyle(color: theme.colorScheme.onSurface),
+        decoration: InputDecoration(
+          hintText: 'Paste your text here...',
+          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          border: InputBorder.none,
+        ),
+        onChanged: (_) {
+          _resetInputs();
+          _selectedInputType = 'text';
+        },
+      ),
+    );
   }
 
-  Widget _buildSafetyInfo(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: isDark ? 0.5 : 0.7),
-            borderRadius: BorderRadius.circular(24),
-            border:
-                Border.all(color: theme.dividerColor.withValues(alpha: 0.6)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 20,
-              )
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.auto_awesome,
-                    size: 48, color: theme.colorScheme.primary),
-              ),
-              const SizedBox(height: 24),
-              Text("Smart Generation",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary)),
-              const SizedBox(height: 12),
-              Text(
-                "Our AI automatically analyzes your content to create the best study materials. Please verify the generated content for accuracy.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-              ),
-            ],
+  Widget _buildLinkField(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        controller: _linkController,
+        style: TextStyle(color: theme.colorScheme.onSurface),
+        decoration: InputDecoration(
+          hintText: 'Enter a URL...',
+          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          border: InputBorder.none,
+        ),
+        onChanged: (_) {
+          _resetInputs();
+          _selectedInputType = 'link';
+        },
+      ),
+    );
+  }
+
+  Widget _buildFileUpload(String type, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+
+    if (_fileName != null && _selectedInputType == type) {
+      return Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, color: colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(_fileName!, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+    }
+    return InkWell(
+      onTap: () => _pickFile(type),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.upload_file, size: 40, color: colorScheme.onSurface.withOpacity(0.4)),
+            const SizedBox(height: 8),
+            Text('Click to upload ${type.toUpperCase()}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenerateButton(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+
+    return SizedBox(
+      width: 250,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _processAndNavigate,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(
+                'Extract Content', // Changed button text
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

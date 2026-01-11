@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SummaryView extends StatelessWidget {
   final String title;
@@ -23,157 +24,119 @@ class SummaryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: theme.dividerColor),
+        // Title
+        SelectableText(
+          title,
+          style: theme.textTheme.displaySmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SelectableText(
-                  title,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                    height: 1.3,
+        ).animate().fadeIn().slideY(begin: -0.2),
+        
+        const SizedBox(height: 24),
+        
+        // Tags
+        if (tags.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags.map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  tag.startsWith('#') ? tag : '#$tag',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (tags.isNotEmpty)
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: tags
-                        .map((tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.primary.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              child: Text(
-                                '#$tag',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                const SizedBox(height: 32),
-                SelectableText(
-                  content,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.8,
-                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+              );
+            }).toList(),
+          ).animate().fadeIn(delay: 100.ms),
+        
+        if (tags.isNotEmpty) const SizedBox(height: 32),
+        
+        // Action Buttons (if showing actions)
         if (showActions) ...[
-          const SizedBox(height: 30),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: theme.dividerColor),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4))
-                ]),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    context,
-                    label: 'Copy',
-                    icon: Icons.copy_rounded,
-                    onPressed: onCopy,
-                    theme: theme,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onCopy,
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  label: const Text('Copy'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: theme.dividerColor),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Container(width: 1, height: 24, color: theme.dividerColor),
-                const SizedBox(width: 8),
-                if (onSave != null) ...[
-                  Expanded(
-                    child: _buildActionButton(
-                      context,
-                      label: 'Save',
-                      icon: Icons.bookmark_border_rounded,
-                      onPressed: onSave,
-                      theme: theme,
+              ),
+              if (onSave != null) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onSave,
+                    icon: const Icon(Icons.bookmark_add_rounded, size: 18),
+                    label: const Text('Save'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: theme.dividerColor),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
-                ],
+                ),
               ],
-            ),
-          ),
-          if (onGenerateQuiz != null) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton.icon(
-                onPressed: onGenerateQuiz,
-                icon: Icon(Icons.psychology_alt,
-                    color: theme.colorScheme.onPrimary),
-                label: Text("Generate Quiz from Summary",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onPrimary)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  elevation: 2,
-                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              if (onGenerateQuiz != null) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: onGenerateQuiz,
+                    icon: const Icon(Icons.quiz_rounded, size: 18),
+                    label: const Text('Generate Quiz'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
-              ),
-            )
-          ]
+              ],
+            ],
+          ).animate().fadeIn(delay: 200.ms),
+          
+          const SizedBox(height: 32),
+          
+          Divider(color: theme.dividerColor),
+          
+          const SizedBox(height: 32),
         ],
+        
+        // Summary Content
+        SelectableText(
+          content,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            height: 1.8,
+            color: theme.colorScheme.onSurface,
+            fontSize: 16,
+          ),
+        ).animate().fadeIn(delay: showActions ? 300.ms : 200.ms),
       ],
-    );
-  }
-
-  Widget _buildActionButton(BuildContext context,
-      {required String label,
-      required IconData icon,
-      VoidCallback? onPressed,
-      required ThemeData theme}) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: theme.colorScheme.primary),
-      label: Text(label,
-          style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
     );
   }
 }

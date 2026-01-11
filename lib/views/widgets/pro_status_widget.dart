@@ -20,7 +20,9 @@ class ProStatusWidget extends StatelessWidget {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isPro ? theme.colorScheme.primaryContainer : theme.colorScheme.tertiaryContainer,
+      color: isPro
+          ? theme.colorScheme.primaryContainer
+          : theme.colorScheme.tertiaryContainer,
       child: InkWell(
         onTap: isPro ? null : () => context.go('/subscription'),
         borderRadius: BorderRadius.circular(12),
@@ -30,14 +32,18 @@ class ProStatusWidget extends StatelessWidget {
             children: [
               Icon(
                 isPro ? Icons.star : Icons.lock_outline,
-                color: isPro ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onTertiaryContainer,
+                color: isPro
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onTertiaryContainer,
               ),
               const SizedBox(width: 12),
               Text(
                 isPro ? 'Pro Member' : 'Upgrade to Pro',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isPro ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onTertiaryContainer,
+                  color: isPro
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onTertiaryContainer,
                 ),
               ),
               const Spacer(),

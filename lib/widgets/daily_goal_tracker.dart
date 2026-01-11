@@ -15,7 +15,8 @@ class DailyGoalTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final double progress = (dailyGoal > 0 ? (itemsCompleted / dailyGoal).clamp(0.0, 1.0) : 0.0);
+    final double progress =
+        (dailyGoal > 0 ? (itemsCompleted / dailyGoal).clamp(0.0, 1.0) : 0.0);
     final bool isGoalMet = itemsCompleted >= dailyGoal && dailyGoal > 0;
 
     return Container(
@@ -35,15 +36,19 @@ class DailyGoalTracker extends StatelessWidget {
                 CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 8,
-                  backgroundColor: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
+                  backgroundColor:
+                      theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     isGoalMet ? Colors.greenAccent : theme.colorScheme.primary,
                   ),
                 ),
                 Center(
                   child: isGoalMet
-                      ? const Icon(Icons.check_rounded, size: 40, color: Colors.greenAccent)
-                      : Text(itemsCompleted.toString(), style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      ? const Icon(Icons.check_rounded,
+                          size: 40, color: Colors.greenAccent)
+                      : Text(itemsCompleted.toString(),
+                          style: theme.textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -53,18 +58,23 @@ class DailyGoalTracker extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Today's Goal: $dailyGoal items", style: theme.textTheme.titleLarge),
+                Text("Today's Goal: $dailyGoal items",
+                    style: theme.textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(
-                  isGoalMet ? 'Great job! You met your goal.' : 'Keep going, you are doing great!',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+                  isGoalMet
+                      ? 'Great job! You met your goal.'
+                      : 'Keep going, you are doing great!',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: theme.textTheme.bodySmall?.color),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
           IconButton(
-            icon: Icon(Icons.edit_rounded, color: theme.iconTheme.color?.withAlpha((255 * 0.7).round())),
+            icon: Icon(Icons.edit_rounded,
+                color: theme.iconTheme.color?.withAlpha((255 * 0.7).round())),
             onPressed: onSetGoal,
             tooltip: 'Set New Goal',
           ),

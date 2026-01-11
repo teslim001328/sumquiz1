@@ -6,7 +6,8 @@ class ItemCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const ItemCard({super.key, 
+  const ItemCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -35,7 +36,8 @@ class ItemCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

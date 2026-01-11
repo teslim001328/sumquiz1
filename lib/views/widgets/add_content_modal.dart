@@ -55,7 +55,8 @@ class AddContentModal extends StatelessWidget {
         children: [
           Text(
             'Create New Content',
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           IconButton(
             icon: const Icon(Icons.close),
@@ -66,7 +67,10 @@ class AddContentModal extends StatelessWidget {
     );
   }
 
-  Widget _buildOption(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _buildOption(BuildContext context,
+      {required IconData icon,
+      required String title,
+      required VoidCallback onTap}) {
     final theme = Theme.of(context);
     return ListTile(
       leading: Icon(icon, color: theme.colorScheme.primary, size: 28),
@@ -75,7 +79,8 @@ class AddContentModal extends StatelessWidget {
         Navigator.of(context).pop();
         onTap();
       },
-      contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      contentPadding:
+          const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

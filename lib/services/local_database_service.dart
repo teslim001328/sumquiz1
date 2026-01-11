@@ -34,7 +34,8 @@ class LocalDatabaseService {
   late Box _settingsBox;
 
   // Singleton pattern
-  static final LocalDatabaseService _instance = LocalDatabaseService._internal();
+  static final LocalDatabaseService _instance =
+      LocalDatabaseService._internal();
   factory LocalDatabaseService() => _instance;
   LocalDatabaseService._internal();
 
@@ -47,24 +48,44 @@ class LocalDatabaseService {
       await Hive.initFlutter();
 
       // Register adapters only if they haven't been registered yet
-      if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(LocalSummaryAdapter());
-      if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(LocalQuizAdapter());
-      if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(LocalQuizQuestionAdapter());
-      if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(LocalFlashcardAdapter());
-      if (!Hive.isAdapterRegistered(4)) Hive.registerAdapter(LocalFlashcardSetAdapter());
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(LocalSummaryAdapter());
+      }
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(LocalQuizAdapter());
+      }
+      if (!Hive.isAdapterRegistered(2)) {
+        Hive.registerAdapter(LocalQuizQuestionAdapter());
+      }
+      if (!Hive.isAdapterRegistered(3)) {
+        Hive.registerAdapter(LocalFlashcardAdapter());
+      }
+      if (!Hive.isAdapterRegistered(4)) {
+        Hive.registerAdapter(LocalFlashcardSetAdapter());
+      }
       if (!Hive.isAdapterRegistered(5)) Hive.registerAdapter(FolderAdapter());
-      if (!Hive.isAdapterRegistered(6)) Hive.registerAdapter(ContentFolderAdapter());
-      if (!Hive.isAdapterRegistered(8)) Hive.registerAdapter(SpacedRepetitionItemAdapter());
-      if (!Hive.isAdapterRegistered(21)) Hive.registerAdapter(DailyMissionAdapter());
+      if (!Hive.isAdapterRegistered(6)) {
+        Hive.registerAdapter(ContentFolderAdapter());
+      }
+      if (!Hive.isAdapterRegistered(8)) {
+        Hive.registerAdapter(SpacedRepetitionItemAdapter());
+      }
+      if (!Hive.isAdapterRegistered(21)) {
+        Hive.registerAdapter(DailyMissionAdapter());
+      }
 
       // Open boxes
       _summariesBox = await Hive.openBox<LocalSummary>(_summariesBoxName);
       _quizzesBox = await Hive.openBox<LocalQuiz>(_quizzesBoxName);
-      _flashcardSetsBox = await Hive.openBox<LocalFlashcardSet>(_flashcardSetsBoxName);
+      _flashcardSetsBox =
+          await Hive.openBox<LocalFlashcardSet>(_flashcardSetsBoxName);
       _foldersBox = await Hive.openBox<Folder>(_foldersBoxName);
-      _contentFoldersBox = await Hive.openBox<ContentFolder>(_contentFoldersBoxName);
-      _spacedRepetitionBox = await Hive.openBox<SpacedRepetitionItem>(_spacedRepetitionBoxName);
-      _dailyMissionsBox = await Hive.openBox<DailyMission>(_dailyMissionsBoxName);
+      _contentFoldersBox =
+          await Hive.openBox<ContentFolder>(_contentFoldersBoxName);
+      _spacedRepetitionBox =
+          await Hive.openBox<SpacedRepetitionItem>(_spacedRepetitionBoxName);
+      _dailyMissionsBox =
+          await Hive.openBox<DailyMission>(_dailyMissionsBoxName);
       _settingsBox = await Hive.openBox(_settingsBoxName);
 
       _isInitialized = true;
@@ -104,7 +125,9 @@ class LocalDatabaseService {
     await init();
     yield _flashcardSetsBox.values.where((fs) => fs.userId == userId).toList();
     await for (final _ in _flashcardSetsBox.watch()) {
-      yield _flashcardSetsBox.values.where((fs) => fs.userId == userId).toList();
+      yield _flashcardSetsBox.values
+          .where((fs) => fs.userId == userId)
+          .toList();
     }
   }
 
@@ -114,7 +137,8 @@ class LocalDatabaseService {
     await init();
     await _summariesBox.put(summary.id, summary);
     if (folderId != null) {
-      await assignContentToFolder(summary.id, folderId, 'summary', summary.userId);
+      await assignContentToFolder(
+          summary.id, folderId, 'summary', summary.userId);
     }
   }
 
@@ -126,11 +150,13 @@ class LocalDatabaseService {
     }
   }
 
-  Future<void> saveFlashcardSet(LocalFlashcardSet flashcardSet, [String? folderId]) async {
+  Future<void> saveFlashcardSet(LocalFlashcardSet flashcardSet,
+      [String? folderId]) async {
     await init();
     await _flashcardSetsBox.put(flashcardSet.id, flashcardSet);
     if (folderId != null) {
-      await assignContentToFolder(flashcardSet.id, folderId, 'flashcardSet', flashcardSet.userId);
+      await assignContentToFolder(
+          flashcardSet.id, folderId, 'flashcardSet', flashcardSet.userId);
     }
   }
 
@@ -188,14 +214,16 @@ class LocalDatabaseService {
     return _quizzesBox.values.where((q) => q.userId == userId).toList();
   }
 
-   Future<LocalFlashcardSet?> getFlashcardSet(String id) async {
+  Future<LocalFlashcardSet?> getFlashcardSet(String id) async {
     await init();
     return _flashcardSetsBox.get(id);
   }
 
   Future<List<LocalFlashcardSet>> getAllFlashcardSets(String userId) async {
     await init();
-    return _flashcardSetsBox.values.where((set) => set.userId == userId).toList();
+    return _flashcardSetsBox.values
+        .where((set) => set.userId == userId)
+        .toList();
   }
 
   Future<Folder?> getFolder(String id) async {
@@ -205,7 +233,9 @@ class LocalDatabaseService {
 
   Future<List<Folder>> getAllFolders(String userId) async {
     await init();
-    return _foldersBox.values.where((folder) => folder.userId == userId).toList();
+    return _foldersBox.values
+        .where((folder) => folder.userId == userId)
+        .toList();
   }
 
   // --- DELETERS ---
@@ -227,7 +257,8 @@ class LocalDatabaseService {
 
   Future<void> deleteFolder(String id) async {
     await init();
-    final relations = _contentFoldersBox.values.where((cf) => cf.folderId == id).toList();
+    final relations =
+        _contentFoldersBox.values.where((cf) => cf.folderId == id).toList();
     for (final relation in relations) {
       await _contentFoldersBox.delete(relation.key);
     }
@@ -236,7 +267,8 @@ class LocalDatabaseService {
 
   // --- RELATIONSHIP MANAGEMENT ---
 
-  Future<void> assignContentToFolder(String contentId, String folderId, String contentType, String userId) async {
+  Future<void> assignContentToFolder(String contentId, String folderId,
+      String contentType, String userId) async {
     await init();
     final key = '$folderId-$contentId';
     final contentFolder = ContentFolder(
@@ -248,14 +280,16 @@ class LocalDatabaseService {
     );
     await _contentFoldersBox.put(key, contentFolder);
   }
-  
+
   Future<List<ContentFolder>> getFolderContents(String folderId) async {
     await init();
-    return _contentFoldersBox.values.where((cf) => cf.folderId == folderId).toList();
+    return _contentFoldersBox.values
+        .where((cf) => cf.folderId == folderId)
+        .toList();
   }
-  
+
   // --- SPACED REPETITION & MISSIONS ---
-  
+
   Box<SpacedRepetitionItem> getSpacedRepetitionBox() {
     return _spacedRepetitionBox;
   }

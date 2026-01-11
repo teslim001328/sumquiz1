@@ -77,7 +77,9 @@ class EditScreenState extends State<EditScreen> {
             final options = lines.sublist(1, lines.length - 1);
             final correctAnswer = lines.last.replaceFirst('Correct: ', '');
             return QuizQuestion(
-                question: question, options: options, correctAnswer: correctAnswer);
+                question: question,
+                options: options,
+                correctAnswer: correctAnswer);
           }).toList();
           await firestoreService.updateQuiz(
             user.uid,

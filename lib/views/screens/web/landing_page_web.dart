@@ -1,7 +1,9 @@
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sumquiz/views/screens/web/creator_tab_view.dart';
 
 class LandingPageWeb extends StatefulWidget {
   const LandingPageWeb({super.key});
@@ -10,31 +12,34 @@ class LandingPageWeb extends StatefulWidget {
   State<LandingPageWeb> createState() => _LandingPageWebState();
 }
 
-class _LandingPageWebState extends State<LandingPageWeb> {
+class _LandingPageWebState extends State<LandingPageWeb>
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Landing page often has a specific fixed theme (Dark Marketing Theme)
-    // We will hardcode dark styles for consistency with the design, or use a specific dark theme overlay.
-    // However, to remove GoogleFonts, we use standard text theme but stylized.
-
-    // For specific landing page colors:
     const backgroundColor = Color(0xFF0F172A);
     const primaryColor = Color(0xFF6366F1);
     const secondaryColor = Color(0xFFEC4899);
 
     return Scaffold(
-      backgroundColor: backgroundColor, // Dark Navy Background
+      backgroundColor: backgroundColor,
       body: Stack(
         children: [
-          // Background Gradients
           Positioned(
             top: -100,
             right: -100,
@@ -45,7 +50,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                 height: 500,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: primaryColor.withValues(alpha: 0.2), // Indigo
+                  color: primaryColor.withOpacity(0.2),
                 ),
               ),
             ),
@@ -60,25 +65,37 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                 height: 600,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: secondaryColor.withValues(alpha: 0.15), // Pink
+                  color: secondaryColor.withOpacity(0.15),
                 ),
               ),
             ),
           ),
-
-          // Main Content
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              children: [
-                _buildNavBar(context),
-                _buildHeroSection(context),
-                _buildFeaturesGrid(context),
-                _buildHowItWorks(context),
-                _buildCTASection(context),
-                _buildFooter(context),
-              ],
-            ),
+          Column(
+            children: [
+              _buildNavBar(context),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Student Tab
+                    SingleChildScrollView(
+                      controller: _scrollController,
+                      child: Column(
+                        children: [
+                          _buildHeroSection(context),
+                          _buildFeaturesGrid(context),
+                          _buildHowItWorks(context),
+                          _buildCTASection(context),
+                          _buildFooter(context),
+                        ],
+                      ),
+                    ),
+                    // Creator Tab
+                    const CreatorTabView(),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -95,18 +112,18 @@ class _LandingPageWebState extends State<LandingPageWeb> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Logo
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.flash_on_rounded,
-                        color: Colors.white, size: 24),
+                    child: Image.asset(
+                      'assets/images/sumquiz_logo.png',
+                      height: 32,
+                      width: 32,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text("SumQuiz",
@@ -116,17 +133,21 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                           color: Colors.white)),
                 ],
               ),
-
-              // Actions
+              SizedBox(
+                width: 300,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                  tabs: const [
+                    Tab(text: "For Students"),
+                    Tab(text: "For Creators"),
+                  ],
+                ),
+              ),
               Row(
                 children: [
-                  TextButton(
-                      onPressed: () {},
-                      child: Text("Features",
-                          style: textTheme.bodyLarge?.copyWith(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500))),
-                  const SizedBox(width: 24),
                   TextButton(
                       onPressed: () => context.go('/auth'),
                       child: Text("Log In",
@@ -164,7 +185,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 80),
       child: Row(
         children: [
-          // Text Content
           Expanded(
             flex: 5,
             child: Column(
@@ -174,12 +194,12 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    color: const Color(0xFF6366F1).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+                        color: const Color(0xFF6366F1).withOpacity(0.3)),
                   ),
-                  child: Text("🚀 #1 AI Study Tool for 2024",
+                  child: Text("🚀 #1 AI Study Tool for 2026",
                       style: textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF818CF8),
                           fontWeight: FontWeight.w600)),
@@ -214,7 +234,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 10,
                         shadowColor:
-                            const Color(0xFF6366F1).withValues(alpha: 0.4),
+                            const Color(0xFF6366F1).withOpacity(0.4),
                       ),
                       child: Row(
                         children: [
@@ -234,7 +254,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2)),
+                            color: Colors.white.withOpacity(0.2)),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 32, vertical: 20),
                         textStyle: const TextStyle(fontSize: 16),
@@ -258,10 +278,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
               ],
             ),
           ),
-
-          Expanded(flex: 1, child: Container()), // Spacer
-
-          // Visual
+          Expanded(flex: 1, child: Container()),
           Expanded(
             flex: 5,
             child: Transform(
@@ -276,14 +293,14 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                   color: const Color(0xFF1E293B),
                   borderRadius: BorderRadius.circular(24),
                   border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      Border.all(color: Colors.white.withOpacity(0.1)),
                   boxShadow: [
                     BoxShadow(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                        color: const Color(0xFF6366F1).withOpacity(0.2),
                         blurRadius: 50,
                         offset: const Offset(-20, 20)),
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Colors.black.withOpacity(0.5),
                         blurRadius: 30,
                         offset: const Offset(0, 10)),
                   ],
@@ -292,7 +309,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                   borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
-                      // Mock UI Elements
                       Positioned(
                         top: 0,
                         left: 0,
@@ -313,7 +329,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                                         decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: Colors.white
-                                                .withValues(alpha: 0.2)))),
+                                                .withOpacity(0.2)))),
                               ),
                             ],
                           ),
@@ -322,7 +338,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                       Center(
                         child: Icon(Icons.auto_awesome_motion,
                             size: 120,
-                            color: Colors.white.withValues(alpha: 0.05)),
+                            color: Colors.white.withOpacity(0.05)),
                       ),
                       Positioned(
                         top: 80,
@@ -334,7 +350,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                             Container(
                                 height: 200,
                                 decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.05),
+                                    color: Colors.white.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(16))),
                             const SizedBox(height: 20),
                             Row(
@@ -344,7 +360,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                                         height: 120,
                                         decoration: BoxDecoration(
                                             color: Colors.white
-                                                .withValues(alpha: 0.05),
+                                                .withOpacity(0.05),
                                             borderRadius:
                                                 BorderRadius.circular(16)))),
                                 const SizedBox(width: 20),
@@ -353,7 +369,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                                         height: 120,
                                         decoration: BoxDecoration(
                                             color: Colors.white
-                                                .withValues(alpha: 0.05),
+                                                .withOpacity(0.05),
                                             borderRadius:
                                                 BorderRadius.circular(16)))),
                               ],
@@ -424,10 +440,10 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
+                        color: Colors.white.withOpacity(0.03),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.05)),
+                            color: Colors.white.withOpacity(0.05)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,7 +452,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: (feature['color'] as Color)
-                                  .withValues(alpha: 0.1),
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(feature['icon'] as IconData,
@@ -468,7 +484,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 80),
-      color: Colors.black.withValues(alpha: 0.2), // Slightly darker section
+      color: Colors.black.withOpacity(0.2),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1000),
@@ -479,8 +495,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                   style: textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 60),
-
-              // Step 1
               _buildStep(
                 number: "01",
                 title: "Import Content",
@@ -488,8 +502,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                 alignRight: false,
                 textTheme: textTheme,
               ),
-
-              // Step 2
               _buildStep(
                 number: "02",
                 title: "AI Analysis",
@@ -498,8 +510,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                 alignRight: true,
                 textTheme: textTheme,
               ),
-
-              // Step 3
               _buildStep(
                 number: "03",
                 title: "Ace the Exam",
@@ -525,7 +535,6 @@ class _LandingPageWebState extends State<LandingPageWeb> {
       child: Row(
         textDirection: alignRight ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          // Number & Text
           Expanded(
             child: Column(
               crossAxisAlignment: alignRight
@@ -536,7 +545,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
                     style: textTheme.displayLarge?.copyWith(
                         fontSize: 80,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white.withValues(alpha: 0.05))),
+                        color: Colors.white.withOpacity(0.05))),
                 Transform.translate(
                   offset: const Offset(0, -40),
                   child: Column(
@@ -560,8 +569,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
               ],
             ),
           ),
-
-          Expanded(child: Container()), // Spacer for visual balance
+          Expanded(child: Container()),
         ],
       ),
     );
@@ -584,7 +592,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                  color: const Color(0xFF4F46E5).withOpacity(0.4),
                   blurRadius: 40,
                   offset: const Offset(0, 20),
                 )
@@ -601,7 +609,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
               Text(
                 "Join thousands of students acing their exams with SumQuiz.",
                 style: textTheme.titleLarge
-                    ?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+                    ?.copyWith(color: Colors.white.withOpacity(0.9)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -632,7 +640,7 @@ class _LandingPageWebState extends State<LandingPageWeb> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
         border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+            top: BorderSide(color: Colors.white.withOpacity(0.05))),
       ),
       child: Center(
         child: Text(

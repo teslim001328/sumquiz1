@@ -25,8 +25,17 @@ class ContentExtractionService {
         final url = input as String;
         if (_isYoutubeUrl(url)) {
           try {
-            // Priority: Native AI Video Analysis (Visuals + Audio)
-            rawText = await _enhancedAiService.analyzeYoutubeVideo(url);
+            // Correctly get video details from the full URL
+            final video = await _yt.videos.get(url);
+            final videoTitle = video.title;
+
+            developer.log('Extracted video title: "$videoTitle" for URL: $url', name: 'ContentExtractionService');
+
+            // Priority: Native AI Video Analysis (Visuals + Audio) with context
+            rawText = await _enhancedAiService.analyzeYoutubeVideo(
+              videoUrl: url,
+              videoTitle: videoTitle,
+            );
           } catch (e) {
             // Fallback: Transcript Extraction (Text only)
             developer.log(
@@ -49,8 +58,12 @@ class ContentExtractionService {
         throw Exception('Unknown content type: $type');
     }
 
-    // Refine the content using AI to remove noise and ensure it's exam-ready
-    return await _enhancedAiService.refineContent(rawText);
+    // 1. Semantic Filter (KEEP/DISCARD) to remove irrelevant noise
+    final filteredText =
+        await _enhancedAiService.filterInstructionalContent(rawText);
+
+    // 2. Refine/Polish the filtered content
+    return await _enhancedAiService.refineContent(filteredText);
   }
 
   bool _isYoutubeUrl(String url) {
@@ -59,8 +72,9 @@ class ContentExtractionService {
 
   Future<String> _extractYoutubeTranscript(String url) async {
     try {
-      final validUrl = _cleanYoutubeUrl(url);
-      final videoId = VideoId(validUrl);
+      // Correctly get video and videoId from the full URL
+      final video = await _yt.videos.get(url);
+      final videoId = video.id;
 
       final manifest = await _yt.videos.closedCaptions.getManifest(videoId);
       final trackInfo = manifest.getByLanguage('en');
@@ -70,19 +84,12 @@ class ContentExtractionService {
         final subtitles = await _yt.videos.closedCaptions.get(track);
         return subtitles.captions.map((e) => e.text).join(' ');
       } else {
-        final video = await _yt.videos.get(videoId);
+        // If no captions, fallback to title and description from the video object we already fetched
         return "Title: ${video.title}\nDescription: ${video.description}";
       }
     } catch (e) {
       throw Exception('Could not extract content from YouTube: $e');
     }
-  }
-
-  String _cleanYoutubeUrl(String url) {
-    if (url.contains('si=')) {
-      return url.split('si=')[0];
-    }
-    return url;
   }
 
   Future<String> _extractWebContent(String url) async {

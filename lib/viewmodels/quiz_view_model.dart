@@ -15,11 +15,14 @@ class QuizViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  QuizViewModel({required LocalDatabaseService localDbService}) : _localDbService = localDbService;
+  QuizViewModel({required LocalDatabaseService localDbService})
+      : _localDbService = localDbService;
 
   // This will be called by the LibraryScreen when the user changes.
   void initializeForUser(String? userId) {
-    if (_userId == userId && _quizzes.isNotEmpty) return; // Avoid unnecessary reloads
+    if (_userId == userId && _quizzes.isNotEmpty) {
+      return; // Avoid unnecessary reloads
+    }
     _userId = userId;
     if (_userId != null) {
       refreshQuizzes();
@@ -46,7 +49,7 @@ class QuizViewModel extends ChangeNotifier {
             .collection('quizzes')
             .where('userId', isEqualTo: _userId)
             .get();
-        
+
         firestoreQuizzes = snapshot.docs.map((doc) {
           final data = doc.data();
           // Create a lightweight LocalQuiz object from Firestore data
@@ -56,12 +59,16 @@ class QuizViewModel extends ChangeNotifier {
             scores: List<double>.from(data['scores'] ?? []),
             questions: const [], // Questions aren't needed for the library list view
             userId: data['userId'] ?? '',
-            timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            timestamp:
+                (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
             isSynced: true, // Data from Firestore is considered synced
           );
         }).toList();
       } catch (e) {
-        developer.log('Could not fetch quizzes from Firestore. This may be normal if offline.', name: 'QuizViewModel', error: e);
+        developer.log(
+            'Could not fetch quizzes from Firestore. This may be normal if offline.',
+            name: 'QuizViewModel',
+            error: e);
         // Proceed with local quizzes even if Firestore fails
       }
 
@@ -77,13 +84,13 @@ class QuizViewModel extends ChangeNotifier {
       for (final quiz in firestoreQuizzes) {
         combinedQuizzes.putIfAbsent(quiz.id, () => quiz);
       }
-      
+
       // 4. Update the final list and sort it with the newest quizzes first
       _quizzes = combinedQuizzes.values.toList();
       _quizzes.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
     } catch (e) {
-      developer.log('An error occurred while refreshing quizzes.', name: 'QuizViewModel', error: e);
+      developer.log('An error occurred while refreshing quizzes.',
+          name: 'QuizViewModel', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -107,8 +114,11 @@ class QuizViewModel extends ChangeNotifier {
   // on a screen where the full quiz data is loaded.
   int get totalPerfectScores {
     return _quizzes.fold(0, (sum, quiz) {
-      if (quiz.questions.isEmpty) return sum; // Cannot determine if questions are not loaded
-      final perfectScores = quiz.scores.where((score) => score == quiz.questions.length).length;
+      if (quiz.questions.isEmpty) {
+        return sum; // Cannot determine if questions are not loaded
+      }
+      final perfectScores =
+          quiz.scores.where((score) => score == quiz.questions.length).length;
       return sum + perfectScores;
     });
   }

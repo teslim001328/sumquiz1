@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/referral_service.dart';
@@ -49,8 +50,9 @@ class UsageService {
       }
 
       return currentUsage < limit;
-    } catch (e) {
-      print('Error checking usage limit: $e');
+    } catch (e, s) {
+      developer.log('Error checking usage limit',
+          name: 'UsageService', error: e, stackTrace: s);
       return false;
     }
   }
@@ -98,8 +100,9 @@ class UsageService {
       if (referrerIdToReward != null) {
         await _referralService.grantReferrerReward(referrerIdToReward);
       }
-    } catch (e) {
-      print('Error recording action: $e');
+    } catch (e, s) {
+      developer.log('Error recording action',
+          name: 'UsageService', error: e, stackTrace: s);
       rethrow;
     }
   }

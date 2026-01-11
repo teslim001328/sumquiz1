@@ -23,12 +23,42 @@ class AchievementsTracker extends StatelessWidget {
     final user = Provider.of<UserModel?>(context);
 
     final achievements = [
-      {'title': 'First Steps', 'description': 'Complete your first item', 'icon': Icons.rocket_launch_rounded, 'earned': totalItemsCompleted >= 1},
-      {'title': 'Consistency King', 'description': 'Maintain a 7-day streak', 'icon': Icons.local_fire_department_rounded, 'earned': streakDays >= 7},
-      {'title': 'Knowledge Seeker', 'description': 'Complete 50 items', 'icon': Icons.school_rounded, 'earned': totalItemsCompleted >= 50},
-      {'title': 'Quiz Master', 'description': 'Take 10 quizzes', 'icon': Icons.quiz_rounded, 'earned': quizzesTaken >= 10},
-      {'title': 'Flashcard Fanatic', 'description': 'Review 100 flashcards', 'icon': Icons.flip_to_front_rounded, 'earned': flashcardsReviewed >= 100},
-      {'title': 'Marathon Learner', 'description': 'Complete 200 items', 'icon': Icons.emoji_events_rounded, 'earned': totalItemsCompleted >= 200},
+      {
+        'title': 'First Steps',
+        'description': 'Complete your first item',
+        'icon': Icons.rocket_launch_rounded,
+        'earned': totalItemsCompleted >= 1
+      },
+      {
+        'title': 'Consistency King',
+        'description': 'Maintain a 7-day streak',
+        'icon': Icons.local_fire_department_rounded,
+        'earned': streakDays >= 7
+      },
+      {
+        'title': 'Knowledge Seeker',
+        'description': 'Complete 50 items',
+        'icon': Icons.school_rounded,
+        'earned': totalItemsCompleted >= 50
+      },
+      {
+        'title': 'Quiz Master',
+        'description': 'Take 10 quizzes',
+        'icon': Icons.quiz_rounded,
+        'earned': quizzesTaken >= 10
+      },
+      {
+        'title': 'Flashcard Fanatic',
+        'description': 'Review 100 flashcards',
+        'icon': Icons.flip_to_front_rounded,
+        'earned': flashcardsReviewed >= 100
+      },
+      {
+        'title': 'Marathon Learner',
+        'description': 'Complete 200 items',
+        'icon': Icons.emoji_events_rounded,
+        'earned': totalItemsCompleted >= 200
+      },
     ];
 
     final earnedCount = achievements.where((a) => a['earned'] == true).length;
@@ -44,18 +74,23 @@ class AchievementsTracker extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.military_tech_rounded, color: theme.colorScheme.secondary, size: 20),
+              Icon(Icons.military_tech_rounded,
+                  color: theme.colorScheme.secondary, size: 20),
               const SizedBox(width: 8),
               Text('Achievements', style: theme.textTheme.titleLarge),
               const Spacer(),
-              Text('$earnedCount/${achievements.length} Unlocked', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold)),
+              Text('$earnedCount/${achievements.length} Unlocked',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 16),
           if (user != null && !user.isPro)
             Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
-              child: Text('Unlock more rewards with a Pro subscription.', style: theme.textTheme.bodySmall),
+              child: Text('Unlock more rewards with a Pro subscription.',
+                  style: theme.textTheme.bodySmall),
             ),
           ListView.separated(
             shrinkWrap: true,

@@ -146,7 +146,8 @@ class PdfExportService {
     return await _saveAndLaunchFile(bytes, 'flashcards_${flashcardSet.id}.pdf');
   }
 
-  Future<String> exportTextAsPdf(String content, String fileName, String userId) async {
+  Future<String> exportTextAsPdf(
+      String content, String fileName, String userId) async {
     // Check if user can export (Pro users can always export)
     final isPro = await _isUserPro(userId);
     if (!isPro) {

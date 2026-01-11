@@ -74,7 +74,7 @@ final _progressShellNavigatorKey =
 GoRouter createAppRouter(AuthService authService) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/splash',
+    initialLocation: kIsWeb ? '/landing' : '/splash',
     refreshListenable: GoRouterRefreshStream(authService.authStateChanges),
     redirect: (context, state) {
       final user = authService.currentUser;

@@ -73,12 +73,12 @@ class EnhancedAIService {
 
   Future<String> _generateWithFallback(String prompt) async {
     try {
-      return await _generateWithModel(_model, prompt, 'Gemini 1.5 Flash');
+      return await _generateWithModel(_model, prompt, 'Gemini 2.5 Flash');
     } catch (e) {
-      developer.log('Gemini 1.5 Flash failed, falling back to 1.5 Flash',
+      developer.log('Gemini 2.5 Flash failed, falling back to 2.5 Flash',
           name: 'EnhancedAIService', error: e);
       return await _generateWithModel(
-          _fallbackModel, prompt, 'Gemini 1.5 Flash');
+          _fallbackModel, prompt, 'Gemini 2.5 Flash');
     }
   }
 
@@ -138,25 +138,112 @@ class EnhancedAIService {
     return input.replaceAll(RegExp(r'[\n\r]+'), ' ').trim();
   }
 
+  Future<String> filterInstructionalContent(String rawText) async {
+    // Chunk size of ~2000 characters (approx 300-400 words)
+    const int chunkCharLimit = 2000;
+    const int maxChunksToProcess = 30; // ~60k chars cap
+
+    final chunks = _chunkText(rawText, chunkCharLimit);
+    final totalChunks = chunks.length;
+    final processedChunks = chunks.take(maxChunksToProcess).toList();
+
+    final keptChunks = <String>[];
+    int keptCount = 0;
+
+    developer.log(
+        'Filtering content: Processing \${processedChunks.length}/\$totalChunks chunks.',
+        name: 'EnhancedAIService');
+
+    for (int i = 0; i < processedChunks.length; i++) {
+      final chunk = processedChunks[i];
+      if (chunk.trim().isEmpty) continue;
+
+      final prompt = '''
+You are a strict filter.
+Decide if the text below contains instructional or exam-relevant content.
+Rule: If the segment does not introduce, explain, define, or demonstrate a concept, it MUST be discarded — even if it sounds informative.
+
+Return ONLY:
+KEEP
+or
+DISCARD
+
+Text:
+$chunk
+''';
+
+      try {
+        final decision = await _generateWithFallback(prompt);
+        if (decision.trim().toUpperCase().startsWith('KEEP')) {
+          keptChunks.add(chunk);
+          keptCount++;
+        } else {
+          // Discarded
+        }
+      } catch (e) {
+        // Fallback: Default to KEEP on error to avoid data loss from API glitches
+        keptChunks.add(chunk);
+        keptCount++;
+      }
+    }
+
+    final discardCount = processedChunks.length - keptCount;
+    final discardRatio =
+        processedChunks.isEmpty ? 0.0 : discardCount / processedChunks.length;
+
+    developer.log(
+        'Filter Stats: Kept \$keptCount | Discarded \$discardCount | Discard Ratio \${(discardRatio * 100).toStringAsFixed(1)}%',
+        name: 'EnhancedAIService');
+
+    if (keptChunks.isEmpty) {
+      developer.log(
+          'Filter discarded EVERYTHING. Returning raw text as fallback.',
+          name: 'EnhancedAIService');
+      return rawText;
+    }
+
+    return keptChunks.join('\\n');
+  }
+
+  List<String> _chunkText(String text, int chunkSize) {
+    List<String> chunks = [];
+    int start = 0;
+    while (start < text.length) {
+      int end = start + chunkSize;
+      if (end >= text.length) {
+        chunks.add(text.substring(start));
+        break;
+      }
+      // Backtrack to last space to avoid splitting words
+      int lastSpace = text.lastIndexOf(' ', end);
+      if (lastSpace == -1 || lastSpace < start) {
+        lastSpace = end;
+      }
+      chunks.add(text.substring(start, lastSpace));
+      start = lastSpace + 1;
+    }
+    return chunks;
+  }
+
   Future<String> refineContent(String rawText) async {
     final sanitizedText = _sanitizeInput(rawText);
     final prompt =
-        '''You are an expert study assistant. Your goal is to prepare this raw text for exam studying.
-Clean, organize, and structure the text.
-- Remove ads, navigation menus, boilerplate, and irrelevant interjections.
-- Fix broken sentences or formatting issues.
-- Organize the content into clear, logical sections with headers if needed.
-- Maintain ALL factual information, data, and key concepts. Do not summarize yet, just clean and structure.
-- If the text is already clean, just return it as is.
-- Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks (no ```json).
+        '''You are a text cleaning and structuring tool.
+Your task is to take the raw text provided and prepare it for studying.
+- You MUST remove all non-instructional content like ads, navigation, and conversational filler.
+- You MUST fix formatting and sentence structure.
+- You MUST organize the content logically with headers.
+- You MUST NOT summarize or alter the core information.
+- You MUST return only a single, valid JSON object. Do not explain your actions. Do not use Markdown.
 
 Structure:
 {
-  "cleanedText": "The refined and organized text content..."
+  "cleanedText": "The cleaned and structured text content..."
 }
 
 Raw Text:
-$sanitizedText''';
+$sanitizedText
+''';
 
     final jsonString = await _generateWithFallback(prompt);
     try {
@@ -194,20 +281,46 @@ $sanitizedText''';
 
   /// Analyzes a YouTube video directly using Gemini's native multimodal capabilities.
   /// Requires a valid [videoUrl].
-  Future<String> analyzeYoutubeVideo(String videoUrl) async {
+  Future<String> analyzeYoutubeVideo({
+    required String videoUrl,
+    required String videoTitle,
+  }) async {
     try {
       final prompt =
-          '''Analyze the YouTube video at the following URL: $videoUrl
-          
-Goal: Provide a comprehensive, detailed transcript-like summary of the video content.
-- Include key visual details (diagrams, code snippets, on-screen text) that might be missed in a pure audio transcript.
-- Capture the structure and flow of the presentation.
-- Do not summarize yet; just extract and describe the content in full detail so it can be processed into a study guide later.
+          '''You are a content extraction engine with a strict focus.
+Your task is to analyze the YouTube video at the provided URL.
+
+The video's declared title is: "$videoTitle". This is the ground truth for the video's topic.
+
+You MUST ruthlessly discard any content that is not directly related to this title. This includes:
+- Advertisements (pre-roll, mid-roll, post-roll)
+- Sponsor messages
+- Unrelated conversations, jokes, or stories
+- Channel intros/outros and calls to action (subscribe, like, etc.)
+
+Your extraction process:
+1. Identify the core topic from the `videoTitle`.
+2. Analyze the video's audio and visual streams.
+3. Extract ONLY the segments where the speaker is teaching, explaining, or demonstrating a concept directly related to the `videoTitle`.
+
+Return ONLY a single, valid JSON object with the extracted text. Do not use Markdown formatted code blocks (no ```json).
+
+Structure:
+{
+  "extractedContent": "The raw, instructional text extracted from the video that is directly related to the video title..."
+}
+
+Video URL:
+$videoUrl
 ''';
 
       // We use the primary model as Gemini 2.5 Flash is multimodal.
-      return await _generateWithModel(
+      final jsonString = await _generateWithModel(
           _model, prompt, 'Gemini 2.5 Flash (Video)');
+      
+      final data = json.decode(jsonString);
+      return data['extractedContent'] ?? '';
+
     } catch (e) {
       developer.log('Native Video Analysis Failed',
           name: 'EnhancedAIService', error: e);

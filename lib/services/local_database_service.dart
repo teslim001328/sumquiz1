@@ -131,6 +131,20 @@ class LocalDatabaseService {
     }
   }
 
+  Stream<List<String>> watchContentIdsInFolder(String folderId) async* {
+    await init();
+    yield _contentFoldersBox.values
+        .where((cf) => cf.folderId == folderId)
+        .map((cf) => cf.contentId)
+        .toList();
+    await for (final _ in _contentFoldersBox.watch()) {
+      yield _contentFoldersBox.values
+          .where((cf) => cf.folderId == folderId)
+          .map((cf) => cf.contentId)
+          .toList();
+    }
+  }
+
   // --- CRUD & SYNC OPERATIONS ---
 
   Future<void> saveSummary(LocalSummary summary, [String? folderId]) async {
@@ -226,6 +240,14 @@ class LocalDatabaseService {
         .toList();
   }
 
+  Future<List<LocalFlashcard>> getFlashcardsByIds(
+      String userId, List<String> cardIds) async {
+    await init();
+    final sets = await getAllFlashcardSets(userId);
+    final allCards = sets.expand((s) => s.flashcards).toList();
+    return allCards.where((c) => cardIds.contains(c.id)).toList();
+  }
+
   Future<Folder?> getFolder(String id) async {
     await init();
     return _foldersBox.get(id);
@@ -240,18 +262,28 @@ class LocalDatabaseService {
 
   // --- DELETERS ---
 
+  Future<void> _removeContentRelations(String contentId) async {
+    final relations = _contentFoldersBox.values.where((cf) => cf.contentId == contentId).toList();
+    for (final relation in relations) {
+      await _contentFoldersBox.delete(relation.key);
+    }
+  }
+
   Future<void> deleteSummary(String id) async {
     await init();
+    await _removeContentRelations(id);
     await _summariesBox.delete(id);
   }
 
   Future<void> deleteQuiz(String id) async {
     await init();
+    await _removeContentRelations(id);
     await _quizzesBox.delete(id);
   }
 
   Future<void> deleteFlashcardSet(String id) async {
     await init();
+    await _removeContentRelations(id);
     await _flashcardSetsBox.delete(id);
   }
 

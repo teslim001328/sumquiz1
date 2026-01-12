@@ -1,420 +1,198 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:go_router/go_router.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../models/user_model.dart';
 import '../../models/library_item.dart';
+import '../../models/folder.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_database_service.dart';
 import '../../services/sync_service.dart';
-import '../../view_models/quiz_view_model.dart';
-import '../../models/editable_content.dart';
-
-import '../../models/flashcard_set.dart';
-import '../../models/folder.dart';
+import '../../view_models/library_view_model.dart';
+import '../../models/extensions/local_flashcard_set_extension.dart';
 
 import '../screens/summary_screen.dart';
 import '../screens/quiz_screen.dart';
 import '../screens/flashcards_screen.dart';
 
-import '../../models/quiz_question.dart';
-import '../../models/flashcard.dart';
-
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
   @override
-  LibraryScreenState createState() => LibraryScreenState();
-}
-
-class LibraryScreenState extends State<LibraryScreen>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late TabController _tabController;
-  // final FirestoreService _firestoreService = FirestoreService(); // Removed
-  final LocalDatabaseService _localDb = LocalDatabaseService();
-  final TextEditingController _searchController = TextEditingController();
-
-  bool _isOfflineMode = false;
-  String _searchQuery = '';
-  bool _isInitialized = false;
-  String? _errorMessage;
-
-  Stream<List<LibraryItem>>? _allItemsStream;
-  Stream<List<LibraryItem>>? _summariesStream;
-  Stream<List<LibraryItem>>? _flashcardsStream;
-  Stream<List<Folder>>? _foldersStream;
-  String? _userIdForStreams;
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-    _searchController.addListener(_onSearchChanged);
-    _initializeDatabase();
-  }
-
-  Future<void> _initializeDatabase() async {
-    try {
-      await _localDb.init();
-      await _loadOfflineModePreference();
-      if (mounted) {
-        setState(() => _isInitialized = true);
-      }
-    } catch (e, stackTrace) {
-      debugPrint('Error initializing LibraryScreen: $e');
-      debugPrint(stackTrace.toString());
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load library: $e';
-          _isInitialized =
-              true; // Set to true to stop loading spinner and show error
-        });
-      }
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInitialized) return;
-
-    final user = Provider.of<UserModel?>(context);
-    if (user != null && user.uid != _userIdForStreams) {
-      _userIdForStreams = user.uid;
-      _initializeStreams(user.uid);
-      if (mounted) {
-        Provider.of<QuizViewModel>(context, listen: false)
-            .initializeForUser(user.uid);
-      }
-    } else if (user == null && _userIdForStreams != null) {
-      _clearStreams();
-    }
-  }
-
-  void _initializeStreams(String userId) {
-    // Folders Stream - Local DB Only
-    _foldersStream = _localDb.watchAllFolders(userId).asBroadcastStream();
-
-    // Summaries - Local DB Only
-    _summariesStream = _localDb
-        .watchAllSummaries(userId)
-        .map((list) => list
-            .map((s) => LibraryItem(
-                id: s.id,
-                title: s.title,
-                type: LibraryItemType.summary,
-                timestamp: Timestamp.fromDate(s.timestamp),
-                isReadOnly: s.isReadOnly))
-            .toList())
-        .asBroadcastStream();
-
-    // Flashcards - Local DB Only
-    _flashcardsStream = _localDb
-        .watchAllFlashcardSets(userId)
-        .map((list) => list
-            .map((f) => LibraryItem(
-                id: f.id,
-                title: f.title,
-                type: LibraryItemType.flashcards,
-                timestamp: Timestamp.fromDate(f.timestamp),
-                isReadOnly: f.isReadOnly))
-            .toList())
-        .asBroadcastStream();
-
-    // Quizzes - Local DB Only
-    final localQuizzes = _localDb.watchAllQuizzes(userId).map((list) => list
-        .map((q) => LibraryItem(
-            id: q.id,
-            title: q.title,
-            type: LibraryItemType.quiz,
-            timestamp: Timestamp.fromDate(q.timestamp),
-            isReadOnly: q.isReadOnly))
-        .toList());
-
-    // All Items - Combined Local Streams
-    _allItemsStream = Rx.combineLatest3<List<LibraryItem>, List<LibraryItem>,
-            List<LibraryItem>, List<LibraryItem>>(
-        _summariesStream!, _flashcardsStream!, localQuizzes,
-        (summaries, flashcards, quizzes) {
-      final all = [...summaries, ...flashcards, ...quizzes];
-      all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return all;
-    }).asBroadcastStream();
-  }
-
-  void _clearStreams() {
-    setState(() {
-      _userIdForStreams = null;
-      _allItemsStream = null;
-      _summariesStream = null;
-      _flashcardsStream = null;
-      _foldersStream = null;
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged() =>
-      setState(() => _searchQuery = _searchController.text.toLowerCase());
-
-  Future<void> _loadOfflineModePreference() async {
-    final isOffline = await _localDb.isOfflineModeEnabled();
-    if (mounted) setState(() => _isOfflineMode = isOffline);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    final user = Provider.of<UserModel?>(context);
+    final theme = Theme.of(context);
 
-    if (!_isInitialized) {
-      return Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      );
+    if (user == null) {
+      return _buildLoggedOutView(theme);
     }
 
-    if (_errorMessage != null) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+    return ChangeNotifierProvider(
+      create: (context) => LibraryViewModel(
+        localDb: context.read<LocalDatabaseService>(),
+        firestoreService: context.read<FirestoreService>(),
+        syncService: context.read<SyncService>(),
+        userId: user.uid,
+      ),
+      child: const _LibraryView(),
+    );
+  }
+
+  Widget _buildLoggedOutView(ThemeData theme) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: _buildGlassContainer(
+            theme: theme,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
+                Icon(Icons.cloud_off_outlined, size: 80, color: theme.colorScheme.primary),
+                const SizedBox(height: 24),
+                Text('Please Log In', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                const SizedBox(height: 12),
                 Text(
-                  'Something went wrong',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _errorMessage!,
+                  'Log in to access your synchronized library across all your devices.',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _errorMessage = null;
-                      _isInitialized = false;
-                    });
-                    _initializeDatabase();
-                  },
-                  child: const Text('Retry'),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(153)),
                 ),
               ],
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    final user = Provider.of<UserModel?>(context);
+  Widget _buildGlassContainer({required Widget child, required ThemeData theme}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: theme.cardColor.withAlpha(178),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: theme.cardColor.withAlpha(230), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(13),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _LibraryView extends StatefulWidget {
+  const _LibraryView();
+
+  @override
+  _LibraryViewState createState() => _LibraryViewState();
+}
+
+class _LibraryViewState extends State<_LibraryView> with TickerProviderStateMixin {
+  late TabController _mainTabController;
+  late TabController _folderTabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _mainTabController = TabController(length: 5, vsync: this);
+    _folderTabController = TabController(length: 4, vsync: this);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _mainTabController.dispose();
+    _folderTabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final viewModel = context.watch<LibraryViewModel>();
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(context, theme),
-      body: Stack(
+      appBar: _buildAppBar(context, theme, viewModel),
+      body: Column(
         children: [
-          // Animated Background
-          Animate(
-            onPlay: (controller) => controller.repeat(reverse: true),
-            effects: [
-              CustomEffect(
-                duration: 10.seconds,
-                builder: (context, value, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                                theme.colorScheme.surface,
-                                Color.lerp(theme.colorScheme.surface,
-                                    theme.colorScheme.primaryContainer, value)!,
-                              ]
-                            : [
-                                const Color(0xFFE3F2FD),
-                                Color.lerp(const Color(0xFFE3F2FD),
-                                    const Color(0xFFBBDEFB), value)!,
-                              ],
-                      ),
-                    ),
-                    child: child,
+          _buildSearchAndTabs(context, theme, viewModel),
+          Expanded(
+            child: StreamBuilder<Folder?>(
+              stream: viewModel.selectedFolderStream,
+              builder: (context, snapshot) {
+                final selectedFolder = snapshot.data;
+                if (selectedFolder == null) {
+                  return TabBarView(
+                    key: const ValueKey('main_tab_view'),
+                    controller: _mainTabController,
+                    children: [
+                      _buildFolderList(viewModel, theme),
+                      _buildContentList(viewModel.allItems$, theme, viewModel),
+                      _buildContentList(viewModel.allSummaries$, theme, viewModel),
+                      _buildContentList(viewModel.allQuizzes$, theme, viewModel),
+                      _buildContentList(viewModel.allFlashcards$, theme, viewModel),
+                    ],
                   );
-                },
-              )
-            ],
-            child: Container(),
-          ),
-          SafeArea(
-            child: user == null
-                ? _buildLoggedOutView(theme)
-                : _buildLibraryContent(user, theme),
+                } else {
+                  return TabBarView(
+                    key: const ValueKey('folder_tab_view'),
+                    controller: _folderTabController,
+                    children: [
+                      _buildContentList(viewModel.allItems$, theme, viewModel),
+                      _buildContentList(viewModel.allSummaries$, theme, viewModel),
+                      _buildContentList(viewModel.allQuizzes$, theme, viewModel),
+                      _buildContentList(viewModel.allFlashcards$, theme, viewModel),
+                    ],
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),
-      floatingActionButton: user != null && !_isOfflineMode
-          ? FloatingActionButton(
-              onPressed: () => _showCreateOptions(context, theme),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              child: const Icon(Icons.add),
-            ).animate().scale(delay: 500.ms)
-          : null,
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, ThemeData theme) {
+  AppBar _buildAppBar(BuildContext context, ThemeData theme, LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Text('Library',
-          style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+      leading: selectedFolder != null ? IconButton(icon: const Icon(Icons.arrow_back_ios_new), onPressed: () => viewModel.selectFolder(null)) : null,
+      title: Text(selectedFolder?.name ?? 'Library', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
       centerTitle: true,
       actions: [
-        IconButton(
-            icon:
-                Icon(Icons.keyboard_outlined, color: theme.colorScheme.primary),
-            tooltip: 'Enter Code',
-            onPressed: () => _showJoinCodeDialog(context)),
-        IconButton(
-            icon:
-                Icon(Icons.settings_outlined, color: theme.colorScheme.primary),
-            onPressed: () {
-              if (mounted) {
-                context.push('/settings');
-              }
-            }),
+        if (viewModel.isSyncing)
+          const Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          )
+        else
+          IconButton(icon: const Icon(Icons.sync), onPressed: viewModel.syncAllData),
       ],
     );
   }
 
-  Widget _buildLoggedOutView(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: _buildGlassContainer(
-          theme: theme,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off_outlined,
-                  size: 80, color: theme.colorScheme.primary),
-              const SizedBox(height: 24),
-              Text('Please Log In',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary)),
-              const SizedBox(height: 12),
-              Text(
-                'Log in to access your synchronized library across all your devices.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 153)), // 0.6 * 255 = 153
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOfflineState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: _buildGlassContainer(
-          theme: theme,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.signal_wifi_off_outlined,
-                  size: 80, color: theme.colorScheme.primary),
-              const SizedBox(height: 24),
-              Text('Offline Mode',
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Text(
-                'You are currently in offline mode. Only locally stored content is available.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 153)), // 0.6 * 255 = 153
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _handleRefresh() async {
-    final syncService = Provider.of<SyncService>(context, listen: false);
-    await syncService.syncAllData();
-  }
-
-  Widget _buildLibraryContent(UserModel user, ThemeData theme) {
-    if (_isOfflineMode) {
-      return _buildOfflineState(theme);
-    }
-    return Column(
-      children: [
-        _buildSearchAndTabs(theme),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildFolderList(user.uid, theme)),
-              RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildCombinedList(user.uid, theme)),
-              RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildLibraryList(
-                      user.uid, 'summaries', _summariesStream, theme)),
-              RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildQuizList(user.uid, theme)),
-              RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildLibraryList(
-                      user.uid, 'flashcards', _flashcardsStream, theme)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchAndTabs(ThemeData theme) {
+  Widget _buildSearchAndTabs(BuildContext context, ThemeData theme, LibraryViewModel viewModel) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
@@ -425,7 +203,7 @@ class LibraryScreenState extends State<LibraryScreen>
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
+                  color: Colors.black.withAlpha(13),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -433,109 +211,63 @@ class LibraryScreenState extends State<LibraryScreen>
             ),
             child: TextField(
               controller: _searchController,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search Library...',
-                hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 128)), // 0.5 * 255 = 128
-                prefixIcon: Icon(Icons.search,
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 128)), // 0.5 * 255 = 128
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withAlpha(128)),
+                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withAlpha(128)),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
             ),
           ).animate().fadeIn().slideY(begin: -0.2),
           const SizedBox(height: 16),
-          _buildTabBar(theme),
+          _buildTabBar(context, theme, viewModel),
         ],
       ),
     );
   }
 
-  Widget _buildTabBar(ThemeData theme) {
+  Widget _buildTabBar(BuildContext context, ThemeData theme, LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
     return TabBar(
-      controller: _tabController,
+      controller: selectedFolder == null ? _mainTabController : _folderTabController,
       isScrollable: true,
-      tabs: const [
-        Tab(text: 'Folders'),
-        Tab(text: 'All'),
-        Tab(text: 'Summaries'),
-        Tab(text: 'Quizzes'),
-        Tab(text: 'Flashcards'),
-      ],
+      tabs: selectedFolder == null
+          ? const [Tab(text: 'Folders'), Tab(text: 'All'), Tab(text: 'Summaries'), Tab(text: 'Quizzes'), Tab(text: 'Flashcards')]
+          : const [Tab(text: 'All'), Tab(text: 'Summaries'), Tab(text: 'Quizzes'), Tab(text: 'Flashcards')],
       indicator: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         color: theme.colorScheme.primary,
       ),
-      labelStyle:
-          theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-      unselectedLabelColor:
-          theme.colorScheme.onSurface.withValues(alpha: 153), // 0.6 * 255 = 153
+      labelStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+      unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(153),
       labelColor: theme.colorScheme.onPrimary,
       dividerColor: Colors.transparent,
       splashFactory: NoSplash.splashFactory,
       overlayColor: WidgetStateProperty.resolveWith<Color?>(
         (Set<WidgetState> states) {
-          return states.contains(WidgetState.focused)
-              ? null
-              : Colors.transparent;
+          return states.contains(WidgetState.focused) ? null : Colors.transparent;
         },
       ),
     ).animate().fadeIn(delay: 100.ms).slideX();
   }
 
-  Widget _buildFolderList(String userId, ThemeData theme) {
+  Widget _buildFolderList(LibraryViewModel viewModel, ThemeData theme) {
     return StreamBuilder<List<Folder>>(
-      stream: _foldersStream,
+      stream: viewModel.allFolders$,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: theme.colorScheme.primary,
-            ),
-          );
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error.withValues(alpha: 0.5)),
-                const SizedBox(height: 16),
-                Text('Error loading folders',
-                    style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text('${snapshot.error}',
-                    style: theme.textTheme.bodySmall,
-                    textAlign: TextAlign.center),
-              ],
-            ),
-          );
-        }
-
-        final folders = snapshot.data ?? [];
-
+        final folders = snapshot.data!;
         if (folders.isEmpty) {
           return _buildNoContentState('folders', theme);
         }
 
-        // Sort by creation date (most recent first)
-        folders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-        // Filter by search query
         final filteredFolders = _searchQuery.isEmpty
             ? folders
-            : folders
-                .where((folder) =>
-                    folder.name.toLowerCase().contains(_searchQuery))
-                .toList();
+            : folders.where((folder) => folder.name.toLowerCase().contains(_searchQuery)).toList();
 
         if (filteredFolders.isEmpty && _searchQuery.isNotEmpty) {
           return _buildNoSearchResultsState(theme);
@@ -549,182 +281,68 @@ class LibraryScreenState extends State<LibraryScreen>
             return _buildGlassListTile(
               title: folder.name,
               subtitle: 'Created: ${folder.createdAt.toString().split(' ')[0]}',
-              icon: folder.isSaved ? Icons.folder : Icons.folder_open,
-              iconColor: folder.isSaved ? Colors.amber : Colors.grey,
+              icon: Icons.folder,
+              iconColor: Colors.amber,
               theme: theme,
-              onTap: () {
-                context.push('/library/results-view/${folder.id}');
-              },
-              // Removed bookmark toggle until we have the proper methods
-            )
-                .animate()
-                .fadeIn(delay: (50 * index).ms)
-                .slideY(begin: 0.1, duration: 300.ms);
+              onTap: () => viewModel.selectFolder(folder),
+            ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.1, duration: 300.ms);
           },
         );
       },
     );
   }
 
-  Widget _buildCombinedList(String userId, ThemeData theme) {
-    return StreamBuilder<List<LibraryItem>>(
-      stream: _allItemsStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: theme.colorScheme.primary,
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline,
-                    size: 64, color: theme.colorScheme.error.withOpacity(0.5)),
-                const SizedBox(height: 16),
-                Text('Error loading content',
-                    style: theme.textTheme.titleMedium),
-              ],
-            ),
-          );
-        }
-
-        final allItems = snapshot.data ?? [];
-
-        if (allItems.isEmpty) {
-          return _buildNoContentState('all', theme);
-        }
-        return _buildContentList(allItems, userId, theme);
-      },
-    );
-  }
-
-  Widget _buildQuizList(String userId, ThemeData theme) {
-    return Consumer<QuizViewModel>(
-      builder: (context, quizViewModel, child) {
-        if (quizViewModel.isLoading) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: theme.colorScheme.primary,
-            ),
-          );
-        }
-
-        if (quizViewModel.quizzes.isEmpty) {
-          return _buildNoContentState('quizzes', theme);
-        }
-
-        final quizItems = quizViewModel.quizzes
-            .map((quiz) => LibraryItem(
-                id: quiz.id,
-                title: quiz.title,
-                type: LibraryItemType.quiz,
-                timestamp: Timestamp.fromDate(quiz.timestamp),
-                isReadOnly: quiz.isReadOnly))
-            .toList();
-
-        return _buildContentList(quizItems, userId, theme);
-      },
-    );
-  }
-
-  Widget _buildLibraryList(String userId, String type,
-      Stream<List<LibraryItem>>? stream, ThemeData theme) {
+  Widget _buildContentList(Stream<List<LibraryItem>> stream, ThemeData theme, LibraryViewModel viewModel) {
     return StreamBuilder<List<LibraryItem>>(
       stream: stream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: theme.colorScheme.primary,
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline,
-                    size: 64, color: theme.colorScheme.error.withOpacity(0.5)),
-                const SizedBox(height: 16),
-                Text('Error loading $type', style: theme.textTheme.titleMedium),
-              ],
-            ),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildNoContentState(viewModel.selectedFolder == null ? 'content' : 'folder content', theme);
         }
 
-        if (!snapshot.hasData ||
-            snapshot.data == null ||
-            snapshot.data!.isEmpty) {
-          return _buildNoContentState(type, theme);
+        final items = snapshot.data!.where((item) => item.title.toLowerCase().contains(_searchQuery)).toList();
+
+        if (items.isEmpty && _searchQuery.isNotEmpty) {
+          return _buildNoSearchResultsState(theme);
         }
-        return _buildContentList(snapshot.data!, userId, theme);
+
+        return RefreshIndicator(
+          onRefresh: viewModel.syncAllData,
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 80.0),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return Dismissible(
+                key: Key(item.id),
+                direction: DismissDirection.endToStart,
+                onDismissed: (_) => viewModel.deleteItem(item),
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withAlpha(204),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: _buildLibraryCard(item, theme, () => _navigateToContent(context, item)),
+              ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.1, duration: 300.ms);
+            },
+          ),
+        );
       },
     );
   }
 
-  Widget _buildContentList(
-      List<LibraryItem> items, String userId, ThemeData theme) {
-    final filteredItems = items
-        .where((item) => item.title.toLowerCase().contains(_searchQuery))
-        .toList();
-
-    if (filteredItems.isEmpty) {
-      if (items.isNotEmpty && _searchQuery.isNotEmpty) {
-        return _buildNoSearchResultsState(theme);
-      }
-      return _buildNoContentState(
-          _tabController.index == 0
-              ? 'all'
-              : [
-                  'all',
-                  'summaries',
-                  'quizzes',
-                  'flashcards'
-                ][_tabController.index - 1],
-          theme);
-    }
-
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 600) {
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 80.0),
-          itemCount: filteredItems.length,
-          itemBuilder: (context, index) =>
-              _buildLibraryCard(filteredItems[index], userId, theme)
-                  .animate()
-                  .fadeIn(delay: (50 * index).ms)
-                  .slideY(begin: 0.1, duration: 300.ms),
-        );
-      } else {
-        return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 80.0),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 400.0,
-            childAspectRatio: 3.5,
-            crossAxisSpacing: 16.0,
-            mainAxisSpacing: 16.0,
-          ),
-          itemCount: filteredItems.length,
-          itemBuilder: (context, index) =>
-              _buildLibraryCard(filteredItems[index], userId, theme)
-                  .animate()
-                  .fadeIn(delay: (50 * index).ms)
-                  .scale(duration: 300.ms),
-        );
-      }
-    });
-  }
-
-  Widget _buildLibraryCard(LibraryItem item, String userId, ThemeData theme) {
+  Widget _buildLibraryCard(LibraryItem item, ThemeData theme, VoidCallback onTap) {
     IconData icon;
     Color iconColor;
     switch (item.type) {
@@ -742,62 +360,13 @@ class LibraryScreenState extends State<LibraryScreen>
         break;
     }
 
-    return Dismissible(
-      key: Key(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 204), // 0.8 * 255 = 204
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (direction) async {
-        return await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
-                  Theme.of(context).colorScheme.surface,
-              title: Text("Confirm Delete",
-                  style: Theme.of(context).textTheme.titleLarge),
-              content: Text("Are you sure you want to delete this item?",
-                  style: Theme.of(context).textTheme.bodyMedium),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text("Delete",
-                      style: TextStyle(color: Colors.redAccent)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-      onDismissed: (direction) {
-        _deleteContent(userId, item, theme);
-      },
-      child: _buildGlassListTile(
-        title: item.title,
-        subtitle: item.type.toString().split('.').last.toUpperCase(),
-        icon: icon,
-        iconColor: iconColor,
-        theme: theme,
-        onTap: () => _navigateToContent(userId, item),
-        trailing: IconButton(
-          icon: Icon(Icons.more_horiz,
-              color: theme.colorScheme.onSurface
-                  .withValues(alpha: 153)), // 0.6 * 255 = 153
-          onPressed: () => _showItemMenu(userId, item, theme),
-        ),
-      ),
+    return _buildGlassListTile(
+      title: item.title,
+      subtitle: item.type.toString().split('.').last.toUpperCase(),
+      icon: icon,
+      iconColor: iconColor,
+      theme: theme,
+      onTap: onTap,
     );
   }
 
@@ -813,13 +382,12 @@ class LibraryScreenState extends State<LibraryScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.6),
+        color: theme.cardColor.withAlpha(153),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: theme.cardColor.withValues(alpha: 0.7), width: 1.5),
+        border: Border.all(color: theme.cardColor.withAlpha(178), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
+            color: Colors.black.withAlpha(13),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -837,7 +405,7 @@ class LibraryScreenState extends State<LibraryScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
+                    color: iconColor.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: iconColor, size: 24),
@@ -847,29 +415,16 @@ class LibraryScreenState extends State<LibraryScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      Text(title, style: theme.textTheme.titleMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
-                      Text(subtitle,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: 12,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 153), // 0.6 * 255 = 153
-                              fontWeight: FontWeight.w500)),
+                      Text(subtitle, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(153), fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
                 if (trailing != null)
                   trailing
                 else
-                  Icon(Icons.chevron_right,
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 77)), // 0.3 * 255 = 77
+                  Icon(Icons.chevron_right, color: theme.colorScheme.onSurface.withAlpha(77)),
               ],
             ),
           ),
@@ -879,32 +434,35 @@ class LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildNoContentState(String type, ThemeData theme) {
-    final typeName = type == 'all' ? 'content' : type.replaceAll('s', '');
+    String title, message;
+    switch (type) {
+      case 'folders':
+        title = 'No folders yet';
+        message = 'Create your first folder to organize your study materials!';
+        break;
+      case 'folder content':
+        title = 'This folder is empty';
+        message = 'Add some content to this folder to see it here.';
+        break;
+      default:
+        title = 'No content yet';
+        message = 'Tap the + button to create your first set of study materials!';
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school_outlined,
-                size: 100,
-                color: theme.colorScheme.primary
-                    .withValues(alpha: 51)), // 0.2 * 255 = 51
+            Icon(Icons.school_outlined, size: 100, color: theme.colorScheme.primary.withAlpha(51)),
             const SizedBox(height: 24),
-            Text('No $typeName yet',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 153))), // 0.6 * 255 = 153
+            Text(title, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface.withAlpha(153))),
             const SizedBox(height: 12),
             Text(
-              type == 'folders'
-                  ? 'Create your first folder to organize your study materials!'
-                  : 'Tap the + button to create your first set of study materials!',
+              message,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface
-                      .withValues(alpha: 128)), // 0.5 * 255 = 128
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(128)),
             ),
           ],
         ),
@@ -919,23 +477,14 @@ class LibraryScreenState extends State<LibraryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off_outlined,
-                size: 100,
-                color: theme.colorScheme.primary
-                    .withValues(alpha: 51)), // 0.2 * 255 = 51
+            Icon(Icons.search_off_outlined, size: 100, color: theme.colorScheme.primary.withAlpha(51)),
             const SizedBox(height: 24),
-            Text('No Results Found',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 153))), // 0.6 * 255 = 153
+            Text('No Results Found', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface.withAlpha(153))),
             const SizedBox(height: 12),
             Text(
               'Your search for "$_searchQuery" did not match any content. Try a different search term.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface
-                      .withValues(alpha: 128)), // 0.5 * 255 = 128
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(128)),
             ),
           ],
         ),
@@ -943,384 +492,37 @@ class LibraryScreenState extends State<LibraryScreen>
     ).animate().fadeIn();
   }
 
-  void _showCreateOptions(BuildContext context, ThemeData theme) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            Text("Create New",
-                style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface)),
-            _buildCreationOption(
-              icon: Icons.article_outlined,
-              title: "Create Summary",
-              subtitle: "Summarize text or PDFs",
-              color: Colors.blueAccent,
-              theme: theme,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SummaryScreen()));
-              },
-            ),
-            _buildCreationOption(
-              icon: Icons.quiz_outlined,
-              title: "Create Quiz",
-              subtitle: "Generate a quiz from any topic",
-              color: Colors.greenAccent,
-              theme: theme,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const QuizScreen()));
-              },
-            ),
-            _buildCreationOption(
-              icon: Icons.style_outlined,
-              title: "Create Flashcards",
-              subtitle: "Make flashcards for study",
-              color: Colors.orangeAccent,
-              theme: theme,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const FlashcardsScreen()));
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreationOption(
-      {required IconData icon,
-      required String title,
-      required String subtitle,
-      required Color color,
-      required VoidCallback onTap,
-      required ThemeData theme}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface)),
-              Text(subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 153))), // 0.6 * 255 = 153
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGlassContainer(
-      {required Widget child, required ThemeData theme}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-                color: theme.cardColor.withValues(alpha: 0.9), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 13), // 0.05 * 255 = 13
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
-  void _showItemMenu(String userId, LibraryItem item, ThemeData theme) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: theme.cardColor,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Wrap(
-        children: [
-          if (!item.isReadOnly)
-            ListTile(
-              leading:
-                  Icon(Icons.edit_outlined, color: theme.colorScheme.onSurface),
-              title: Text('Edit',
-                  style: TextStyle(color: theme.colorScheme.onSurface)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _editContent(userId, item);
-              },
-            ),
-          ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            title:
-                const Text('Delete', style: TextStyle(color: Colors.redAccent)),
-            onTap: () {
-              Navigator.pop(ctx);
-              _deleteContent(userId, item, theme);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _navigateToContent(String userId, LibraryItem item) async {
+  void _navigateToContent(BuildContext context, LibraryItem item) async {
     Widget? screen;
+    final localDb = context.read<LocalDatabaseService>();
+
     switch (item.type) {
       case LibraryItemType.summary:
-        final localSummary = await _localDb.getSummary(item.id);
+        final localSummary = await localDb.getSummary(item.id);
         if (mounted && localSummary != null) {
           screen = SummaryScreen(summary: localSummary);
         }
         break;
       case LibraryItemType.quiz:
-        final localQuiz = await _localDb.getQuiz(item.id);
-        if (!mounted) return;
-        if (localQuiz != null) {
+        final localQuiz = await localDb.getQuiz(item.id);
+        if (mounted && localQuiz != null) {
           screen = QuizScreen(quiz: localQuiz);
         }
         break;
       case LibraryItemType.flashcards:
-        final localSet = await _localDb.getFlashcardSet(item.id);
+        final localSet = await localDb.getFlashcardSet(item.id);
         if (mounted && localSet != null) {
-          screen = FlashcardsScreen(
-              flashcardSet: FlashcardSet(
-                id: localSet.id,
-                title: localSet.title,
-                flashcards: localSet.flashcards
-                    .map((f) =>
-                        Flashcard(question: f.question, answer: f.answer))
-                    .toList(),
-                timestamp: Timestamp.fromDate(localSet.timestamp),
-              ),
-              isReadOnly: localSet.isReadOnly,
-              publicDeckId: localSet.publicDeckId);
+          screen = FlashcardsScreen(flashcardSet: localSet.toFlashcardSet());
         }
         break;
     }
 
-    if (!mounted) return;
-
-    if (screen != null) {
+    if (mounted && screen != null) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => screen!));
-    } else {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Could not load content.')));
+        const SnackBar(content: Text('Error: Could not load content.')),
+      );
     }
-  }
-
-  Future<void> _editContent(String userId, LibraryItem item) async {
-    EditableContent? editableContent;
-
-    switch (item.type) {
-      case LibraryItemType.summary:
-        var summary = await _localDb.getSummary(item.id);
-
-        if (summary != null) {
-          editableContent = EditableContent.fromSummary(
-              summary.id,
-              summary.title,
-              summary.content,
-              summary.tags,
-              Timestamp.fromDate(summary.timestamp));
-        }
-        break;
-      case LibraryItemType.quiz:
-        var quiz = await _localDb.getQuiz(item.id);
-
-        if (quiz != null) {
-          editableContent = EditableContent.fromQuiz(
-              quiz.id,
-              quiz.title,
-              quiz.questions
-                  .map((q) => QuizQuestion(
-                      question: q.question,
-                      options: q.options,
-                      correctAnswer: q.correctAnswer))
-                  .toList(),
-              Timestamp.fromDate(quiz.timestamp));
-        }
-        break;
-      case LibraryItemType.flashcards:
-        var flashcardSet = await _localDb.getFlashcardSet(item.id);
-
-        if (flashcardSet != null) {
-          editableContent = EditableContent.fromFlashcardSet(
-              flashcardSet.id,
-              flashcardSet.title,
-              flashcardSet.flashcards
-                  .map((f) => Flashcard(
-                      id: const Uuid().v4(),
-                      question: f.question,
-                      answer: f.answer))
-                  .toList(),
-              Timestamp.fromDate(flashcardSet.timestamp));
-        }
-        break;
-    }
-
-    if (!mounted) return;
-
-    if (editableContent != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Edit feature coming soon!")));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Could not load for editing.')));
-    }
-  }
-
-  Future<void> _deleteContent(
-      String userId, LibraryItem item, ThemeData theme) async {
-    try {
-      // TODO: Implement SyncService delete propagation (tombstones) mechanism.
-      // For now, we only delete locally.
-
-      switch (item.type) {
-        case LibraryItemType.summary:
-          await _localDb.deleteSummary(item.id);
-          break;
-        case LibraryItemType.quiz:
-          await _localDb.deleteQuiz(item.id);
-          break;
-        case LibraryItemType.flashcards:
-          await _localDb.deleteFlashcardSet(item.id);
-          break;
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Item deleted successfully'),
-            backgroundColor: theme.colorScheme.secondary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error deleting item: $e')));
-      }
-    }
-  }
-
-  void _showJoinCodeDialog(BuildContext context) {
-    final TextEditingController codeController = TextEditingController();
-    bool isLoading = false;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Join via Code'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                    'Enter the 6-character code shared by your creator.'),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: codeController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Code',
-                    border: OutlineInputBorder(),
-                    hintText: 'e.g. AB1234',
-                  ),
-                  maxLength: 6,
-                ),
-                if (isLoading) const LinearProgressIndicator(),
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel')),
-              ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        final code = codeController.text.trim();
-                        if (code.length < 4) return;
-
-                        setState(() => isLoading = true);
-                        try {
-                          final firestoreService = FirestoreService();
-                          final deck = await firestoreService
-                              .fetchPublicDeckByCode(code);
-
-                          if (!context.mounted) return;
-                          Navigator.pop(context);
-
-                          if (deck != null) {
-                            context.push('/public_deck/${deck.id}',
-                                extra: deck);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Deck not found.')));
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')));
-                          }
-                        } finally {
-                          if (context.mounted) {
-                            setState(() => isLoading = false);
-                          }
-                        }
-                      },
-                child: const Text('Join'),
-              ),
-            ],
-          );
-        });
-      },
-    );
   }
 }

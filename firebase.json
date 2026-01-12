@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"sumquiz-3d54e","appId":"1:1063163612294:android:c2eddda0afa793abedd507","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"sumquiz-3d54e","configurations":{"android":"1:1063163612294:android:c2eddda0afa793abedd507","ios":"1:1063163612294:ios:e65161b2afad0e3bedd507","macos":"1:1063163612294:ios:84a8828a5917135cedd507","web":"1:1063163612294:web:64ad516526c5b56eedd507","windows":"1:1063163612294:web:64ad516526c5b56eedd507"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "sumquiz-3d54e",
+          "appId": "1:1063163612294:android:c2eddda0afa793abedd507",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "sumquiz-3d54e",
+          "configurations": {
+            "android": "1:1063163612294:android:c2eddda0afa793abedd507",
+            "ios": "1:1063163612294:ios:e65161b2afad0e3bedd507",
+            "macos": "1:1063163612294:ios:84a8828a5917135cedd507",
+            "web": "1:1063163612294:web:64ad516526c5b56eedd507",
+            "windows": "1:1063163612294:web:64ad516526c5b56eedd507"
+          }
+        }
+      }
+    }
+  }
+}

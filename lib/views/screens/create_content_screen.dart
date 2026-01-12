@@ -1,4 +1,3 @@
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +6,53 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
-import 'package:sumquiz/services/usage_service.dart';
+import 'package:sumquiz/services/enhanced_ai_service.dart';
+import 'package:sumquiz/views/widgets/extraction_progress_dialog.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
+
+class InputValidator {
+  static bool isValidUrl(String url) {
+    if (url.trim().isEmpty) return false;
+
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static bool isYoutubeUrl(String url) {
+    return url.contains('youtube.com/watch') ||
+        url.contains('youtu.be/') ||
+        url.contains('youtube.com/shorts/');
+  }
+
+  static String? validateText(String text) {
+    if (text.trim().isEmpty) {
+      return 'Please enter some text';
+    }
+    if (text.trim().length < 50) {
+      return 'Text is too short. Please provide at least 50 characters';
+    }
+    if (text.length > 50000) {
+      return 'Text is too long. Maximum 50,000 characters';
+    }
+    return null; // Valid
+  }
+
+  static String? validateUrl(String url) {
+    if (url.trim().isEmpty) {
+      return 'Please enter a URL';
+    }
+    if (!isValidUrl(url)) {
+      return 'Please enter a valid URL (must start with http:// or https://)';
+    }
+    return null; // Valid
+  }
+}
 
 class CreateContentScreen extends StatefulWidget {
   const CreateContentScreen({super.key});
@@ -24,7 +68,6 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
   Uint8List? _pdfBytes;
   String? _imageName;
   Uint8List? _imageBytes;
-  bool _isLoading = false;
   String _errorMessage = '';
 
   final ImagePicker _imagePicker = ImagePicker();
@@ -44,17 +87,20 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
 
   // These methods will set the active input type and clear others
   void _activateTextField() {
-    if (_linkController.text.isNotEmpty || _pdfBytes != null || _imageBytes != null) {
+    if (_linkController.text.isNotEmpty ||
+        _pdfBytes != null ||
+        _imageBytes != null) {
       _resetInputs();
     }
   }
 
   void _activateLinkField() {
-     if (_textController.text.isNotEmpty || _pdfBytes != null || _imageBytes != null) {
+    if (_textController.text.isNotEmpty ||
+        _pdfBytes != null ||
+        _imageBytes != null) {
       _resetInputs();
     }
   }
-
 
   bool _checkProAccess(String feature) {
     final user = Provider.of<UserModel?>(context, listen: false);
@@ -93,7 +139,8 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     if (!_checkProAccess('Image Scan')) return;
     _resetInputs(); // Clear other inputs
     try {
-      final XFile? image = await _imagePicker.pickImage(source: source, imageQuality: 80);
+      final XFile? image =
+          await _imagePicker.pickImage(source: source, imageQuality: 80);
       if (image != null) {
         final bytes = await image.readAsBytes();
         setState(() {
@@ -107,69 +154,99 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
   }
 
   Future<void> _processAndNavigate() async {
-    if (_isLoading) return;
-
     final user = Provider.of<UserModel?>(context, listen: false);
     if (user == null) {
       setState(() => _errorMessage = 'You must be logged in to create content.');
       return;
     }
 
-    final usageService = UsageService();
-    final canGenerate = await usageService.canGenerateDeck(user.uid);
+    // Validate input
+    String? validationError;
 
-    if (!canGenerate) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => const UpgradeDialog(featureName: 'Daily Limit'),
-        );
+    if (_textController.text.trim().isNotEmpty) {
+      validationError = InputValidator.validateText(_textController.text);
+    } else if (_linkController.text.trim().isNotEmpty) {
+      validationError = InputValidator.validateUrl(_linkController.text);
+    } else if (_pdfBytes != null) {
+      if (_pdfBytes!.length > 15 * 1024 * 1024) {
+        validationError = 'PDF file is too large. Maximum size is 15MB';
       }
+    } else if (_imageBytes != null) {
+      if (_imageBytes!.length > 10 * 1024 * 1024) {
+        validationError = 'Image file is too large. Maximum size is 10MB';
+      }
+    } else {
+      validationError = 'Please provide some content to process';
+    }
+
+    if (validationError != null) {
+      setState(() => _errorMessage = validationError!);
       return;
     }
-    
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
 
-    try {
-      final extractionService = Provider.of<ContentExtractionService>(context, listen: false);
-      String extractedText = '';
-      
-      // Determine which input is active and process it
-      if (_textController.text.trim().isNotEmpty) {
-        extractedText = _textController.text;
-      } else if (_linkController.text.trim().isNotEmpty) {
-        if (!_checkProAccess('Web Link')) {
-           setState(() => _isLoading = false);
-           return;
-        }
-        extractedText = await extractionService.extractContent(type: 'link', input: _linkController.text);
-      } else if (_pdfBytes != null) {
-        extractedText = await extractionService.extractContent(type: 'pdf', input: _pdfBytes!);
-      } else if (_imageBytes != null) {
-        extractedText = await extractionService.extractContent(type: 'image', input: _imageBytes!);
-      } else {
-        throw Exception('Please provide some content first.');
-      }
-      
-      if (extractedText.trim().isEmpty) {
-        throw Exception('Could not extract any content from the source.');
-      }
+    final extractionService = Provider.of<ContentExtractionService>(context, listen: false);
 
-      await usageService.recordDeckGeneration(user.uid);
+    String? extractedTextResult = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ExtractionProgressDialog(
+        generationFuture: (onProgress) async {
+          String extractedText = '';
 
-      if (mounted) {
-        context.push('/create/extraction-view', extra: extractedText);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceFirst("Exception: ", ""));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+          if (_textController.text.trim().isNotEmpty) {
+            onProgress('Analyzing text...');
+            extractedText = _textController.text;
+          } else if (_linkController.text.trim().isNotEmpty) {
+            onProgress('Analyzing link...');
+            if (mounted && !_checkProAccess('Web Link')) {
+              throw Exception('Upgrade to Pro to use web links.');
+            }
+            if (InputValidator.isYoutubeUrl(_linkController.text)) {
+              final ytRegex = RegExp(r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\\shorts\/)([a-zA-Z0-9_-]{11})');
+              if (!ytRegex.hasMatch(_linkController.text)) {
+                throw Exception('Invalid YouTube URL format');
+              }
+            }
+            extractedText = await extractionService.extractContent(
+              type: 'link',
+              input: _linkController.text,
+              userId: user.uid,
+            );
+          } else if (_pdfBytes != null) {
+            onProgress('Analyzing PDF...');
+            extractedText = await extractionService.extractContent(
+              type: 'pdf',
+              input: _pdfBytes!,
+              userId: user.uid,
+            );
+          } else if (_imageBytes != null) {
+            onProgress('Analyzing image...');
+            extractedText = await extractionService.extractContent(
+              type: 'image',
+              input: _imageBytes!,
+              userId: user.uid,
+            );
+          }
+
+          if (extractedText.trim().isEmpty) {
+            throw Exception('Could not extract any content from the source.');
+          }
+          if (extractedText.trim().length < 100) {
+            throw Exception('Extracted content is too short. Please use a source with more content.');
+          }
+          return extractedText; // Return only the extracted text
+        },
+      ),
+    );
+
+    if (mounted) {
+      // Navigate to ExtractionViewScreen, passing the extracted text
+      context.push('/extraction-view', extra: extractedTextResult);
+    } else {
+      if(mounted){
+        setState(() {
+          _errorMessage = _getUserFriendlyError(Exception('Content extraction failed.'));
+        });
       }
     }
   }
@@ -182,19 +259,24 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text('Create Content', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: Text('Create Content',
+            style: TextStyle(
+                color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: CircleAvatar(
               backgroundColor: colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.person, color: colorScheme.onSurfaceVariant, size: 20),
+              child: Icon(Icons.person,
+                  color: colorScheme.onSurfaceVariant, size: 20),
             ),
             onPressed: () => context.push('/account'),
           ),
         ],
         backgroundColor: Colors.transparent,
         elevation: 0,
-        systemOverlayStyle: theme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: theme.brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -204,10 +286,12 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             const SizedBox(height: 16),
             RichText(
               text: TextSpan(
-                style: theme.textTheme.displaySmall?.copyWith(color: colorScheme.onSurface, height: 1.3),
+                style: theme.textTheme.displaySmall?.copyWith(
+                    color: colorScheme.onSurface, height: 1.3),
                 children: [
                   const TextSpan(text: 'What do you want to '),
-                  TextSpan(text: 'learn', style: TextStyle(color: colorScheme.primary)),
+                  TextSpan(
+                      text: 'learn', style: TextStyle(color: colorScheme.primary)),
                   const TextSpan(text: ' today?'),
                 ],
               ),
@@ -224,10 +308,7 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             const SizedBox(height: 32),
             _buildSectionHeader(colorScheme, Icons.fullscreen, 'SCAN IMAGE'),
             _buildScanImageSection(theme),
-            if (_errorMessage.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Center(child: Text(_errorMessage, style: TextStyle(color: colorScheme.error, fontSize: 14))),
-            ],
+            _buildErrorDisplay(theme),
             const SizedBox(height: 120), // Space for the floating button
           ],
         ),
@@ -237,14 +318,18 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     );
   }
 
-  Widget _buildSectionHeader(ColorScheme colorScheme, IconData icon, String title) {
+  Widget _buildSectionHeader(
+      ColorScheme colorScheme, IconData icon, String title) {
     return Row(
       children: [
         Icon(icon, color: colorScheme.primary, size: 20),
         const SizedBox(width: 8),
         Text(
           title,
-          style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+          style: TextStyle(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2),
         ),
       ],
     );
@@ -255,9 +340,9 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+        border: Border.all(color: theme.colorScheme.outline.withAlpha(77)),
       ),
       child: Stack(
         alignment: Alignment.bottomRight,
@@ -269,7 +354,8 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             decoration: InputDecoration(
               hintText: 'Type or paste your notes here for AI summary...',
-              hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
+              hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant.withAlpha(128)),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -285,10 +371,12 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
                 }
               },
               icon: Icon(Icons.paste, size: 16, color: theme.colorScheme.onSecondaryContainer),
-              label: Text('Paste', style: TextStyle(color: theme.colorScheme.onSecondaryContainer)),
+              label: Text('Paste',
+                  style: TextStyle(color: theme.colorScheme.onSecondaryContainer)),
               style: TextButton.styleFrom(
                 backgroundColor: theme.colorScheme.secondaryContainer,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),
@@ -299,27 +387,54 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
   }
 
   Widget _buildImportWebpageSection(ThemeData theme) {
+    final isValid =
+        _linkController.text.isNotEmpty && InputValidator.isValidUrl(_linkController.text);
+
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+        border: Border.all(
+          color: _linkController.text.isEmpty
+              ? theme.colorScheme.outline.withAlpha(77)
+              : isValid
+                  ? Colors.green.withAlpha(128)
+                  : Colors.red.withAlpha(128),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.public, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7)),
+          Icon(
+            Icons.public,
+            color: _linkController.text.isEmpty
+                ? theme.colorScheme.onSurfaceVariant.withAlpha(178)
+                : isValid
+                    ? Colors.green
+                    : Colors.red,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: _linkController,
               onTap: _activateLinkField,
+              onChanged: (value) =>
+                  setState(() {}), // Trigger rebuild for validation
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               decoration: InputDecoration(
                 hintText: 'https://example.com/article',
-                hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant.withAlpha(128),
+                ),
                 border: InputBorder.none,
+                suffixIcon: _linkController.text.isNotEmpty
+                    ? Icon(
+                        isValid ? Icons.check_circle : Icons.error,
+                        color: isValid ? Colors.green : Colors.red,
+                        size: 20,
+                      )
+                    : null,
               ),
             ),
           ),
@@ -337,10 +452,14 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         height: 120,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.3) : Colors.transparent,
+          color: isSelected
+              ? theme.colorScheme.primaryContainer.withAlpha(77)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3),
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withAlpha(77),
             width: isSelected ? 1 : 2,
             style: BorderStyle.solid,
           ),
@@ -349,10 +468,14 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
-              backgroundColor: isSelected ? theme.colorScheme.primary.withOpacity(0.2) : theme.colorScheme.surfaceContainerHighest,
+              backgroundColor: isSelected
+                  ? theme.colorScheme.primary.withAlpha(51)
+                  : theme.colorScheme.surfaceContainerHighest,
               radius: 24,
               child: Icon(
-                isSelected ? Icons.check_circle_rounded : Icons.upload_file_rounded,
+                isSelected
+                    ? Icons.check_circle_rounded
+                    : Icons.upload_file_rounded,
                 color: theme.colorScheme.primary,
                 size: 24,
               ),
@@ -360,12 +483,16 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             const SizedBox(height: 12),
             Text(
               _pdfName ?? 'Tap to browse',
-              style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
             ),
             if (!isSelected)
-              Text('PDF files up to 10MB', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 12)),
+              Text('PDF files up to 10MB',
+                  style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(153),
+                      fontSize: 12)),
           ],
         ),
       ),
@@ -373,41 +500,68 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
   }
 
   Widget _buildScanImageSection(ThemeData theme) {
-    final bool isCameraSelected = _imageBytes != null && _imageName?.contains('camera') == true;
-    final bool isGallerySelected = _imageBytes != null && _imageName?.contains('gallery') == true;
+    final bool isCameraSelected =
+        _imageBytes != null && _imageName?.contains('camera') == true;
+    final bool isGallerySelected =
+        _imageBytes != null && _imageName?.contains('gallery') == true;
 
     return Padding(
       padding: const EdgeInsets.only(top: 16.0),
       child: Row(
         children: [
-          Expanded(child: _buildScanButton('Camera', Icons.camera_alt, () => _pickImage(ImageSource.camera), isCameraSelected, theme)),
+          Expanded(
+              child: _buildScanButton(
+                  'Camera',
+                  Icons.camera_alt,
+                  () => _pickImage(ImageSource.camera),
+                  isCameraSelected,
+                  theme)),
           const SizedBox(width: 16),
-          Expanded(child: _buildScanButton('Gallery', Icons.photo_library, () => _pickImage(ImageSource.gallery), isGallerySelected, theme)),
+          Expanded(
+              child: _buildScanButton(
+                  'Gallery',
+                  Icons.photo_library,
+                  () => _pickImage(ImageSource.gallery),
+                  isGallerySelected,
+                  theme)),
         ],
       ),
     );
   }
 
-  Widget _buildScanButton(String label, IconData icon, VoidCallback onPressed, bool isSelected, ThemeData theme) {
+  Widget _buildScanButton(String label, IconData icon, VoidCallback onPressed,
+      bool isSelected, ThemeData theme) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3)),
+          border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline.withAlpha(77)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
-              backgroundColor: isSelected ? theme.colorScheme.primary.withOpacity(0.2) : theme.colorScheme.secondaryContainer,
+              backgroundColor: isSelected
+                  ? theme.colorScheme.primary.withAlpha(51)
+                  : theme.colorScheme.secondaryContainer,
               radius: 24,
-              child: Icon(icon, color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSecondaryContainer, size: 24),
+              child: Icon(icon,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSecondaryContainer,
+                  size: 24),
             ),
             const SizedBox(height: 12),
-            Text(label, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+            Text(label,
+                style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -421,28 +575,158 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         width: double.infinity,
         height: 56,
         child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : _processAndNavigate,
-          icon: _isLoading
-              ? Container(
-                  width: 24,
-                  height: 24,
-                  padding: const EdgeInsets.all(2.0),
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.onPrimary,
-                    strokeWidth: 3,
-                  ),
-                )
-              : Icon(Icons.auto_awesome_sharp, color: theme.colorScheme.onPrimary, size: 20),
+          onPressed: _processAndNavigate,
+          icon: Icon(Icons.auto_awesome_sharp,
+                  color: theme.colorScheme.onPrimary, size: 20),
           label: Text(
             'Extract Content',
-            style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.colorScheme.primary,
-            disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.5),
+            disabledBackgroundColor: theme.colorScheme.primary.withAlpha(128),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           ),
         ),
+      ),
+    );
+  }
+
+  String _getUserFriendlyError(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+
+    // Network errors
+    if (errorStr.contains('socket') ||
+        errorStr.contains('network') ||
+        errorStr.contains('connection')) {
+      return '📡 Check your internet connection and try again';
+    }
+
+    // Timeout errors
+    if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
+      return '⏱️ Request took too long. Try with shorter content or check your connection';
+    }
+
+    // Rate limit errors
+    if (errorStr.contains('rate limit')) {
+      return '🚦 Too many requests. Please wait a few minutes before trying again';
+    }
+
+    // API errors
+    if (errorStr.contains('api') || errorStr.contains('quota')) {
+      return '🔑 Service temporarily unavailable. Please try again later';
+    }
+
+    // Content too long
+    if (errorStr.contains('too long') || errorStr.contains('maximum')) {
+      return '📏 Content is too long. Try breaking it into smaller sections';
+    }
+
+    // YouTube specific
+    if (errorStr.contains('youtube') || errorStr.contains('video')) {
+      if (errorStr.contains('unavailable') || errorStr.contains('private')) {
+        return '🎥 Video is unavailable or private. Try a different video';
+      }
+      if (errorStr.contains('caption') || errorStr.contains('transcript')) {
+        return '📝 Video doesn\'t have captions. Try a video with subtitles enabled';
+      }
+      return '🎥 Could not process video. Make sure the URL is correct';
+    }
+
+    // PDF errors
+    if (errorStr.contains('pdf')) {
+      if (errorStr.contains('size') || errorStr.contains('large')) {
+        return '📄 PDF file is too large. Maximum size is 15MB';
+      }
+      return '📄 Could not read PDF. Make sure the file isn\'t corrupted';
+    }
+
+    // Image errors
+    if (errorStr.contains('image') || errorStr.contains('ocr')) {
+      return '🖼️ Could not read text from image. Try a clearer image with better lighting';
+    }
+
+    // Auth/permission errors
+    if (errorStr.contains('permission') || errorStr.contains('unauthorized')) {
+      return '🔒 Access denied. Please log in and try again';
+    }
+
+    // Limit errors
+    if (errorStr.contains('limit reached') || errorStr.contains('upgrade')) {
+      return error.toString().replaceFirst('Exception: ', '');
+    }
+
+    // AI generation errors
+    if (error is EnhancedAIServiceException) {
+      return '🤖 ${error.message}';
+    }
+
+    // Extraction errors
+    if (error is Exception) {
+      final message = error.toString().replaceFirst('Exception: ', '');
+      if (message.length < 100) {
+        return '⚠️ $message';
+      }
+    }
+
+    // Generic fallback
+    return '❌ Something went wrong. Please try again or contact support';
+  }
+
+  Widget _buildErrorDisplay(ThemeData theme) {
+    if (_errorMessage.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.error.withAlpha(77),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: theme.colorScheme.error,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Error',
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _errorMessage,
+                  style: TextStyle(
+                    color: theme.colorScheme.onErrorContainer,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, size: 20),
+            onPressed: () => setState(() => _errorMessage = ''),
+            color: theme.colorScheme.error,
+          ),
+        ],
       ),
     );
   }

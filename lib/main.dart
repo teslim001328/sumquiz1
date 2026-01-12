@@ -1,6 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, PlatformDispatcher;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/providers/sync_provider.dart';
@@ -10,7 +11,6 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/sync_service.dart';
 import 'firebase_options.dart';
-import 'package:sumquiz/services/ai_service.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
 import 'package:sumquiz/services/firestore_service.dart';
 import 'package:sumquiz/services/usage_service.dart';
@@ -35,6 +35,7 @@ import 'package:sumquiz/widgets/notification_navigator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   // Global error handling
   FlutterError.onError = (FlutterErrorDetails details) async {
@@ -68,8 +69,8 @@ void main() async {
 
   if (!kIsWeb) {
     await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug,
-      appleProvider: AppleProvider.appAttest,
+      androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
     );
   }
 
@@ -137,13 +138,14 @@ class _MyAppState extends State<MyApp> {
           },
           dispose: (_, service) => service?.dispose(),
         ),
-        Provider<EnhancedAIService>(create: (_) => EnhancedAIService()),
-        Provider<AIService>(
-            create: (context) =>
-                AIService(iapService: context.read<IAPService?>())),
-        Provider<ContentExtractionService>(
-            create: (context) =>
-                ContentExtractionService(context.read<EnhancedAIService>())),
+        ProxyProvider<IAPService, EnhancedAIService>(
+          update: (context, iapService, previous) =>
+              EnhancedAIService(iapService: iapService),
+        ),
+        ProxyProvider<EnhancedAIService, ContentExtractionService>(
+          update: (context, enhancedAIService, previous) =>
+              ContentExtractionService(enhancedAIService),
+        ),
         Provider<UserService>(create: (_) => UserService()),
         Provider<SyncService>(
           create: (context) =>

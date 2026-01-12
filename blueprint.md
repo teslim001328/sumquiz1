@@ -2,52 +2,52 @@
 
 ## Overview
 
-This document outlines the architecture, features, and design of the SumQuiz application. It serves as a single source of truth for the project, documenting all style, design, and features implemented from the initial version to the current version.
+SumQuiz is a mobile application that leverages AI to transform various forms of content into study materials. It allows users to import text, links, PDFs, and images, and then generates summaries, quizzes, and flashcards from the extracted content. The application is designed to be a comprehensive study companion, with features for spaced repetition, progress tracking, and offline access.
 
-## Project Structure
+## Style, Design, and Features
 
-The project is organized into the following directories:
+### Theming
 
-- `lib`: Contains the main application code, organized by feature.
-- `lib/models`: Contains the data models for the application.
-- `lib/services`: Contains the services that interact with external APIs and databases.
-- `lib/views`: Contains the UI widgets and screens.
-- `lib/view_models`: Contains the view models that manage the state of the UI.
+*   **Theme Provider:** The application uses a `ThemeProvider` to manage light and dark themes.
+*   **Material Design 3:** The UI is built with Material Design 3 components, providing a modern and consistent look and feel.
+*   **Color Scheme:** The color scheme is based on a primary seed color, which is used to generate a harmonious and accessible color palette.
+*   **Typography:** The application uses the `google_fonts` package to provide a variety of a custom text styles.
 
-## Features
+### Architecture
 
-- **User Authentication**: Users can sign in with Google or email and password.
-- **Summarization**: Users can generate summaries from text or PDF files.
-- **Quizzes**: Users can generate quizzes from summaries or text.
-- **Flashcards**: Users can generate flashcards from summaries or text.
-- **Library**: Users can save their summaries, quizzes, and flashcards to a local database for offline access.
-- **Spaced Repetition**: The application uses a spaced repetition algorithm to schedule flashcard reviews.
-- **Synchronization**: The application synchronizes the local database with Firestore when the user logs in.
+*   **Provider State Management:** The application uses the `provider` package for state management, with a combination of `ChangeNotifierProvider`, `ProxyProvider`, and `StreamProvider` to manage the application's state.
+*   **Layered Architecture:** The codebase is organized into a layered architecture, with a clear separation of concerns between the UI, business logic, and data layers.
+*   **Services:** The application uses a variety of services to handle tasks such as authentication, data storage, AI processing, and content extraction.
 
-## Design
+### Features
 
-The application uses a modern, clean design with a consistent color scheme and typography. The UI is designed to be intuitive and easy to use.
+*   **Authentication:** Users can sign in with Firebase Authentication.
+*   **Content Extraction:** The application can extract text from a variety of sources, including:
+    *   Plain text
+    *   Web links
+    *   PDF files
+    *   Images (using OCR)
+    *   **YouTube videos (via direct Gemini API analysis)**
+*   **AI-Powered Content Generation:** The application uses the Gemini AI model to generate the following study materials:
+    *   **Summaries:** Comprehensive study guides with titles, content, and tags.
+    *   **Quizzes:** Challenging multiple-choice exams with plausible distractors.
+    *   **Flashcards:** High-quality flashcards for active recall study.
+*   **Local Storage:** The application uses a local database to store all generated content, ensuring offline access.
+*   **Spaced Repetition:** The application includes a spaced repetition system to help users learn and retain information more effectively.
+*   **Syncing:** The application can sync data with a backend service to provide a seamless experience across multiple devices.
+*   **In-App Purchases:** The application includes in-app purchases to unlock premium features.
+*   **Referrals:** The application includes a referral system to reward users for inviting their friends.
+*   **Notifications:** The application can send notifications to remind users to study.
+*   **Error Reporting:** The application includes an error reporting service to help developers identify and fix bugs.
+*   **Progress Tracking:** The application now provides real-time progress updates for long-running operations, such as content generation.
+*   **User-Friendly Error Messages:** The application now displays user-friendly error messages that are easy to understand.
+*   **Input Validation:** The application now validates user input to prevent crashes and other issues.
 
-## Current Plan
+## Current Plan: Refactoring YouTube Video Analysis with Native Gemini API
 
-### Onboarding Screen Revamp
+This refactoring focused on replacing the inefficient and fragile transcript-scraping method with direct video analysis using the Gemini API's native capabilities.
 
-The onboarding screen is the first impression a user has of the app. The current design is functional, but it can be improved to be more immersive, visually appealing, and persuasive.
-
-**Strategy:**
-
-1.  **Immersive Visuals:** Each onboarding step will feature a full-screen, high-quality, dark-themed image with a subtle noise texture and a vignette effect. This will create a premium and focused atmosphere.
-
-2.  **Strategic Content Alignment:** The headline and subtitle of each step will be repositioned to the top of the screen, ensuring they are the first thing the user reads. This placement immediately communicates the app's value propositions.
-
-3.  **Engaging Titles & subtitles:** The titles will be more benefit-oriented and punchier. I'll use a more premium and authoritative font to match the new visual style.
-
-4.  **Animated Illustrations:** I will add animations to the illustrations to make them more dynamic and engaging.
-
-5.  **Clear & Actionable Buttons:** The buttons will be redesigned for better visibility and to create a stronger call to action.
-
-### Next Steps
-
-- Continue to improve the UI and add new features.
-- Add more tests to improve the code coverage.
-- Monitor the application for bugs and performance issues.
+*   **Implemented Direct YouTube Video Analysis:** The `EnhancedAIService` now has an `analyzeYouTubeVideo` method that passes the public YouTube URL directly to the Gemini `visionModel` using `FileData`. This provides much richer, more accurate context from both video and audio.
+*   **Simplified Content Extraction:** The `ContentExtractionService` was significantly simplified. It now calls the new `analyzeYouTubeVideo` method directly, removing the complex and error-prone `_extractYoutubeTranscript` logic.
+*   **Removed Redundant Dependencies:** The `youtube_explode_dart` package, which was only used for the old transcript-scraping method, has been completely removed from `pubspec.yaml`, reducing the project's dependency footprint.
+*   **Streamlined AI Processing:** The call to `filterInstructionalContent` was removed from the YouTube processing flow in `ContentExtractionService`, as the new prompt in `analyzeYouTubeVideo` handles content filtering more effectively at the source.

@@ -97,10 +97,8 @@ class UsageService {
       });
 
       // Grant reward outside the user transaction to ensure atomicity of that specific update
-      if (referrerIdToReward != null) {
-        await _referralService.grantReferrerReward(referrerIdToReward);
-      }
-    } catch (e, s) {
+      await _referralService.grantReferrerReward(referrerIdToReward);
+        } catch (e, s) {
       developer.log('Error recording action',
           name: 'UsageService', error: e, stackTrace: s);
       rethrow;

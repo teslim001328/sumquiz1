@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sumquiz/services/iap_service.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/user_model.dart';
@@ -36,7 +37,7 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  final EnhancedAIService _aiService = EnhancedAIService();
+  late final EnhancedAIService _aiService;
   final LocalDatabaseService _localDbService = LocalDatabaseService();
 
   QuizState _state = QuizState.creation;
@@ -51,6 +52,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
+    _aiService = EnhancedAIService(iapService: Provider.of<IAPService>(context, listen: false));
     _localDbService.init();
 
     if (widget.quiz != null) {
@@ -282,13 +284,13 @@ class _QuizScreenState extends State<QuizScreen> {
                       Icon(Icons.person_outline_rounded,
                           size: 16,
                           color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6)),
+                              .withOpacity(0.6)),
                       const SizedBox(width: 6),
                       Text(
                         'Created by ${widget.quiz!.creatorName}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
+                              .withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -342,7 +344,7 @@ class _QuizScreenState extends State<QuizScreen> {
           Text(
             "Crafting challenging questions...",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ],
@@ -373,7 +375,7 @@ class _QuizScreenState extends State<QuizScreen> {
               _errorMessage,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 32),
@@ -420,7 +422,7 @@ class _QuizScreenState extends State<QuizScreen> {
               Text(
                 'Generate a quiz from your study materials',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
               ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2),
               const SizedBox(height: 48),
@@ -440,7 +442,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 decoration: InputDecoration(
                   hintText: 'e.g., Biology Chapter 5 Quiz',
                   hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
                   ),
                   filled: true,
                   fillColor: theme.cardColor,
@@ -481,7 +483,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   hintText:
                       'Paste your notes, article, or study material here...',
                   hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
                   ),
                   filled: true,
                   fillColor: theme.cardColor,
@@ -592,7 +594,7 @@ class _QuizScreenState extends State<QuizScreen> {
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: performanceColor.withValues(alpha: 0.1),
+                  color: performanceColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -644,7 +646,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       '$_score out of ${_questions.length} correct',
                       style: theme.textTheme.titleLarge?.copyWith(
                         color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],

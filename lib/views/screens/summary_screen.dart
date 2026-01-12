@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sumquiz/models/local_summary.dart';
+import 'package:sumquiz/services/iap_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -45,7 +46,7 @@ class SummaryScreenState extends State<SummaryScreen> {
   @override
   void initState() {
     super.initState();
-    _aiService = EnhancedAIService();
+    _aiService = EnhancedAIService(iapService: Provider.of<IAPService>(context, listen: false));
     _localDbService = LocalDatabaseService();
     _localDbService.init();
     if (widget.summary != null) {
@@ -424,7 +425,7 @@ class SummaryScreenState extends State<SummaryScreen> {
           const SizedBox(height: 24),
           Text(_loadingMessage,
               style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7))),
         ],
       ).animate().fadeIn(),
     );
@@ -450,7 +451,7 @@ class SummaryScreenState extends State<SummaryScreen> {
               Text(
                 'Paste your content or upload a PDF to generate a comprehensive summary',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    color: theme.colorScheme.onSurface.withOpacity(0.6)),
               ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2),
               const SizedBox(height: 48),
               
@@ -461,7 +462,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                 decoration: InputDecoration(
                   hintText: 'Paste your text here...',
                   hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                      color: theme.colorScheme.onSurface.withOpacity(0.3)),
                   filled: true,
                   fillColor: theme.cardColor,
                   border: OutlineInputBorder(
@@ -491,7 +492,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                         Icons.upload_file_rounded,
                         color: _pdfFileName != null
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            : theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                       label: Text(
                         _pdfFileName ?? 'Upload PDF',
@@ -569,7 +570,7 @@ class SummaryScreenState extends State<SummaryScreen> {
             Text(_errorMessage,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7))),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _retry,
@@ -594,7 +595,7 @@ class SummaryScreenState extends State<SummaryScreen> {
       return Center(
           child: Text('No summary available',
               style: theme.textTheme.bodyLarge
-                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))));
+                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))));
     }
 
     final isViewingSaved = widget.summary != null;
@@ -629,7 +630,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(

@@ -11,38 +11,25 @@ service cloud.firestore {
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    function isCreator() {
-      // Assumes 'role' is stored in user document. 
-      // Ideally, use Custom Claims for better performance/security.
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'creator';
-    }
 
     // Users Collection
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId); // Users can create their own profile
-      allow update: if isOwner(userId); // Users can update their own profile
-      allow delete: if false; // Deletion requires admin or cloud function
+      allow read, write: if isOwner(userId);
     }
-    
-    // Public Decks Collection
-    match /public_decks/{deckId} {
-      // Anyone can read public decks (for import)
-      // Or restrict to authenticated users:
-      allow read: if isAuthenticated();
-      
-      // Only Creators can create
-      allow create: if isCreator();
-      
-      // Only the deck owner can update key fields, 
-      // BUT anyone can increment metrics (atomic operations only ideally, but simplistic here)
-      allow update: if isAuthenticated(); 
-      // Note: Real production apps should use Cloud Functions for metrics to prevent
-      // malicious overwrites of stats.
-      
-      allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
+
+    // Content Collections (Summaries, Quizzes, Flashcard Sets)
+    match /users/{userId}/{collection}/{contentId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Folders Collection
+    match /users/{userId}/folders/{folderId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Content-Folder Relationships
+    match /users/{userId}/content_folders/{contentFolderId} {
+      allow read, write: if isOwner(userId);
     }
   }
 }

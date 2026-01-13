@@ -44,8 +44,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    _loadMission();
-    _loadSrsStats();
+    // Load both mission and SRS stats concurrently
+    await Future.wait([
+      _loadMission(),
+      _loadSrsStats(),
+    ]);
   }
 
   Future<void> _loadSrsStats() async {
@@ -259,7 +262,40 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _buildMissionDashboard(UserModel? user, ThemeData theme) {
-    if (_dailyMission == null) return const SizedBox();
+    // Show helpful message if mission is null instead of blank screen
+    if (_dailyMission == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: _buildGlassCard(
+            theme: theme,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.info_outline,
+                    size: 48,
+                    color: theme.colorScheme.primary.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  'No mission available',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Check back later for your daily mission',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final isCompleted = _dailyMission!.isCompleted;
 
     return SingleChildScrollView(
@@ -552,11 +588,25 @@ class _ReviewScreenState extends State<ReviewScreen> {
         localDb.watchAllQuizzes(user.uid),
         localDb.watchAllSummaries(user.uid),
         (sets, quizzes, summaries) {
-          final all = <dynamic>[...sets, ...quizzes, ...summaries];
-          all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          // Filter out any null items and combine
+          final all = <dynamic>[
+            ...sets.where((s) => s != null),
+            ...quizzes.where((q) => q != null),
+            ...summaries.where((s) => s != null),
+          ];
+
+          // Safe sort with null checks to prevent null errors
+          all.sort((a, b) {
+            if (a == null || b == null) return 0;
+            final aTime = a.timestamp;
+            final bTime = b.timestamp;
+            if (aTime == null || bTime == null) return 0;
+            return bTime.compareTo(aTime);
+          });
+
           return all.take(5).toList();
         },
-      ),
+      ).shareReplay(maxSize: 1), // Allow multiple subscribers with cached value
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());

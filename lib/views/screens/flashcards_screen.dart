@@ -15,6 +15,7 @@ import '../../services/local_database_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import '../../services/enhanced_ai_service.dart';
 import '../../services/usage_service.dart';
+import '../../services/user_service.dart';
 import '../../models/user_model.dart';
 import '../../models/flashcard.dart';
 import '../../models/flashcard_set.dart';
@@ -71,7 +72,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   }
 
   Future<void> _initializeServices() async {
-    _aiService = EnhancedAIService(iapService: Provider.of<IAPService>(context, listen: false));
+    _aiService = EnhancedAIService(
+        iapService: Provider.of<IAPService>(context, listen: false));
     _localDbService = LocalDatabaseService();
     await _localDbService.init();
     _srsService =
@@ -226,6 +228,14 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
 
       for (final flashcard in _flashcards) {
         await _srsService.scheduleReview(flashcard.id, userModel.uid);
+      }
+
+      // Increment daily progress
+      try {
+        final userService = UserService();
+        await userService.incrementItemsCompleted(userModel.uid);
+      } catch (e) {
+        debugPrint('Failed to increment progress: $e');
       }
 
       if (mounted) {
@@ -450,8 +460,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                   decoration: InputDecoration(
                     hintText: 'e.g., Biology Chapter 5',
                     hintStyle: TextStyle(
-                        color:
-                            theme.colorScheme.onSurface.withOpacity(0.5)),
+                        color: theme.colorScheme.onSurface.withOpacity(0.5)),
                     filled: true,
                     fillColor: theme.cardColor.withOpacity(0.5),
                     border: OutlineInputBorder(
@@ -473,8 +482,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                   decoration: InputDecoration(
                     hintText: 'Paste your notes, an article, or any text here.',
                     hintStyle: TextStyle(
-                        color:
-                            theme.colorScheme.onSurface.withOpacity(0.5)),
+                        color: theme.colorScheme.onSurface.withOpacity(0.5)),
                     filled: true,
                     fillColor: theme.cardColor.withOpacity(0.5),
                     border: OutlineInputBorder(
@@ -552,8 +560,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
               Text(
                   'You got $_correctCount out of ${_flashcards.length} correct.',
                   style: theme.textTheme.titleMedium?.copyWith(
-                      color:
-                          theme.colorScheme.onSurface.withOpacity(0.8))),
+                      color: theme.colorScheme.onSurface.withOpacity(0.8))),
               const SizedBox(height: 40),
               if (_isCreationMode) ...[
                 SizedBox(
@@ -604,8 +611,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                     },
                     child: Text('Finish',
                         style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withOpacity(0.7)))),
+                            color:
+                                theme.colorScheme.onSurface.withOpacity(0.7)))),
               ),
             ],
           ),

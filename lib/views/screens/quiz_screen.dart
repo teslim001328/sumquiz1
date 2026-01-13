@@ -12,6 +12,7 @@ import '../../services/enhanced_ai_service.dart';
 import '../../services/local_database_service.dart';
 import '../../services/usage_service.dart';
 import '../../services/notification_integration.dart';
+import '../../services/user_service.dart';
 import '../../view_models/quiz_view_model.dart';
 import '../widgets/upgrade_dialog.dart';
 import '../widgets/quiz_view.dart';
@@ -221,6 +222,14 @@ class _QuizScreenState extends State<QuizScreen> {
       }
 
       quizViewModel.refresh();
+
+      // Increment daily progress
+      try {
+        final userService = UserService();
+        await userService.incrementItemsCompleted(user.uid);
+      } catch (e) {
+        debugPrint('Failed to increment progress: $e');
+      }
 
       // 🔔 Schedule notifications after quiz completion
       if (mounted) {

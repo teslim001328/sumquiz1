@@ -1,14 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
 import 'package:collection/collection.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/spaced_repetition.dart';
 import '../models/local_flashcard.dart';
+import 'dart:developer' as developer;
 
 class SpacedRepetitionService {
   final Box<SpacedRepetitionItem> _box;
-  final Uuid _uuid = const Uuid();
   static const int freeSrsCardsMax = 50;
 
   SpacedRepetitionService(this._box);
@@ -46,9 +45,9 @@ class SpacedRepetitionService {
         await userDoc.update({
           'srsCardCount': FieldValue.increment(1),
         });
-      } catch (e) {
+      } catch (e, s) {
         // Log error but don't fail the operation
-        print('Error updating SRS card count: $e');
+        developer.log('Error updating SRS card count', name: 'SpacedRepetitionService', error: e, stackTrace: s);
       }
     }
   }

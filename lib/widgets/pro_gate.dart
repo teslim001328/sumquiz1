@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
-import '../services/iap_service.dart';
 
 /// A widget that conditionally displays content based on the user's Pro status
 /// and usage limits for FREE tier users.
@@ -27,7 +26,6 @@ class ProGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserModel?>();
-    final iapService = context.watch<IAPService?>();
 
     // If feature requires Pro regardless of limits
     if (requiresPro) {

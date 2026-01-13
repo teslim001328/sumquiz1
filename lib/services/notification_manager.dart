@@ -245,22 +245,6 @@ class NotificationManager {
     // Daily learning reminder
     await scheduleDailyLearningReminder(user);
 
-    // Check user activity and schedule accordingly
-    final lastActivity = await _getLastActivityDate(user.uid);
-    final daysSinceActivity = DateTime.now().difference(lastActivity).inDays;
-
-    if (daysSinceActivity >= 3) {
-      await scheduleInactivityReminder(user);
-    }
-
-    // Schedule Pro reminders for free users
-    if (!user.isPro) {
-      final usageCount = await _getUsageCount(user.uid);
-      if (usageCount >= 3) {
-        await scheduleProUpgradeReminder();
-      }
-    }
-
     // Schedule referral reminder weekly
     await scheduleReferralReminder();
   }
@@ -275,62 +259,4 @@ class NotificationManager {
     await _notificationService.toggleNotifications(true);
   }
 
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
-
-  Future<DateTime> _getLastActivityDate(String userId) async {
-    try {
-      // Get most recent content creation date
-      final summaries = await _localDb.getAllSummaries(userId);
-      final quizzes = await _localDb.getAllQuizzes(userId);
-      final flashcards = await _localDb.getAllFlashcardSets(userId);
-
-      final dates = <DateTime>[];
-      if (summaries.isNotEmpty) dates.add(summaries.first.timestamp);
-      if (quizzes.isNotEmpty) dates.add(quizzes.first.timestamp);
-      if (flashcards.isNotEmpty) dates.add(flashcards.first.timestamp);
-
-      if (dates.isEmpty) return DateTime.now();
-
-      dates.sort((a, b) => b.compareTo(a)); // Most recent first
-      return dates.first;
-    } catch (e) {
-      return DateTime.now();
-    }
-  }
-
-  Future<int> _getUsageCount(String userId) async {
-    try {
-      final summaries = await _localDb.getAllSummaries(userId);
-      final quizzes = await _localDb.getAllQuizzes(userId);
-      final flashcards = await _localDb.getAllFlashcardSets(userId);
-      return summaries.length + quizzes.length + flashcards.length;
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  /// Get user's most studied topic
-  Future<String> _getMostStudiedTopic(String userId) async {
-    try {
-      final summaries = await _localDb.getAllSummaries(userId);
-      final topicCounts = <String, int>{};
-
-      for (var summary in summaries) {
-        for (var tag in summary.tags) {
-          topicCounts[tag] = (topicCounts[tag] ?? 0) + 1;
-        }
-      }
-
-      if (topicCounts.isEmpty) return 'General';
-
-      final sortedTopics = topicCounts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-
-      return sortedTopics.first.key;
-    } catch (e) {
-      return 'General';
-    }
-  }
 }

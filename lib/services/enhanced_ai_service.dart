@@ -14,33 +14,77 @@ import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:developer' as developer;
-
 import 'package:sumquiz/services/spaced_repetition_service.dart';
 import 'package:sumquiz/services/sync_service.dart';
+
+// --- RESULT TYPE FOR BETTER ERROR HANDLING ---
+sealed class Result<T> {
+  const Result();
+  factory Result.ok(T value) = Ok._;
+  factory Result.error(Exception error) = Error._;
+}
+
+final class Ok<T> extends Result<T> {
+  const Ok._(this.value);
+  final T value;
+  @override
+  String toString() => 'Result<$T>.ok($value)';
+}
+
+final class Error<T> extends Result<T> {
+  const Error._(this.error);
+  final Exception error;
+  @override
+  String toString() => 'Result<$T>.error($error)';
+}
 
 // --- EXCEPTIONS ---
 class EnhancedAIServiceException implements Exception {
   final String message;
-  EnhancedAIServiceException(this.message);
+  final String? code;
+  final dynamic originalError;
+  
+  EnhancedAIServiceException(
+    this.message, {
+    this.code,
+    this.originalError,
+  });
+  
   @override
-  String toString() => message;
+  String toString() => code != null ? '[$code] $message' : message;
+  
+  bool get isRateLimitError => 
+      code == 'RESOURCE_EXHAUSTED' || 
+      code == '429' ||
+      message.contains('rate limit') ||
+      message.contains('quota');
+      
+  bool get isNetworkError =>
+      code == 'NETWORK_ERROR' ||
+      originalError is TimeoutException;
 }
 
 // --- CONFIG ---
 class EnhancedAIConfig {
-  // Updated to Gemini 2.5 models (stable as of Jan 2026)
-  // Gemini 2.0 models are deprecated as of Feb 2026
-  static const String primaryModel =
-      'gemini-2.5-flash'; // Fast, stable, cost-effective
-  static const String fallbackModel =
-      'gemini-1.5-flash'; // Proven stable fallback
-  static const String visionModel = 'gemini-2.5-flash'; // Vision + multimodal
-  static const String experimentalModel =
-      'gemini-3-flash-preview'; // Latest preview (optional)
-  static const int maxRetries = 3; // Increased for better reliability
-  static const int requestTimeoutSeconds = 120; // Increased for video
+  // Updated models as of January 2026
+  static const String primaryModel = 'gemini-2.5-flash';
+  static const String fallbackModel = 'gemini-1.5-flash';
+  static const String visionModel = 'gemini-2.5-flash';
+  
+  // Retry configuration with exponential backoff
+  static const int maxRetries = 5;
+  static const int initialRetryDelayMs = 1000;
+  static const int maxRetryDelayMs = 60000;
+  static const int requestTimeoutSeconds = 120;
+  
+  // Input/output limits
   static const int maxInputLength = 30000;
   static const int maxPdfSize = 15 * 1024 * 1024; // 15MB
+  static const int maxOutputTokens = 8192;
+  
+  // Model parameters
+  static const double defaultTemperature = 0.3;
+  static const double fallbackTemperature = 0.4;
 }
 
 // --- SERVICE ---
@@ -52,14 +96,14 @@ class EnhancedAIService {
 
   EnhancedAIService({required IAPService iapService})
       : _iapService = iapService {
-    final apiKey = dotenv.env['GEMINI_API_KEY']!;
+    final apiKey = dotenv.env['API_KEY']!;
 
     _model = GenerativeModel(
       model: EnhancedAIConfig.primaryModel,
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.3,
-        maxOutputTokens: 8192,
+        temperature: EnhancedAIConfig.defaultTemperature,
+        maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
         responseMimeType: 'application/json',
       ),
     );
@@ -68,8 +112,8 @@ class EnhancedAIService {
       model: EnhancedAIConfig.fallbackModel,
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.4, // Slightly higher for creativity if primary fails
-        maxOutputTokens: 8192,
+        temperature: EnhancedAIConfig.fallbackTemperature,
+        maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
         responseMimeType: 'application/json',
       ),
     );
@@ -92,75 +136,140 @@ class EnhancedAIService {
           await _iapService.isUploadLimitReached(userId);
       if (isUploadLimitReached) {
         throw EnhancedAIServiceException(
-            'You\'ve reached your weekly upload limit. Upgrade to Pro for unlimited uploads.');
+          'You\'ve reached your weekly upload limit. Upgrade to Pro for unlimited uploads.',
+          code: 'UPLOAD_LIMIT_REACHED',
+        );
       }
 
       final isFolderLimitReached =
           await _iapService.isFolderLimitReached(userId);
       if (isFolderLimitReached) {
         throw EnhancedAIServiceException(
-            'You\'ve reached your folder limit. Upgrade to Pro for unlimited folders.');
+          'You\'ve reached your folder limit. Upgrade to Pro for unlimited folders.',
+          code: 'FOLDER_LIMIT_REACHED',
+        );
       }
     }
   }
 
+  /// Enhanced retry mechanism with exponential backoff and jitter
   Future<String> _generateWithFallback(String prompt) async {
     try {
       return await _generateWithModel(
-          _model, prompt, EnhancedAIConfig.primaryModel);
+        _model,
+        prompt,
+        EnhancedAIConfig.primaryModel,
+      );
     } catch (e) {
       developer.log(
-          'Primary model (${EnhancedAIConfig.primaryModel}) failed, trying fallback',
-          name: 'EnhancedAIService',
-          error: e);
+        'Primary model (${EnhancedAIConfig.primaryModel}) failed, trying fallback',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+      
       try {
         return await _generateWithModel(
-            _fallbackModel, prompt, EnhancedAIConfig.fallbackModel);
+          _fallbackModel,
+          prompt,
+          EnhancedAIConfig.fallbackModel,
+        );
       } catch (fallbackError) {
         developer.log(
-            'Fallback model (${EnhancedAIConfig.fallbackModel}) also failed',
-            name: 'EnhancedAIService',
-            error: fallbackError);
+          'Fallback model (${EnhancedAIConfig.fallbackModel}) also failed',
+          name: 'EnhancedAIService',
+          error: fallbackError,
+        );
+        
         throw EnhancedAIServiceException(
-            'AI service temporarily unavailable. Please try again in a moment. '
-            'If the issue persists, check your internet connection.');
+          'AI service temporarily unavailable. Please try again in a moment.',
+          code: 'SERVICE_UNAVAILABLE',
+          originalError: fallbackError,
+        );
       }
     }
   }
 
+  /// Generate with exponential backoff and jitter for rate limiting
   Future<String> _generateWithModel(
-      GenerativeModel model, String prompt, String modelName) async {
+    GenerativeModel model,
+    String prompt,
+    String modelName,
+  ) async {
     int attempt = 0;
+    
     while (attempt < EnhancedAIConfig.maxRetries) {
       try {
         final chat = model.startChat();
-        final response = await chat.sendMessage(Content.text(prompt)).timeout(
-            const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
+        final response = await chat
+            .sendMessage(Content.text(prompt))
+            .timeout(Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
         final responseText = response.text;
-        developer.log('Raw AI Response ($modelName): $responseText',
-            name: 'EnhancedAIService');
+        developer.log(
+          'AI Response ($modelName, attempt ${attempt + 1}): ${responseText?.substring(0, min(100, responseText.length))}...',
+          name: 'EnhancedAIService',
+        );
+
         if (responseText == null || responseText.isEmpty) {
-          throw EnhancedAIServiceException('Model returned an empty response.');
+          throw EnhancedAIServiceException(
+            'Model returned an empty response.',
+            code: 'EMPTY_RESPONSE',
+          );
         }
 
         return responseText.trim();
-      } on TimeoutException {
+      } on TimeoutException catch (e) {
         throw EnhancedAIServiceException(
-            'The AI model took too long to respond.');
+          'Request timed out after ${EnhancedAIConfig.requestTimeoutSeconds} seconds.',
+          code: 'TIMEOUT',
+          originalError: e,
+        );
       } catch (e) {
-        developer.log(
-            'AI Generation Error ($modelName, Attempt ${attempt + 1})',
-            name: 'EnhancedAIService',
-            error: e);
         attempt++;
+        
+        // Check if it's a rate limit error
+        final isRateLimited = e.toString().contains('RESOURCE_EXHAUSTED') ||
+            e.toString().contains('429') ||
+            e.toString().contains('rate limit');
+        
+        developer.log(
+          'AI Generation Error ($modelName, Attempt $attempt/${EnhancedAIConfig.maxRetries})',
+          name: 'EnhancedAIService',
+          error: e,
+        );
+
         if (attempt >= EnhancedAIConfig.maxRetries) {
+          if (isRateLimited) {
+            throw EnhancedAIServiceException(
+              'Rate limit exceeded. Please try again in a few moments.',
+              code: 'RESOURCE_EXHAUSTED',
+              originalError: e,
+            );
+          }
           rethrow;
         }
-        await Future.delayed(Duration(seconds: pow(2, attempt).toInt()));
+
+        // Exponential backoff with jitter
+        final baseDelay = EnhancedAIConfig.initialRetryDelayMs * pow(2, attempt - 1);
+        final jitter = Random().nextInt(1000);
+        final delay = min(
+          baseDelay.toInt() + jitter,
+          EnhancedAIConfig.maxRetryDelayMs,
+        );
+        
+        developer.log(
+          'Retrying in ${delay}ms...',
+          name: 'EnhancedAIService',
+        );
+        
+        await Future.delayed(Duration(milliseconds: delay));
       }
     }
-    throw EnhancedAIServiceException('Generation failed.');
+    
+    throw EnhancedAIServiceException(
+      'Generation failed after ${EnhancedAIConfig.maxRetries} attempts.',
+      code: 'MAX_RETRIES_EXCEEDED',
+    );
   }
 
   String _sanitizeInput(String input) {
@@ -198,8 +307,7 @@ class EnhancedAIService {
 
   Future<String> refineContent(String rawText) async {
     final sanitizedText = _sanitizeInput(rawText);
-    final prompt =
-        '''You are an expert content extractor preparing raw text for exam studying.
+    final prompt = '''You are an expert content extractor preparing raw text for exam studying.
 
 CRITICAL: Your task is to EXTRACT and CLEAN the content, NOT to summarize or condense it.
 
@@ -211,7 +319,7 @@ WHAT TO DO:
    - Sponsor messages
    - Unrelated tangents or personal stories
    - Boilerplate text (copyright notices, disclaimers)
-   - Repetitive filler phrases ("as I mentioned before", "let's get started")
+   - Repetitive filler phrases
 
 2. FIX and CLEAN:
    - Broken sentences or formatting issues
@@ -233,229 +341,282 @@ WHAT TO DO:
    - The instructor's exact wording for important concepts
 
 REMEMBER: You are EXTRACTING educational content, not creating a summary.
-If the original text has 1000 words of instructional content, your output should have close to 1000 words (minus ads/fluff).
 The goal is clean, organized, study-ready content with ALL the educational value intact.
 
-You MUST return only a single, valid JSON object. Do not explain your actions. Do not use Markdown.
-
-Structure:
+Return ONLY valid JSON (no markdown code blocks):
 {
   "cleanedText": "The extracted, cleaned, and organized content..."
 }
 
 Raw Text:
-$sanitizedText
-''';
+$sanitizedText''';
 
-    final jsonString = await _generateWithFallback(prompt);
+    String jsonString = '';
     try {
+      jsonString = await _generateWithFallback(prompt);
       final data = json.decode(jsonString);
       return data['cleanedText'] ?? jsonString;
     } catch (e) {
+      developer.log(
+        'Content refinement failed, returning original',
+        name: 'EnhancedAIService',
+        error: e,
+      );
       return jsonString;
     }
   }
 
-  Future<String> analyzeYouTubeVideo(String videoUrl,
-      {required String userId}) async {
-    await _checkUsageLimits(userId);
+  /// Enhanced YouTube video analysis with better error handling
+  Future<Result<String>> analyzeYouTubeVideo(
+    String videoUrl, {
+    required String userId,
+  }) async {
+    try {
+      await _checkUsageLimits(userId);
 
-    final prompt =
-        '''You are analyzing a YouTube video using your native multimodal capabilities (vision + audio).
-Video URL: $videoUrl
+      final prompt = '''Analyze this YouTube video: $videoUrl
 
 CRITICAL INSTRUCTIONS:
-1. WATCH the video - analyze both visual content (slides, diagrams, demonstrations) AND audio (spoken words)
-2. EXTRACT all instructional content - do NOT summarize, condense, or paraphrase
-3. Capture EVERYTHING the instructor teaches, including:
-   - All concepts, definitions, and explanations (word-for-word when important)
-   - Visual content from slides, whiteboards, diagrams, or demonstrations
-   - Examples, case studies, and practice problems shown
-   - Formulas, equations, code snippets, or technical details
-   - Step-by-step procedures or processes demonstrated
-   - Timestamps for key moments (e.g., [01:23] when showing important diagrams)
+1. WATCH the video - analyze both visual and audio content
+2. EXTRACT all instructional content (do NOT summarize)
+3. Capture EVERYTHING the instructor teaches:
+   - All concepts, definitions, explanations (word-for-word when important)
+   - Visual content (slides, diagrams, demonstrations)
+   - Examples, case studies, practice problems
+   - Formulas, equations, code, technical details
+   - Step-by-step procedures
+   - Key timestamps [MM:SS]
 
-WHAT TO EXCLUDE (discard completely):
-- Video intros, outros, and channel promotions
-- Personal stories or anecdotes not related to the topic
-- Jokes, tangents, or off-topic discussions
-- Calls to action (like, subscribe, etc.)
-- Sponsor messages or advertisements
+EXCLUDE:
+- Intros, outros, promotions
+- Personal stories unrelated to topic
+- Jokes, tangents
+- Calls to action (like, subscribe)
+- Sponsor messages
 - Navigation instructions ("in the next video...")
 - Repetitive filler phrases
 
 OUTPUT FORMAT:
-Return the extracted instructional content as clean, organized text.
-- Preserve all factual information, data points, and key concepts
-- Organize by topic/section if the video has clear segments
-- Include visual content descriptions where relevant (e.g., "The diagram shows...")
-- Maintain technical accuracy - do not simplify or rephrase technical terms
-- If the instructor writes something on screen, transcribe it exactly
-- Include timestamps for demonstrations or critical visual content
+Clean, organized text with:
+- All factual information preserved
+- Organized by topic/section
+- Visual descriptions where relevant
+- Technical accuracy maintained
+- Timestamps for key moments
 
-REMEMBER: You are EXTRACTING content for study purposes, not creating a summary.
-The goal is to capture ALL the educational value from the video.
-''';
+REMEMBER: EXTRACT for study purposes, not summarize.''';
 
-    try {
-      // Gemini 1.5 Flash has native YouTube video understanding
-      final response = await _visionModel.generateContent([
-        Content.text(prompt),
-      ]).timeout(
-          const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
+      final response = await _visionModel
+          .generateContent([Content.text(prompt)])
+          .timeout(Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
       if (response.text == null || response.text!.trim().isEmpty) {
-        throw EnhancedAIServiceException(
-            'Model returned an empty response from video analysis.');
+        return Result.error(
+          EnhancedAIServiceException(
+            'Video analysis returned empty response.',
+            code: 'EMPTY_RESPONSE',
+          ),
+        );
       }
-      return response.text!;
-    } on TimeoutException {
-      throw EnhancedAIServiceException(
-          'Video analysis timed out. The video might be too long or complex.');
+
+      return Result.ok(response.text!);
+    } on TimeoutException catch (e) {
+      return Result.error(
+        EnhancedAIServiceException(
+          'Video analysis timed out. Video might be too long.',
+          code: 'TIMEOUT',
+          originalError: e,
+        ),
+      );
+    } on EnhancedAIServiceException catch (e) {
+      return Result.error(e);
     } catch (e) {
-      developer.log('YouTube Video Analysis Failed',
-          name: 'EnhancedAIService', error: e);
-      if (e is EnhancedAIServiceException) rethrow;
-      throw EnhancedAIServiceException(
-          'Failed to analyze the YouTube video: ${e.toString()}');
+      developer.log(
+        'YouTube Video Analysis Failed',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+      return Result.error(
+        EnhancedAIServiceException(
+          'Failed to analyze YouTube video.',
+          code: 'ANALYSIS_FAILED',
+          originalError: e,
+        ),
+      );
     }
   }
 
-  Future<String> extractTextFromImage(Uint8List imageBytes,
-      {required String userId}) async {
+  Future<String> extractTextFromImage(
+    Uint8List imageBytes, {
+    required String userId,
+  }) async {
     await _checkUsageLimits(userId);
 
     try {
       final imagePart = DataPart('image/jpeg', imageBytes);
       final promptPart = TextPart(
-          'Transcribe all text from this image exactly as it appears. Ignore visuals.');
+        'Transcribe all text from this image exactly as it appears. '
+        'Include all text content, maintaining original formatting where possible. '
+        'Ignore non-text visual elements.',
+      );
 
-      final response = await _visionModel.generateContent([
-        Content.multi([promptPart, imagePart])
-      ]).timeout(
-          const Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
+      final response = await _visionModel
+          .generateContent([
+            Content.multi([promptPart, imagePart])
+          ])
+          .timeout(Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
       if (response.text == null || response.text!.isEmpty) {
-        throw EnhancedAIServiceException('No text found in image.');
+        throw EnhancedAIServiceException(
+          'No text found in image.',
+          code: 'NO_TEXT_FOUND',
+        );
       }
       return response.text!;
+    } on EnhancedAIServiceException {
+      rethrow;
     } catch (e) {
-      if (e is EnhancedAIServiceException) rethrow;
       developer.log('Vision API Error', name: 'EnhancedAIService', error: e);
       throw EnhancedAIServiceException(
-          'Failed to extract text from image: ${e.toString()}');
+        'Failed to extract text from image.',
+        code: 'EXTRACTION_FAILED',
+        originalError: e,
+      );
     }
   }
 
+  /// Generate summary with JSON schema for structured output
   Future<String> _generateSummaryJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
 
+    // Using JSON Schema for structured output (Nov 2025 feature)
     final model = GenerativeModel(
       model: EnhancedAIConfig.primaryModel,
-      apiKey: dotenv.env['GEMINI_API_KEY']!,
+      apiKey: dotenv.env['API_KEY']!,
       generationConfig: GenerationConfig(
         responseMimeType: 'application/json',
         responseSchema: Schema.object(
           properties: {
-            'title': Schema.string(),
-            'content': Schema.string(),
-            'tags': Schema.array(items: Schema.string()),
+            'title': Schema.string(
+              description: 'Clear, topic-focused title',
+            ),
+            'content': Schema.string(
+              description: 'Detailed study guide optimized for exam prep',
+            ),
+            'tags': Schema.array(
+              items: Schema.string(),
+              description: '3-5 relevant keywords',
+            ),
           },
+          requiredProperties: ['title', 'content', 'tags'],
         ),
       ),
     );
 
-    final prompt =
-        '''Create a comprehensive EXAM-FOCUSED study guide from this text.
+    final prompt = '''Create a comprehensive EXAM-FOCUSED study guide from this text.
 
 Your task:
-1. **Title**: Create a clear, topic-focused title that reflects the exam subject
+1. **Title**: Create a clear, topic-focused title
 2. **Content**: Write a detailed study guide optimized for exam preparation:
-   - Start with key concepts and definitions (what will be tested)
-   - Include all important facts, dates, formulas, and technical details
-   - Highlight common exam topics and frequently tested areas
-   - Use clear headings and bullet points for easy review
-   - Include examples that illustrate key concepts
-   - Add memory aids or mnemonics where helpful
-   - Organize by topic/subtopic for structured studying
-3. **Tags**: Generate 3-5 relevant keywords for categorization
+   - Start with key concepts and definitions
+   - Include all important facts, dates, formulas, technical details
+   - Highlight common exam topics
+   - Use clear headings and bullet points
+   - Include examples illustrating key concepts
+   - Add memory aids or mnemonics
+   - Organize by topic/subtopic
+3. **Tags**: Generate 3-5 relevant keywords
 
-FOCUS: This is for EXAM PREPARATION. Prioritize:
+FOCUS: EXAM PREPARATION
+Prioritize:
 - Information likely to appear on tests
 - Definitions and terminology
 - Key facts and figures
 - Cause-effect relationships
 - Processes and procedures
-- Common misconceptions to avoid
+- Common misconceptions
 
 Text: $sanitizedText''';
 
     try {
-      final response = await model.generateContent(
-          [Content.text(prompt)]).timeout(const Duration(seconds: 60));
+      final response = await model
+          .generateContent([Content.text(prompt)])
+          .timeout(const Duration(seconds: 60));
 
       if (response.text == null || response.text!.isEmpty) {
-        throw EnhancedAIServiceException('Empty response from AI');
+        throw EnhancedAIServiceException(
+          'Empty response from AI',
+          code: 'EMPTY_RESPONSE',
+        );
       }
 
       final data = json.decode(response.text!);
-
       if (!data.containsKey('title') || !data.containsKey('content')) {
-        throw EnhancedAIServiceException('Invalid response structure');
+        throw EnhancedAIServiceException(
+          'Invalid response structure',
+          code: 'INVALID_STRUCTURE',
+        );
       }
 
       return response.text!;
     } catch (e) {
-      developer.log('Summary generation failed',
-          name: 'EnhancedAIService', error: e);
+      developer.log(
+        'Summary generation failed',
+        name: 'EnhancedAIService',
+        error: e,
+      );
 
       if (e is EnhancedAIServiceException) rethrow;
-
       throw EnhancedAIServiceException(
-          'Failed to generate summary: ${e.toString()}');
+        'Failed to generate summary.',
+        code: 'GENERATION_FAILED',
+        originalError: e,
+      );
     }
   }
 
   Future<String> _generateQuizJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
-    final prompt =
-        '''Create a challenging multiple-choice exam quiz based on the text.
-- Determine the number of questions based on the length and depth of the content (aim for comprehensive coverage).
-- Questions should mimic real exam questions (application of knowledge, not just keyword matching).
-- Focus on high-yield facts, common misconceptions, and critical details.
-- Each question must have exactly 4 options.
-- The "correctAnswer" must be one of the options.
-- The other 3 options (distractors) must be plausible but incorrect (common mistakes).
+    
+    final prompt = '''Create a challenging multiple-choice exam quiz.
 
-Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks (no ```json).
-Structure:
+Requirements:
+- Determine question count based on content depth (comprehensive coverage)
+- Questions should mimic real exam questions (application, not just recall)
+- Focus on high-yield facts, misconceptions, critical details
+- Exactly 4 options per question
+- correctAnswer must be one of the options
+- 3 plausible but incorrect distractors (common mistakes)
+
+Return ONLY valid JSON (no markdown):
 {
   "questions": [
     {
-      "question": "A diagnostic-style question...?",
-      "options": ["Correct Answer", "Plausible Distractor 1", "Plausible Distractor 2", "Plausible Distractor 3"],
+      "question": "Diagnostic-style question...?",
+      "options": ["Correct Answer", "Distractor 1", "Distractor 2", "Distractor 3"],
       "correctAnswer": "Correct Answer"
     }
   ]
 }
 
-Text Source:
-$sanitizedText''';
+Text: $sanitizedText''';
+    
     return _generateWithFallback(prompt);
   }
 
   Future<String> _generateFlashcardsJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
-    final prompt =
-        '''Generate high-quality flashcards for Active Recall study based on the text.
-- Determine the number of flashcards based on the amount of key information spread throughout the text.
-- Focus on the most important facts likely to appear on an exam.
-- Front (Question): A specific prompt, term, or concept.
-- Back (Answer): The precise definition, explanation, or key fact. Avoid vague answers.
-- Cover: Definitions, Dates, Formulas, Key Figures, Cause-Effect relationships.
+    
+    final prompt = '''Generate high-quality flashcards for Active Recall study.
 
-Return ONLY a single, valid JSON object. Do not use Markdown formatted code blocks (no ```json).
-Structure:
+Requirements:
+- Determine count based on key information throughout text
+- Focus on exam-likely facts
+- Front (Question): Specific prompt, term, or concept
+- Back (Answer): Precise definition, explanation, or key fact (no vague answers)
+- Cover: Definitions, Dates, Formulas, Key Figures, Cause-Effect relationships
+
+Return ONLY valid JSON (no markdown):
 {
   "flashcards": [
     {
@@ -465,8 +626,8 @@ Structure:
   ]
 }
 
-Text Source:
-$sanitizedText''';
+Text: $sanitizedText''';
+    
     return _generateWithFallback(prompt);
   }
 
@@ -494,11 +655,13 @@ $sanitizedText''';
 
     int completed = 0;
     final total = requestedOutputs.length;
+    final failures = <String>[];
 
     try {
       for (String outputType in requestedOutputs) {
         onProgress(
-            'Generating ${outputType.capitalize()} (${completed + 1}/$total)...');
+          'Generating ${outputType.capitalize()} (${completed + 1}/$total)...',
+        );
 
         try {
           switch (outputType) {
@@ -518,26 +681,54 @@ $sanitizedText''';
               final jsonString = await _generateFlashcardsJson(text);
               onProgress('Saving flashcards...');
               await _saveFlashcards(
-                  jsonString, userId, title, localDb, folderId, srsService);
+                jsonString,
+                userId,
+                title,
+                localDb,
+                folderId,
+                srsService,
+              );
               break;
           }
 
           completed++;
           onProgress('${outputType.capitalize()} complete! ✓');
+        } on EnhancedAIServiceException catch (e) {
+          developer.log(
+            'Failed to generate $outputType: ${e.message}',
+            name: 'EnhancedAIService',
+            error: e,
+          );
+          failures.add(outputType);
+          onProgress('${outputType.capitalize()} failed - continuing...');
         } catch (e) {
-          developer.log('Failed to generate $outputType',
-              name: 'EnhancedAIService', error: e);
+          developer.log(
+            'Unexpected error generating $outputType',
+            name: 'EnhancedAIService',
+            error: e,
+          );
+          failures.add(outputType);
           onProgress('${outputType.capitalize()} failed - continuing...');
         }
       }
 
       if (completed == 0) {
         await localDb.deleteFolder(folderId);
-        throw EnhancedAIServiceException('Failed to generate any content');
+        throw EnhancedAIServiceException(
+          'Failed to generate any content. Please try again.',
+          code: 'ALL_GENERATION_FAILED',
+        );
       }
 
-      onProgress('All done! 🎉');
+      if (failures.isNotEmpty) {
+        onProgress(
+          'Done! ${failures.length} item(s) failed: ${failures.join(", ")}',
+        );
+      } else {
+        onProgress('All done! 🎉');
+      }
 
+      // Trigger sync in background
       SyncService(localDb).syncAllData();
 
       return folderId;
@@ -547,7 +738,10 @@ $sanitizedText''';
 
       if (e is EnhancedAIServiceException) rethrow;
       throw EnhancedAIServiceException(
-          'Content generation failed: ${e.toString()}');
+        'Content generation failed.',
+        code: 'GENERATION_FAILED',
+        originalError: e,
+      );
     }
   }
 
@@ -588,7 +782,10 @@ $sanitizedText''';
         .toList();
 
     if (questions.isEmpty) {
-      throw Exception('No quiz questions generated');
+      throw EnhancedAIServiceException(
+        'No quiz questions generated',
+        code: 'EMPTY_QUIZ',
+      );
     }
 
     final quiz = LocalQuiz(
@@ -620,7 +817,10 @@ $sanitizedText''';
         .toList();
 
     if (flashcards.isEmpty) {
-      throw Exception('No flashcards generated');
+      throw EnhancedAIServiceException(
+        'No flashcards generated',
+        code: 'EMPTY_FLASHCARDS',
+      );
     }
 
     final flashcardSet = LocalFlashcardSet(

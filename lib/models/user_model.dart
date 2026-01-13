@@ -211,7 +211,7 @@ class UserModel {
           lastDeckGenerationDate ?? this.lastDeckGenerationDate,
       lastWeeklyReset: lastWeeklyReset ?? this.lastWeeklyReset,
       updatedAt: updatedAt ?? this.updatedAt,
-      isTrial: isTrial ?? this._isTrialUser,
+      isTrial: isTrial ?? _isTrialUser,
       isCreatorPro: isCreatorPro ?? this.isCreatorPro,
       referralCode: referralCode ?? this.referralCode,
       creatorProfile: creatorProfile ?? this.creatorProfile,

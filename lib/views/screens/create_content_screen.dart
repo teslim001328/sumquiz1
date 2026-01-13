@@ -7,8 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
-// TODO: Create this widget
-// import 'package:sumquiz/views/widgets/extraction_progress_dialog.dart';
+import 'package:sumquiz/views/widgets/extraction_progress_dialog.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
 
 class InputValidator {
@@ -50,6 +49,11 @@ class InputValidator {
     }
     if (!isValidUrl(url)) {
       return 'Please enter a valid URL (must start with http:// or https://)';
+    }
+    if (url.contains('youtube.com') || url.contains('youtu.be')) {
+      if (!isYoutubeUrl(url)) {
+        return 'Invalid YouTube URL. Please provide a valid video, short, or live stream link.';
+      }
     }
     return null; // Valid
   }
@@ -164,21 +168,33 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
 
     // Validate input
     String? validationError;
+    String type;
+    dynamic input;
 
     if (_textController.text.trim().isNotEmpty) {
       validationError = InputValidator.validateText(_textController.text);
+      type = 'text';
+      input = _textController.text;
     } else if (_linkController.text.trim().isNotEmpty) {
       validationError = InputValidator.validateUrl(_linkController.text);
+      type = 'link';
+      input = _linkController.text;
     } else if (_pdfBytes != null) {
       if (_pdfBytes!.length > 15 * 1024 * 1024) {
         validationError = 'PDF file is too large. Maximum size is 15MB';
       }
+      type = 'pdf';
+      input = _pdfBytes;
     } else if (_imageBytes != null) {
       if (_imageBytes!.length > 10 * 1024 * 1024) {
         validationError = 'Image file is too large. Maximum size is 10MB';
       }
+      type = 'image';
+      input = _imageBytes;
     } else {
       validationError = 'Please provide some content to process';
+      type = '';
+      input = null;
     }
 
     if (validationError != null) {
@@ -189,69 +205,29 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     final extractionService =
         Provider.of<ContentExtractionService>(context, listen: false);
 
-    String? extractedTextResult = await showDialog<String>(
+    showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => ExtractionProgressDialog(
-        generationFuture: (onProgress) async {
-          String extractedText = '';
-
-          if (_textController.text.trim().isNotEmpty) {
-            onProgress('Analyzing text...');
-            extractedText = _textController.text;
-          } else if (_linkController.text.trim().isNotEmpty) {
-            onProgress('Analyzing link...');
-            if (mounted && !_checkProAccess('Web Link')) {
-              throw Exception('Upgrade to Pro to use web links.');
-            }
-            if (InputValidator.isYoutubeUrl(_linkController.text)) {
-              final ytRegex = RegExp(
-                  r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\\shorts\/)([a-zA-Z0-9_-]{11})');
-              if (!ytRegex.hasMatch(_linkController.text)) {
-                throw Exception('Invalid YouTube URL format');
-              }
-            }
-            extractedText = await extractionService.extractContent(
-              type: 'link',
-              input: _linkController.text,
-              userId: user.uid,
-            );
-          } else if (_pdfBytes != null) {
-            onProgress('Analyzing PDF...');
-            extractedText = await extractionService.extractContent(
-              type: 'pdf',
-              input: _pdfBytes!,
-              userId: user.uid,
-            );
-          } else if (_imageBytes != null) {
-            onProgress('Analyzing image...');
-            extractedText = await extractionService.extractContent(
-              type: 'image',
-              input: _imageBytes!,
-              userId: user.uid,
-            );
-          }
-
-          if (extractedText.trim().isEmpty) {
-            throw Exception('Could not extract any content from the source.');
-          }
-          if (extractedText.trim().length < 100) {
-            throw Exception(
-                'Extracted content is too short. Please use a source with more content.');
-          }
-          return extractedText; // Return only the extracted text
-        },
-      ),
+      builder: (context) {
+        return const ExtractionProgressDialog();
+      },
     );
 
-    if (mounted) {
-      // Navigate to ExtractionViewScreen, passing the extracted text
-      context.push('/extraction-view', extra: extractedTextResult);
-    } else {
+    try {
+      final extractedTextResult = await extractionService.extractContent(
+        type: type,
+        input: input,
+        userId: user.uid,
+      );
       if (mounted) {
+        Navigator.of(context).pop(); // Close the progress dialog
+        context.push('/extraction-view', extra: extractedTextResult);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close the progress dialog
         setState(() {
-          _errorMessage =
-              _getUserFriendlyError(Exception('Content extraction failed.'));
+          _errorMessage = _getUserFriendlyError(e);
         });
       }
     }

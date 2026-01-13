@@ -1,0 +1,1118 @@
+[debug] [2026-01-13T11:25:02.335Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:02.339Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:02.340Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:02.341Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:02.342Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:02.343Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:02.343Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.344Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.344Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:02.344Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:02.344Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.344Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.346Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:02.347Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:02.532Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:02.533Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:02.533Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:02.538Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.538Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.539Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.539Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.551Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.552Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.552Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.552Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.552Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.552Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.553Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.553Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.554Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.554Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.555Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T11:25:02.555Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.638Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:02.638Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:02.638Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:02.639Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.639Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.639Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.639Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.643Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.643Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.643Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.643Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:02.643Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.643Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.644Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.645Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.646Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T11:25:02.646Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:02.647Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T11:25:02.647Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T11:25:03.222Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T11:25:03.222Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T11:25:03.293Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T11:25:03.293Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T11:25:03.348Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T11:25:03.348Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.349Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T11:25:03.350Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.358Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T11:25:03.358Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.359Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.371Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.372Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.373Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.373Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.373Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.373Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.374Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:03.427Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T11:25:03.427Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.428Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T11:25:03.428Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.433Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T11:25:03.433Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T11:25:03.526Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:03.527Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:03.527Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:03.528Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.528Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.528Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.536Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.539Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.549Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.550Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.551Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.551Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.551Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.551Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.551Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:03.590Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.590Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.591Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.591Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.591Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.591Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.591Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:03.691Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:03.692Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:03.692Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:03.692Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.693Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.693Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.763Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:03.763Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:03.763Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:03.764Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.765Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.765Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.985Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.987Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.995Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.996Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.997Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:03.997Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:03.997Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.997Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:03.998Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:03.999Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:03.999Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:04.000Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:04.000Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:04.000Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:04.000Z] Checked if tokens are valid: true, expires at: 1768306134905
+[debug] [2026-01-13T11:25:04.000Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T11:25:04.195Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:04.196Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:04.196Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:04.196Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:04.197Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:04.197Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T11:25:04.206Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T11:25:04.206Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T11:25:04.206Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T11:25:04.207Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T11:25:04.207Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T11:25:04.207Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:14:59.716Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:14:59.721Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:14:59.723Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:14:59.724Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:14:59.725Z] Checked if tokens are valid: false, expires at: 1768306134905
+[debug] [2026-01-13T13:14:59.725Z] Checked if tokens are valid: false, expires at: 1768306134905
+[debug] [2026-01-13T13:14:59.726Z] > refreshing access token with scopes: []
+[debug] [2026-01-13T13:14:59.728Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-13T13:14:59.729Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T13:14:59.736Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:14:59.737Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:14:59.738Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:14:59.738Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:14:59.738Z] Checked if tokens are valid: false, expires at: 1768306134905
+[debug] [2026-01-13T13:14:59.738Z] Checked if tokens are valid: false, expires at: 1768306134905
+[debug] [2026-01-13T13:14:59.739Z] > refreshing access token with scopes: []
+[debug] [2026-01-13T13:14:59.739Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-13T13:14:59.739Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T13:14:59.779Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-13T13:14:59.779Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T13:14:59.843Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:14:59.848Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-13T13:14:59.848Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T13:14:59.857Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:15:00.033Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:15:00.034Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:15:00.034Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:15:00.042Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.042Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.042Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.043Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.056Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.057Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.057Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.057Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.057Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.057Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.059Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.059Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.060Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.060Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.062Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:15:00.062Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.146Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:15:00.146Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:15:00.147Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:15:00.147Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.147Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.148Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.148Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.154Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.155Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.155Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.155Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:00.155Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.155Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.157Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.157Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.159Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:15:00.159Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.161Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:15:00.161Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:15:00.770Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:15:00.770Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:15:00.836Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:15:00.837Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:00.838Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:15:00.838Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:00.882Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:15:00.882Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:00.898Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:15:00.898Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:15:01.018Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:15:01.018Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:01.022Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:15:01.022Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:01.028Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:15:01.028Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:15:01.029Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.049Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.051Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.051Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.051Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:15:01.052Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.052Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.052Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:15:01.298Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:15:01.298Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:15:01.298Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:15:01.300Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.300Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.301Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:15:01.309Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.312Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.328Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.330Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.330Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.330Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:15:01.331Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.331Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.331Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:15:01.410Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.412Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.412Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.412Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:15:01.413Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.413Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:15:01.413Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:15:01.474Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:15:01.474Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:15:01.475Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:15:01.475Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.476Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.476Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:15:01.565Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:15:01.565Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:15:01.566Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:15:01.567Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:15:01.567Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:15:01.568Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:42.484Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:42.489Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:42.490Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:42.492Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:42.493Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:42.493Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:42.494Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.494Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.494Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:42.495Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:42.495Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.495Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.497Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:42.499Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:42.751Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:42.751Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:42.752Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:42.759Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.759Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.759Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.760Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.773Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.773Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.774Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.774Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.774Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.774Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.776Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.776Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.777Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.777Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.778Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:25:42.778Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.814Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:42.815Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:42.815Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:42.816Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.816Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.816Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.816Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.821Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.821Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.822Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.822Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:42.822Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.822Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.823Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.823Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.825Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:25:42.825Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:42.826Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:25:42.826Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:25:43.169Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:25:43.169Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.458Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:25:43.458Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:25:43.539Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:25:43.539Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:25:43.576Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:25:43.576Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.581Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:25:43.581Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.624Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:25:43.625Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.651Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:25:43.651Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.667Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:25:43.667Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:25:43.667Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.686Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.688Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.688Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:43.689Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:43.689Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.689Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.689Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:43.838Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:43.839Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:43.839Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:43.840Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.841Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:43.841Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:43.853Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.856Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.871Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.872Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.873Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:43.873Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:43.873Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.873Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.874Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:43.963Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.964Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:43.964Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:43.965Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:43.965Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.965Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:43.965Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:44.019Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:44.019Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:44.020Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:44.020Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:44.021Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:44.021Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:44.123Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:44.123Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:44.123Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:44.124Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:44.125Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:44.125Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:45.273Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.274Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.294Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.295Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.296Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:45.296Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:45.296Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:45.296Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:45.296Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:45.298Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.299Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.299Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:45.300Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:45.300Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:45.300Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:25:45.300Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:25:45.444Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:45.444Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:45.445Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:45.445Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.445Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:45.446Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:25:45.446Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:25:45.447Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:25:45.447Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:25:45.447Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:25:45.448Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:25:45.448Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:43.386Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:43.430Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:43.431Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:43.433Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:43.434Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:43.435Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:43.436Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.436Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.437Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:43.437Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:43.437Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.437Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.439Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:43.441Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:43.631Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:43.632Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:43.632Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:43.642Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.642Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.642Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.642Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.658Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.658Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.658Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.658Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.658Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.659Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.660Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.660Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.662Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.662Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.663Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:54:43.663Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.812Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:43.812Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:43.812Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:43.813Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.813Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.813Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.813Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.818Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.818Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.818Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.818Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:43.818Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.818Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.820Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.820Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.821Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T13:54:43.821Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:43.822Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T13:54:43.822Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T13:54:44.371Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:54:44.371Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:54:44.476Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:54:44.476Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.488Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:54:44.488Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.495Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:54:44.495Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.496Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.515Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.516Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.517Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.517Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:44.517Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.517Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.518Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:44.529Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T13:54:44.529Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T13:54:44.637Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T13:54:44.638Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.649Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T13:54:44.649Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.652Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T13:54:44.652Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T13:54:44.675Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:44.675Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:44.676Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:44.677Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.677Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.678Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:44.686Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.691Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.706Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.707Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.708Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.708Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:44.708Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.708Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.708Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:44.787Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.787Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.788Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.788Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:44.788Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.790Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:44.790Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:44.859Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:44.860Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:44.860Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:44.860Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.861Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.861Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:44.931Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:44.931Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:44.931Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:44.932Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:44.932Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:44.933Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:53.963Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.075Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.076Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.080Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.080Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:54.080Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.080Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.080Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:54.225Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:54.225Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:54.225Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:54.226Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.228Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.228Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:54.234Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.236Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.256Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.257Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.258Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.258Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:54.258Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.258Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.258Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:54.263Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.263Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.264Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.264Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:54.264Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.264Z] Checked if tokens are valid: true, expires at: 1768313698849
+[debug] [2026-01-13T13:54:54.267Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T13:54:54.403Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:54.403Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:54.404Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:54.404Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.405Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.405Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T13:54:54.429Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T13:54:54.429Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T13:54:54.429Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T13:54:54.430Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T13:54:54.430Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T13:54:54.430Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:24.091Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:24.096Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:24.097Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:24.098Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:24.099Z] Checked if tokens are valid: false, expires at: 1768313698849
+[debug] [2026-01-13T16:03:24.099Z] Checked if tokens are valid: false, expires at: 1768313698849
+[debug] [2026-01-13T16:03:24.100Z] > refreshing access token with scopes: []
+[debug] [2026-01-13T16:03:24.102Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-13T16:03:24.102Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T16:03:24.107Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:24.108Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:24.108Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:24.108Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:24.108Z] Checked if tokens are valid: false, expires at: 1768313698849
+[debug] [2026-01-13T16:03:24.109Z] Checked if tokens are valid: false, expires at: 1768313698849
+[debug] [2026-01-13T16:03:24.109Z] > refreshing access token with scopes: []
+[debug] [2026-01-13T16:03:24.109Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-13T16:03:24.109Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T16:03:24.176Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-13T16:03:24.176Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T16:03:24.217Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:03:24.221Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-13T16:03:24.221Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-13T16:03:24.227Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:03:24.399Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:03:24.399Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:03:24.400Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:03:24.405Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.405Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.406Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.406Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.419Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.419Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.419Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.419Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.419Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.419Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.421Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.421Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.422Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.422Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.423Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:03:24.423Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.841Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:03:24.841Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:03:24.842Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:03:24.842Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.842Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.842Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.842Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.846Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.847Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.847Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.847Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:24.847Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.847Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.849Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.849Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.850Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:03:24.850Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:24.851Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:03:24.851Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:03:25.098Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:03:25.098Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:03:25.206Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:03:25.206Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.207Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:03:25.207Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.210Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:03:25.210Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.210Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.230Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.231Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.231Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:25.231Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:25.232Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.232Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.232Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:03:25.400Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:03:25.400Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:03:25.400Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:03:25.401Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.402Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:25.402Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:25.471Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:03:25.471Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:03:25.637Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:03:25.637Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.652Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:03:25.652Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.672Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:03:25.672Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:03:25.836Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.839Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.854Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.855Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.856Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:25.856Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:25.856Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.856Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.856Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:03:25.869Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.870Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:25.870Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:25.870Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:25.870Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.870Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:03:25.871Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:03:26.101Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:03:26.101Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:03:26.101Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:03:26.102Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:26.102Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:26.102Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:03:26.105Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:03:26.105Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:03:26.106Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:03:26.106Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:03:26.106Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:03:26.107Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:55.104Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:55.112Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:55.114Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:55.115Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:55.117Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:55.118Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:55.119Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.119Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.119Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:55.119Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:55.123Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.123Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.126Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:55.129Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:55.328Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:55.328Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:55.328Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:55.334Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.335Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.335Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.335Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.368Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.368Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.368Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.369Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.369Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.369Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.375Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.375Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.377Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.378Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.379Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:26:55.379Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.492Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:55.492Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:55.492Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:55.493Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.493Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.494Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.494Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.498Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.498Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.499Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.499Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:55.499Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.499Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.503Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.503Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.521Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:26:55.521Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:55.523Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:26:55.523Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:26:56.101Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:26:56.102Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:26:56.225Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:26:56.225Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.227Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:26:56.227Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.229Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:26:56.229Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.285Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:26:56.285Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:26:56.340Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:26:56.340Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.386Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:26:56.387Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.388Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:26:56.389Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:26:56.390Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.415Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.418Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.420Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:56.420Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:56.420Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.420Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.420Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:56.593Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:56.594Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:56.594Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:56.595Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.596Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:56.596Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:56.630Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.640Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.669Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.670Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.670Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:56.671Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:56.676Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.676Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.676Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:56.772Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.780Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.781Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:56.781Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:56.781Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.781Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:56.782Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:56.823Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:56.823Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:56.827Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:56.831Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:56.838Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:56.838Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:57.191Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:57.191Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:57.191Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:57.200Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:57.201Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:57.201Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:58.422Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.428Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.444Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.445Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.445Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:58.445Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:58.446Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:58.446Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:58.446Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:58.447Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.448Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.448Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:58.448Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:58.448Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:58.448Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:26:58.448Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:26:58.830Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:58.831Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:58.831Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:58.832Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.832Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:58.832Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:26:58.848Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:26:58.849Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:26:58.849Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:26:58.849Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:26:58.850Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:26:58.850Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:22.945Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:22.968Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:22.971Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:22.973Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:22.974Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:22.975Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:22.976Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:22.976Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:22.976Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:22.977Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:22.977Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:22.977Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:22.979Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:22.982Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:23.197Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:23.198Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:23.198Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:23.217Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.217Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.221Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.221Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.262Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.262Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.263Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.263Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.264Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.264Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.271Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.271Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.275Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.275Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.277Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:30:23.277Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.551Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:23.551Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:23.551Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:23.552Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.552Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.552Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.552Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.560Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.560Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.561Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.561Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:23.561Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.561Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.563Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.563Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.564Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-13T16:30:23.565Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:23.566Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [none]
+[debug] [2026-01-13T16:30:23.566Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com x-goog-quota-user=projects/sumquiz-3d54e
+[debug] [2026-01-13T16:30:24.046Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:30:24.046Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:30:24.102Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:30:24.103Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.148Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:30:24.149Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.195Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:30:24.198Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.199Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.224Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.229Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.230Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.230Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:24.231Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.231Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.235Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:24.261Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com 403
+[debug] [2026-01-13T16:30:24.261Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseio.com [omitted]
+[debug] [2026-01-13T16:30:24.373Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com 200
+[debug] [2026-01-13T16:30:24.373Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.388Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-13T16:30:24.389Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.393Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-13T16:30:24.393Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/sumquiz-3d54e/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-13T16:30:24.401Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:24.401Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:24.403Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:24.407Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.409Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.410Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:24.430Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.436Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.462Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.463Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.470Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.470Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:24.471Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.471Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.471Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:24.545Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.548Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.548Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.549Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:24.549Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.549Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:24.549Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:24.632Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:24.633Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:24.633Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:24.634Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.635Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.635Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:24.695Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:24.695Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:24.696Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:24.697Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:24.697Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:24.697Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:29.408Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:29.428Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:29.429Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:29.429Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:29.429Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:29.430Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:29.430Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:29.430Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:30.032Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:30.032Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:30.033Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:30.033Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.034Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:30.034Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:30.050Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.059Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.070Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.071Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.071Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:30.071Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:30.072Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:30.072Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:30.072Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:30.174Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.175Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.187Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:30.188Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:30.188Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:30.188Z] Checked if tokens are valid: true, expires at: 1768323803221
+[debug] [2026-01-13T16:30:30.191Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo [none]
+[debug] [2026-01-13T16:30:30.236Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:30.237Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:30.237Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:30.238Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.239Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:30.239Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)
+[debug] [2026-01-13T16:30:30.438Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo 200
+[debug] [2026-01-13T16:30:30.438Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/sumquiz-3d54e/billingInfo {"name":"projects/sumquiz-3d54e/billingInfo","projectId":"sumquiz-3d54e","billingAccountName":"billingAccounts/0156B0-1B19EA-47413B","billingEnabled":false}
+[debug] [2026-01-13T16:30:30.438Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-01-13T16:30:30.439Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-01-13T16:30:30.440Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-01-13T16:30:30.440Z] > authorizing via signed-in user (oladejoteslim32@gmail.com)

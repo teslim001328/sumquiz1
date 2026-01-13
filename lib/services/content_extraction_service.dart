@@ -30,8 +30,13 @@ class ContentExtractionService {
             throw Exception('User ID is required for YouTube analysis.');
           }
           // YouTube requires AI for video analysis
-          return await _enhancedAiService.analyzeYouTubeVideo(url,
+          final result = await _enhancedAiService.analyzeYouTubeVideo(url,
               userId: userId);
+          if (result is Ok<String>) {
+            return result.value;
+          } else {
+            throw (result as Error).error;
+          }
         } else {
           rawText = await _extractWebContent(url);
         }
@@ -63,7 +68,9 @@ class ContentExtractionService {
   }
 
   bool _isYoutubeUrl(String url) {
-    return url.contains('youtube.com') || url.contains('youtu.be');
+    return url.contains('youtube.com/watch') ||
+        url.contains('youtu.be/') ||
+        url.contains('youtube.com/shorts/');
   }
 
   Future<String> _extractWebContent(String url) async {

@@ -245,7 +245,6 @@ class ReferralService {
 
         final data = referrerDoc.data() as Map<String, dynamic>;
         final int currentRewards = data['referralRewards'] as int? ?? 0;
-        final int currentTotalReferrals = data['totalReferrals'] as int? ?? 0;
 
         DateTime currentExpiry =
             (data['subscriptionExpiry'] as Timestamp?)?.toDate() ??

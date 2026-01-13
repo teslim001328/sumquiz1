@@ -9,9 +9,7 @@ import '../../models/folder.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_database_service.dart';
 import '../../services/sync_service.dart';
-// TODO: Create these missing files
-// import '../../view_models/library_view_model.dart';
-// import '../../models/extensions/local_flashcard_set_extension.dart';
+import '../../view_models/library_view_model.dart';
 
 import '../screens/summary_screen.dart';
 import '../screens/quiz_screen.dart';
@@ -169,13 +167,22 @@ class _LibraryViewState extends State<_LibraryView>
                     key: const ValueKey('folder_tab_view'),
                     controller: _folderTabController,
                     children: [
-                      _buildContentList(viewModel.allItems$, theme, viewModel),
                       _buildContentList(
-                          viewModel.allSummaries$, theme, viewModel),
+                          viewModel.getFolderItemsStream(selectedFolder.id),
+                          theme,
+                          viewModel),
                       _buildContentList(
-                          viewModel.allQuizzes$, theme, viewModel),
+                          viewModel.getFolderSummariesStream(selectedFolder.id),
+                          theme,
+                          viewModel),
                       _buildContentList(
-                          viewModel.allFlashcards$, theme, viewModel),
+                          viewModel.getFolderQuizzesStream(selectedFolder.id),
+                          theme,
+                          viewModel),
+                      _buildContentList(
+                          viewModel.getFolderFlashcardsStream(selectedFolder.id),
+                          theme,
+                          viewModel),
                     ],
                   );
                 }
@@ -196,7 +203,8 @@ class _LibraryViewState extends State<_LibraryView>
       leading: selectedFolder != null
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios_new),
-              onPressed: () => viewModel.selectFolder(null))
+              onPressed: () => viewModel.selectFolder(null),
+            )
           : null,
       title: Text(selectedFolder?.name ?? 'Library',
           style: theme.textTheme.headlineSmall?.copyWith(
@@ -226,7 +234,7 @@ class _LibraryViewState extends State<_LibraryView>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: theme.cardColor.withOpacity(0.7),
+              color: theme.cardColor.withAlpha((255 * 0.7).round()),
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
@@ -303,14 +311,18 @@ class _LibraryViewState extends State<_LibraryView>
     return StreamBuilder<List<Folder>>(
       stream: viewModel.allFolders$,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final folders = snapshot.data!;
-        if (folders.isEmpty) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return _buildNoContentState('folders', theme);
         }
 
+        final folders = snapshot.data!;
         final filteredFolders = _searchQuery.isEmpty
             ? folders
             : folders
@@ -391,8 +403,8 @@ class _LibraryViewState extends State<_LibraryView>
                   ),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                child: _buildLibraryCard(
-                    item, theme, () => _navigateToContent(context, item)),
+                child: _buildLibraryCard(item, theme,
+                    () => _navigateToContent(context, item, viewModel)),
               )
                   .animate()
                   .fadeIn(delay: (50 * index).ms)
@@ -577,37 +589,60 @@ class _LibraryViewState extends State<_LibraryView>
     ).animate().fadeIn();
   }
 
-  void _navigateToContent(BuildContext context, LibraryItem item) async {
-    Widget? screen;
-    final localDb = context.read<LocalDatabaseService>();
+  Future<void> _navigateToContent(
+      BuildContext context, LibraryItem item, LibraryViewModel viewModel) async {
+    if (!mounted) return;
+    final user = Provider.of<UserModel?>(context, listen: false);
+    if (user == null) return;
 
-    switch (item.type) {
-      case LibraryItemType.summary:
-        final localSummary = await localDb.getSummary(item.id);
-        if (mounted && localSummary != null) {
-          screen = SummaryScreen(summary: localSummary);
-        }
-        break;
-      case LibraryItemType.quiz:
-        final localQuiz = await localDb.getQuiz(item.id);
-        if (mounted && localQuiz != null) {
-          screen = QuizScreen(quiz: localQuiz);
-        }
-        break;
-      case LibraryItemType.flashcards:
-        final localSet = await localDb.getFlashcardSet(item.id);
-        if (mounted && localSet != null) {
-          screen = FlashcardsScreen(flashcardSet: localSet.toFlashcardSet());
-        }
-        break;
-    }
+    try {
+      // Get the specific content based on its type
+      dynamic contentData;
+      switch (item.type) {
+        case LibraryItemType.summary:
+          contentData = await viewModel.localDb.getSummary(item.id);
+          break;
+        case LibraryItemType.quiz:
+          contentData = await viewModel.localDb.getQuiz(item.id);
+          break;
+        case LibraryItemType.flashcards:
+          contentData = await viewModel.localDb.getFlashcardSet(item.id);
+          break;
+      }
 
-    if (mounted && screen != null) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => screen!));
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Could not load content.')),
-      );
+      if (!mounted) return;
+
+      if (contentData == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Could not load content.')),
+          );
+        }
+        return;
+      }
+
+      Widget screen;
+      switch (item.type) {
+        case LibraryItemType.summary:
+          screen = SummaryScreen(summary: contentData);
+          break;
+        case LibraryItemType.quiz:
+          screen = QuizScreen(quiz: contentData);
+          break;
+        case LibraryItemType.flashcards:
+          screen = FlashcardsScreen(flashcardSet: contentData);
+          break;
+      }
+
+      if (mounted) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
     }
   }
 }

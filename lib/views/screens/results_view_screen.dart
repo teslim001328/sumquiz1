@@ -74,6 +74,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
   }
 
   Future<void> _publishDeck() async {
+    if (!mounted) return;
     final user = context.read<UserModel?>();
     if (user == null || user.role != UserRole.creator) return;
 
@@ -97,7 +98,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
           'id': _summary!.id,
           'title': _summary!.title,
           'content': _summary!.content,
-          'tags': _summary!.tags ?? [],
+          'tags': _summary!.tags,
           'timestamp': Timestamp.fromDate(_summary!.timestamp),
         },
         quizData: {
@@ -399,9 +400,11 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
           showActions: true,
           onCopy: () {
             Clipboard.setData(ClipboardData(text: _summary!.content));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Summary copied to clipboard')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Summary copied to clipboard')),
+              );
+            }
           },
         ),
       ),
@@ -419,9 +422,11 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
       questions: _quiz!.questions,
       onAnswer: (isCorrect) {},
       onFinish: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Quiz practice finished!')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Quiz practice finished!')),
+          );
+        }
       },
     );
   }
@@ -446,9 +451,11 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
       flashcards: flashcards,
       onReview: (index, knewIt) {},
       onFinish: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Flashcard review finished!')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Flashcard review finished!')),
+          );
+        }
       },
     );
   }

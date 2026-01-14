@@ -18,17 +18,18 @@ class WebColors {
   static const secondaryLight = Color(0xFFD1FAE5); // Light tint
 
   // Text
-  static const textPrimary = Color(0xFF111827); // Almost black
-  static const textSecondary = Color(0xFF6B7280); // Medium gray
-  static const textTertiary = Color(0xFF9CA3AF); // Light gray
+  static const Color textPrimary = Color(0xFF111827); // Almost black
+  static const Color textSecondary = Color(0xFF6B7280); // Medium gray
+  static const Color textTertiary = Color(0xFF9CA3AF); // Light gray
 
   // Borders
   static const border = Color(0xFFE5E7EB); // Light border
   static const borderDark = Color(0xFFD1D5DB); // Darker border
 
-  // Accents (use sparingly)
-  static const accent = Color(0xFF8B5CF6); // Purple
-  static const accentOrange = Color(0xFFF59E0B); // Orange
+  // Accents
+  static const Color accent = Color(0xFF8B5CF6); // Purple
+  static const Color accentOrange = Color(0xFFF59E0B); // Orange
+  static const Color accentPink = Color(0xFFEC4899); // Pink
 
   // Shadows
   static List<BoxShadow> get cardShadow => [

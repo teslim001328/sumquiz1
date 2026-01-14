@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sumquiz/theme/web_theme.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/models/library_item.dart';
 import 'package:sumquiz/services/firestore_service.dart';
@@ -12,9 +12,6 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/view_models/quiz_view_model.dart';
 import 'package:sumquiz/views/screens/summary_screen.dart';
 import 'package:sumquiz/models/folder.dart';
-import 'package:sumquiz/views/widgets/web/glass_card.dart';
-import 'package:sumquiz/views/widgets/web/neon_button.dart';
-import 'package:sumquiz/views/widgets/web/particle_background.dart';
 
 class LibraryScreenWeb extends StatefulWidget {
   const LibraryScreenWeb({super.key});
@@ -35,7 +32,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   Stream<List<LibraryItem>>? _summariesStream;
   Stream<List<LibraryItem>>? _flashcardsStream;
   String? _userIdForStreams;
-  int _hoveredCard = -1;
 
   @override
   void initState() {
@@ -127,55 +123,22 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserModel?>(context);
-    const backgroundColor = Color(0xFF0A0E27);
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Stack(
+      backgroundColor: WebColors.background,
+      body: Row(
         children: [
-          // Particle background
-          const Positioned.fill(
-            child: ParticleBackground(
-              numberOfParticles: 30,
-              particleColor: Colors.white,
-            ),
-          ),
-          // Gradient orbs
-          Positioned(
-            top: -100,
-            right: 200,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF6366F1).withOpacity(0.2),
-                      const Color(0xFF6366F1).withOpacity(0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Main content
-          Row(
-            children: [
-              _buildSidebar(),
-              Expanded(
-                child: user == null
-                    ? const Center(
-                        child: Text(
-                          "Please Log In",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      )
-                    : _buildMainContent(user),
-              ),
-            ],
+          _buildSidebar(),
+          Expanded(
+            child: user == null
+                ? Center(
+                    child: Text(
+                      "Please Log In",
+                      style:
+                          TextStyle(color: WebColors.textPrimary, fontSize: 18),
+                    ),
+                  )
+                : _buildMainContent(user),
           ),
         ],
       ),
@@ -183,91 +146,68 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   }
 
   Widget _buildSidebar() {
-    return GlassCard(
+    return Container(
+      width: 250,
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
-      blur: 20,
-      child: SizedBox(
-        width: 250,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFFEC4899)],
-              ).createShader(bounds),
-              child: const Text(
-                'Library',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: WebColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Library',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: WebColors.textPrimary,
             ),
-            const SizedBox(height: 40),
-            _buildSidebarTab(0, 'Folders', Icons.folder_open),
-            const SizedBox(height: 8),
-            _buildSidebarTab(1, 'All Content', Icons.dashboard_outlined),
-            const SizedBox(height: 8),
-            _buildSidebarTab(2, 'Summaries', Icons.article_outlined),
-            const SizedBox(height: 8),
-            _buildSidebarTab(3, 'Quizzes', Icons.quiz_outlined),
-            const SizedBox(height: 8),
-            _buildSidebarTab(4, 'Flashcards', Icons.style_outlined),
-          ],
-        ),
+          ),
+          const SizedBox(height: 40),
+          _buildSidebarTab(0, 'Folders', Icons.folder_open),
+          const SizedBox(height: 8),
+          _buildSidebarTab(1, 'All Content', Icons.dashboard_outlined),
+          const SizedBox(height: 8),
+          _buildSidebarTab(2, 'Summaries', Icons.article_outlined),
+          const SizedBox(height: 8),
+          _buildSidebarTab(3, 'Quizzes', Icons.quiz_outlined),
+          const SizedBox(height: 8),
+          _buildSidebarTab(4, 'Flashcards', Icons.style_outlined),
+        ],
       ),
     );
   }
 
   Widget _buildSidebarTab(int index, String title, IconData icon) {
     final isSelected = _tabController.index == index;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => _tabController.animateTo(index)),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                  )
-                : null,
-            color: !isSelected ? Colors.white.withOpacity(0.03) : null,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color:
-                    isSelected ? Colors.white : Colors.white.withOpacity(0.6),
-                size: 22,
+    return GestureDetector(
+      onTap: () => setState(() => _tabController.animateTo(index)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? WebColors.primaryLight : null,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? WebColors.primary : WebColors.textSecondary,
+              size: 22,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? WebColors.primary : WebColors.textSecondary,
+                fontSize: 15,
               ),
-              const SizedBox(width: 16),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color:
-                      isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -300,31 +240,25 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       child: Row(
         children: [
           Expanded(
-            child: GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              margin: EdgeInsets.zero,
-              child: TextField(
-                controller: _searchController,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Search your library...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                  prefixIcon:
-                      Icon(Icons.search, color: Colors.white.withOpacity(0.6)),
-                  border: InputBorder.none,
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(color: WebColors.textPrimary, fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'Search your library...',
+                hintStyle: TextStyle(color: WebColors.textTertiary),
+                prefixIcon: Icon(Icons.search, color: WebColors.textSecondary),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: WebColors.border),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 24),
-          NeonButton(
-            text: 'Create New',
+          ElevatedButton.icon(
             onPressed: () => context.push('/create'),
-            icon: Icons.add,
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            ),
-            glowColor: const Color(0xFF6366F1),
+            icon: const Icon(Icons.add),
+            label: const Text('Create New'),
           ),
         ],
       ),
@@ -336,8 +270,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       future: _localDb.getAllFolders(userId),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+          return Center(
+            child: CircularProgressIndicator(color: WebColors.primary),
           );
         }
         final folders = snapshot.data ?? [];
@@ -347,9 +281,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                     title: f.name,
                     subtitle: 'Folder',
                     icon: Icons.folder,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
-                    ),
+                    color: WebColors.accentOrange,
                     onTap: () => context.push('/library/results-view/${f.id}'),
                   ))
               .toList(),
@@ -363,8 +295,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       stream: _allItemsStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+          return Center(
+            child: CircularProgressIndicator(color: WebColors.primary),
           );
         }
         final items = snapshot.data ?? [];
@@ -382,8 +314,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       stream: stream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+          return Center(
+            child: CircularProgressIndicator(color: WebColors.primary),
           );
         }
         return _buildContentGrid(snapshot.data!, userId);
@@ -409,28 +341,22 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   Widget _buildContentGrid(List<LibraryItem> items, String userId) {
     final cardData = items.map((item) {
       IconData icon;
-      Gradient gradient;
+      Color color;
       String typeName;
       switch (item.type) {
         case LibraryItemType.summary:
           icon = Icons.article;
-          gradient = const LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-          );
+          color = WebColors.primary;
           typeName = 'Summary';
           break;
         case LibraryItemType.quiz:
           icon = Icons.quiz;
-          gradient = const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
-          );
+          color = WebColors.secondary;
           typeName = 'Quiz';
           break;
         case LibraryItemType.flashcards:
           icon = Icons.style;
-          gradient = const LinearGradient(
-            colors: [Color(0xFFEC4899), Color(0xFFF97316)],
-          );
+          color = WebColors.accentPink;
           typeName = 'Flashcards';
           break;
       }
@@ -439,7 +365,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         title: item.title,
         subtitle: typeName,
         icon: icon,
-        gradient: gradient,
+        color: color,
         onTap: () {
           if (item.type == LibraryItemType.summary) {
             Navigator.push(
@@ -466,99 +392,61 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       itemCount: cards.length,
       itemBuilder: (context, index) {
         final card = cards[index];
-        return MouseRegion(
-          onEnter: (_) => setState(() => _hoveredCard = index),
-          onExit: (_) => setState(() => _hoveredCard = -1),
-          child: _buildLibraryCard(
-            card: card,
-            isHovered: _hoveredCard == index,
-            delay: index * 50,
-          ),
-        );
+        return _buildLibraryCard(card: card, delay: index * 50);
       },
     );
   }
 
   Widget _buildLibraryCard({
     required _LibraryCardData card,
-    required bool isHovered,
     required int delay,
   }) {
     return GestureDetector(
       onTap: card.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        transform: Matrix4.identity()
-          ..translate(0.0, isHovered ? -8.0 : 0.0)
-          ..rotateZ(isHovered ? -0.01 : 0.0),
-        child: GlassCard(
-          padding: const EdgeInsets.all(24),
-          margin: EdgeInsets.zero,
-          boxShadow: isHovered
-              ? [
-                  BoxShadow(
-                    color: (card.gradient as LinearGradient)
-                        .colors
-                        .first
-                        .withOpacity(0.4),
-                    blurRadius: 30,
-                    offset: const Offset(0, 12),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: card.gradient,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (card.gradient as LinearGradient)
-                          .colors
-                          .first
-                          .withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Icon(card.icon, color: Colors.white, size: 32),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: WebColors.border),
+          boxShadow: WebColors.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: card.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Spacer(),
-              Text(
-                card.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  height: 1.3,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Icon(card.icon, color: card.color, size: 32),
+            ),
+            const Spacer(),
+            Text(
+              card.title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: WebColors.textPrimary,
+                height: 1.3,
               ),
-              const SizedBox(height: 8),
-              Text(
-                card.subtitle,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.6),
-                  fontWeight: FontWeight.w500,
-                ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              card.subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: WebColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: delay)).scale();
+    ).animate().fadeIn(delay: Duration(milliseconds: delay));
   }
 
   @override
@@ -573,14 +461,14 @@ class _LibraryCardData {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Gradient gradient;
+  final Color color;
   final VoidCallback onTap;
 
   _LibraryCardData({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.gradient,
+    required this.color,
     required this.onTap,
   });
 }

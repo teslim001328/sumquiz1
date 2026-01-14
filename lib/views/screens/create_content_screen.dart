@@ -389,56 +389,72 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     final isValid = _linkController.text.isNotEmpty &&
         InputValidator.isValidUrl(_linkController.text);
 
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _linkController.text.isEmpty
-              ? theme.colorScheme.outline.withAlpha(77)
-              : isValid
-                  ? Colors.green.withAlpha(128)
-                  : Colors.red.withAlpha(128),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.link,
-            color: _linkController.text.isEmpty
-                ? theme.colorScheme.onSurfaceVariant.withAlpha(178)
-                : isValid
-                    ? Colors.green
-                    : Colors.red,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: _linkController,
-              onTap: _activateLinkField,
-              onChanged: (value) =>
-                  setState(() {}), // Trigger rebuild for validation
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-              decoration: InputDecoration(
-                hintText: 'YouTube, article, PDF link, or any URL',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant.withAlpha(128),
-                ),
-                border: InputBorder.none,
-                suffixIcon: _linkController.text.isNotEmpty
-                    ? Icon(
-                        isValid ? Icons.check_circle : Icons.error,
-                        color: isValid ? Colors.green : Colors.red,
-                        size: 20,
-                      )
-                    : null,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _linkController.text.isEmpty
+                  ? theme.colorScheme.outline.withAlpha(77)
+                  : isValid
+                      ? Colors.green.withAlpha(128)
+                      : Colors.red.withAlpha(128),
             ),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.link,
+                color: _linkController.text.isEmpty
+                    ? theme.colorScheme.onSurfaceVariant.withAlpha(178)
+                    : isValid
+                        ? Colors.green
+                        : Colors.red,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _linkController,
+                  onTap: _activateLinkField,
+                  onChanged: (value) =>
+                      setState(() {}), // Trigger rebuild for validation
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                  decoration: InputDecoration(
+                    hintText: 'YouTube, article, PDF link, or any URL',
+                    hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant.withAlpha(128),
+                    ),
+                    border: InputBorder.none,
+                    suffixIcon: _linkController.text.isNotEmpty
+                        ? Icon(
+                            isValid ? Icons.check_circle : Icons.error,
+                            color: isValid ? Colors.green : Colors.red,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, top: 8, right: 16),
+          child: Text(
+            '💡 Paste links to YouTube videos, articles, PDFs, images, audio, or video files',
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurfaceVariant.withAlpha(153),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

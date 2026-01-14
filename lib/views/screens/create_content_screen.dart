@@ -229,7 +229,7 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
         } catch (e) {
           // Dialog already closed or context invalid, ignore
         }
-        context.push('/extraction-view', extra: extractedTextResult);
+        context.push('/create/extraction-view', extra: extractedTextResult);
       }
     } catch (e) {
       if (mounted) {

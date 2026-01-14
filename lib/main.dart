@@ -111,31 +111,28 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _router = createAppRouter(widget.authService);
-
-    // 🔔 Schedule notifications on app launch
-    _scheduleNotificationsOnLaunch();
   }
 
-  Future<void> _scheduleNotificationsOnLaunch() async {
+  Future<void> _scheduleNotificationsOnLaunch(BuildContext context) async {
     // Wait a bit for providers to initialize
     await Future.delayed(const Duration(seconds: 2));
 
     try {
       final user = widget.authService.currentUser;
-      if (user != null && mounted) {
+      if (user != null) {
         // Get user model from Firestore
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
 
-        if (userDoc.exists && mounted) {
+        if (userDoc.exists) {
           final userModel = UserModel.fromFirestore(userDoc);
           await NotificationIntegration.onAppLaunch(context, userModel);
         }
       }
     } catch (e) {
-      debugPrint('Failed to schedule notifications on app launch: $e');
+      debugPrint('❌ Failed to schedule notifications on app launch: $e');
     }
   }
 
@@ -227,24 +224,33 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
-          return NotificationNavigator(
-            child: MaterialApp.router(
-              title: 'SumQuiz',
-              theme: ThemeProvider.lightTheme,
-              darkTheme: ThemeProvider.darkTheme,
-              themeMode: themeProvider.themeMode,
-              routerConfig: _router,
-              debugShowCheckedModeBanner: false,
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                FlutterQuillLocalizations.delegate,
-              ],
-              supportedLocales: const [
-                Locale('en', ''),
-              ],
-            ),
+          return Builder(
+            builder: (context) {
+              // Schedule notifications after providers are available
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scheduleNotificationsOnLaunch(context);
+              });
+
+              return NotificationNavigator(
+                child: MaterialApp.router(
+                  title: 'SumQuiz',
+                  theme: ThemeProvider.lightTheme,
+                  darkTheme: ThemeProvider.darkTheme,
+                  themeMode: themeProvider.themeMode,
+                  routerConfig: _router,
+                  debugShowCheckedModeBanner: false,
+                  localizationsDelegates: const [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    FlutterQuillLocalizations.delegate,
+                  ],
+                  supportedLocales: const [
+                    Locale('en', ''),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),

@@ -507,6 +507,83 @@ REMEMBER: EXTRACT for study purposes, not summarize. Keep all educational value 
     }
   }
 
+  /// Analyze content from direct URL using Gemini File API
+  /// Supports documents, images, audio, and video files
+  Future<Result<String>> analyzeContentFromUrl({
+    required String url,
+    required String mimeType,
+    String? customPrompt,
+    required String userId,
+  }) async {
+    try {
+      // Check usage limits
+      await _checkUsageLimits(userId);
+
+      // Create content with file URL
+      final content = Content.multi([
+        TextPart(customPrompt ??
+            'Extract and summarize all text content from this file. Provide a clear, well-structured summary.'),
+        FilePart(Uri.parse(url)),
+      ]);
+
+      // Use vision model for better file understanding
+      final response = await _visionModel.generateContent([content]);
+
+      if (response.text == null || response.text!.isEmpty) {
+        return Result.error(EnhancedAIServiceException(
+          'No content extracted from URL',
+          code: 'EMPTY_RESPONSE',
+        ));
+      }
+
+      return Result.ok(response.text!);
+    } on GenerativeAIException catch (e) {
+      developer.log(
+        'Gemini File API error: ${e.message}',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+
+      // Handle specific error cases
+      if (e.message.contains('quota') ||
+          e.message.contains('RESOURCE_EXHAUSTED')) {
+        return Result.error(EnhancedAIServiceException(
+          'API quota exceeded. Please try again later.',
+          code: 'QUOTA_EXCEEDED',
+        ));
+      }
+
+      if (e.message.contains('403') || e.message.contains('access')) {
+        return Result.error(EnhancedAIServiceException(
+          'Unable to access the file URL. Make sure the URL is publicly accessible.',
+          code: 'ACCESS_DENIED',
+        ));
+      }
+
+      if (e.message.contains('404') || e.message.contains('not found')) {
+        return Result.error(EnhancedAIServiceException(
+          'File not found at the provided URL.',
+          code: 'FILE_NOT_FOUND',
+        ));
+      }
+
+      return Result.error(EnhancedAIServiceException(
+        'Failed to analyze content from URL: ${e.message}',
+        code: 'API_ERROR',
+      ));
+    } catch (e) {
+      developer.log(
+        'Unexpected error analyzing URL content',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+      return Result.error(EnhancedAIServiceException(
+        'An unexpected error occurred while processing the file.',
+        code: 'UNKNOWN_ERROR',
+      ));
+    }
+  }
+
   /// Validate YouTube URL format
   bool _isValidYouTubeUrl(String url) {
     try {

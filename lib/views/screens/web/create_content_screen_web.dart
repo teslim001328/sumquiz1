@@ -9,6 +9,7 @@ import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
 import 'package:sumquiz/services/usage_service.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
+import 'dart:math' as dart_math;
 
 class CreateContentScreenWeb extends StatefulWidget {
   const CreateContentScreenWeb({super.key});
@@ -170,76 +171,28 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
 
   @override
   Widget build(BuildContext context) {
+    // Premium Design: Full screen animated background
     return Scaffold(
-      backgroundColor: WebColors.background,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            padding: const EdgeInsets.all(40),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              WebColors.background,
+              WebColors.primaryLight.withOpacity(0.5),
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Create Study Materials',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w700,
-                    color: WebColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(duration: 300.ms),
-                const SizedBox(height: 16),
-                Text(
-                  'Transform any content into exam-ready summaries, quizzes, and flashcards',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: WebColors.textSecondary,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 100.ms),
-                const SizedBox(height: 60),
-                _buildInputCard(),
-                const SizedBox(height: 24),
-                if (_errorMessage.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _errorMessage,
-                            style: TextStyle(
-                              color: Colors.red.shade700,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 32),
-                _isLoading
-                    ? _buildLoadingIndicator()
-                    : ElevatedButton.icon(
-                        onPressed: _processAndNavigate,
-                        icon: const Icon(Icons.auto_awesome),
-                        label: const Text('Extract Content'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 48,
-                            vertical: 24,
-                          ),
-                        ),
-                      ),
+                _buildHeader(),
+                const SizedBox(height: 40),
+                _buildMainCard(),
               ],
             ),
           ),
@@ -248,33 +201,58 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     );
   }
 
-  Widget _buildInputCard() {
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFF4F46E5), Color(0xFF9333EA)],
+          ).createShader(bounds),
+          child: const Text(
+            'Create Study Materials',
+            style: TextStyle(
+              fontSize: 42,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Transform text, links, PDFs, or images into\ninteractive flashcards and quizzes instantly.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            color: WebColors.textSecondary,
+            height: 1.6,
+          ),
+        ),
+      ],
+    ).animate().fadeIn().slideY(begin: -0.2);
+  }
+
+  Widget _buildMainCard() {
     return Container(
+      width: 1000,
+      padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.cardShadow,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: WebColors.primary.withOpacity(0.1),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                _buildTab(0, Icons.edit_note, 'Text'),
-                const SizedBox(width: 8),
-                _buildTab(1, Icons.link, 'Link'),
-                const SizedBox(width: 8),
-                _buildTab(2, Icons.picture_as_pdf, 'PDF'),
-                const SizedBox(width: 8),
-                _buildTab(3, Icons.image, 'Image'),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: WebColors.border),
+          _buildCustomTabBar(),
+          const SizedBox(height: 40),
           SizedBox(
-            height: 300,
+            height: 400,
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -285,57 +263,77 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
               ],
             ),
           ),
+          const SizedBox(height: 40),
+          if (_errorMessage.isNotEmpty) _buildErrorBanner(),
+          const SizedBox(height: 24),
+          _isLoading ? _buildLoadingState() : _buildGenerateButton(),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
-  Widget _buildTab(int index, IconData icon, String label) {
-    final isSelected = _tabController.index == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _tabController.animateTo(index);
+  Widget _buildCustomTabBar() {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: WebColors.backgroundAlt,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: WebColors.primary,
+        unselectedLabelColor: WebColors.textSecondary,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        dividerColor: Colors.transparent,
+        onTap: (index) {
           _resetInputs();
           setState(() {
             _selectedInputType = ['text', 'link', 'pdf', 'image'][index];
           });
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? WebColors.primaryLight : null,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? WebColors.primary : WebColors.textSecondary,
-                size: 24,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color:
-                      isSelected ? WebColors.primary : WebColors.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
+        tabs: [
+          _buildTabItem(Icons.edit_note, 'Text'),
+          _buildTabItem(Icons.link, 'Web Link'),
+          _buildTabItem(Icons.picture_as_pdf, 'Upload PDF'),
+          _buildTabItem(Icons.image, 'Scan Image'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabItem(IconData icon, String label) {
+    return Tab(
+      height: 50,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
       ),
     );
   }
 
   Widget _buildTextInput() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return Container(
+      decoration: BoxDecoration(
+        color: WebColors.backgroundAlt.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: WebColors.border),
+      ),
       child: TextField(
         controller: _textController,
         maxLines: null,
@@ -346,7 +344,9 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           height: 1.6,
         ),
         decoration: InputDecoration(
-          hintText: 'Paste or type your content here...',
+          contentPadding: const EdgeInsets.all(24),
+          hintText:
+              'Paste your lecture notes, article text, or any content here...',
           hintStyle: TextStyle(
             color: WebColors.textTertiary,
             fontSize: 16,
@@ -361,54 +361,89 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
   }
 
   Widget _buildLinkInput() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Enter URL',
-            style: TextStyle(
-              color: WebColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Paste a URL to Generate Content',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: WebColors.textPrimary,
           ),
-          const SizedBox(height: 16),
-          TextField(
+        ),
+        const SizedBox(height: 32),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
             controller: _linkController,
             style: TextStyle(
               color: WebColors.textPrimary,
               fontSize: 16,
             ),
             decoration: InputDecoration(
-              hintText: 'https://example.com/article',
-              hintStyle: TextStyle(
-                color: WebColors.textTertiary,
-              ),
+              hintText: 'https://youtube.com/watch?v=...',
+              filled: true,
+              fillColor: WebColors.backgroundAlt,
               prefixIcon: Icon(Icons.link, color: WebColors.primary),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: WebColors.border),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 20,
               ),
             ),
             onChanged: (_) {
               setState(() => _selectedInputType = 'link');
             },
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(Icons.check_circle, color: WebColors.secondary, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                'Supports YouTube, articles, and web pages',
-                style: TextStyle(
-                  color: WebColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 32),
+        Wrap(
+          spacing: 16,
+          children: [
+            _buildSupportedChip(Icons.play_circle, 'YouTube Videos'),
+            _buildSupportedChip(Icons.article, 'Blog Articles'),
+            _buildSupportedChip(Icons.web, 'Web Pages'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupportedChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: WebColors.backgroundAlt,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WebColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: WebColors.textSecondary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: WebColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -417,56 +452,168 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
 
   Widget _buildFileUpload(String type) {
     final hasFile = _fileName != null && _selectedInputType == type;
+    if (hasFile) return _buildFilePreview();
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: hasFile ? _buildFilePreview() : _buildUploadZone(type),
-    );
-  }
-
-  Widget _buildUploadZone(String type) {
     return GestureDetector(
       onTap: () => _pickFile(type),
       child: Container(
         decoration: BoxDecoration(
+          color: WebColors.backgroundAlt.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: WebColors.border,
+            color: WebColors.primary.withOpacity(0.3),
             width: 2,
-            style: BorderStyle.solid,
+            style: BorderStyle
+                .none, // Can't do dashed easily without package, using dotted image instead
           ),
-          borderRadius: BorderRadius.circular(12),
-          color: WebColors.backgroundAlt,
+        ),
+        child: CustomPaint(
+          painter: DashedRectPainter(
+            color: WebColors.primary.withOpacity(0.4),
+            strokeWidth: 2,
+            gap: 8,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: WebColors.primary.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Image.asset(
+                        'assets/images/web/upload_illustration.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
+                const SizedBox(height: 24),
+                Text(
+                  'Click to upload ${type.toUpperCase()}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: WebColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  type == 'pdf'
+                      ? 'Supports standard PDF files up to 15MB'
+                      : 'Supports JPG, PNG up to 10MB',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: WebColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: WebColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Browse Files',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilePreview() {
+    return Center(
+      child: Container(
+        width: 500,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: WebColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: WebColors.primaryLight,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFFECFDF5),
+                shape: BoxShape.circle,
               ),
-              child: Icon(
-                type == 'pdf' ? Icons.picture_as_pdf : Icons.image,
-                color: WebColors.primary,
-                size: 48,
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF10B981),
+                size: 40,
               ),
-            ),
-            const SizedBox(height: 24),
+            ).animate().scale(),
+            const SizedBox(height: 20),
             Text(
-              'Click to upload ${type.toUpperCase()}',
+              'File Selected Ready',
               style: TextStyle(
-                color: WebColors.textPrimary,
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
+                color: WebColors.textSecondary,
+                letterSpacing: 1,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              type == 'pdf' ? 'Max size: 15MB' : 'Max size: 10MB',
+              _fileName!,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: WebColors.textSecondary,
-                fontSize: 14,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: WebColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _fileName = null;
+                  _fileBytes = null;
+                });
+              },
+              icon: Icon(Icons.delete_outline, color: Colors.red[400]),
+              label: Text(
+                'Remove File',
+                style: TextStyle(color: Colors.red[400]),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red.shade100),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -475,86 +622,196 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     );
   }
 
-  Widget _buildFilePreview() {
+  Widget _buildErrorBanner() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: WebColors.secondaryLight,
+        color: const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: WebColors.secondary),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: WebColors.secondary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child:
-                const Icon(Icons.check_circle, color: Colors.white, size: 48),
-          ),
-          const SizedBox(height: 24),
+          Icon(Icons.error, color: const Color(0xFFDC2626), size: 20),
+          const SizedBox(width: 12),
           Text(
-            _fileName!,
+            _errorMessage,
             style: TextStyle(
-              color: WebColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                _fileName = null;
-                _fileBytes = null;
-              });
-            },
-            icon: Icon(Icons.close, color: WebColors.textSecondary),
-            label: Text(
-              'Remove',
-              style: TextStyle(color: WebColors.textSecondary),
+              color: const Color(0xFFDC2626),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
       ),
+    ).animate().shake();
+  }
+
+  Widget _buildGenerateButton() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [WebColors.primary, const Color(0xFF8B5CF6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: WebColors.primary.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _processAndNavigate,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            const Text(
+              'Generate Study Material',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      )
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.2)),
     );
   }
 
-  Widget _buildLoadingIndicator() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: WebColors.border),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(color: WebColors.primary),
-          const SizedBox(height: 24),
-          Text(
-            'Extracting content...',
-            style: TextStyle(
-              color: WebColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+  Widget _buildLoadingState() {
+    return Column(
+      children: [
+        SizedBox(
+          width: 60,
+          height: 60,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(WebColors.primary),
+            strokeWidth: 4,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'This may take a few moments',
-            style: TextStyle(
-              color: WebColors.textSecondary,
-              fontSize: 14,
-            ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Analyzing content with AI...',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: WebColors.textPrimary,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'This usually takes 5-10 seconds',
+          style: TextStyle(
+            color: WebColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
+}
+
+// Simple dashed border painter
+class DashedRectPainter extends CustomPainter {
+  final double strokeWidth;
+  final Color color;
+  final double gap;
+
+  DashedRectPainter(
+      {this.strokeWidth = 2.0, this.color = Colors.grey, this.gap = 5.0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint dashedPaint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    double x = size.width;
+    double y = size.height;
+
+    Path _topPath = getDashedPath(
+      a: const Point(0, 0),
+      b: Point(x, 0),
+      gap: gap,
+    );
+
+    Path _rightPath = getDashedPath(
+      a: Point(x, 0),
+      b: Point(x, y),
+      gap: gap,
+    );
+
+    Path _bottomPath = getDashedPath(
+      a: Point(0, y),
+      b: Point(x, y),
+      gap: gap,
+    );
+
+    Path _leftPath = getDashedPath(
+      a: const Point(0, 0),
+      b: Point(0, y),
+      gap: gap,
+    );
+
+    canvas.drawPath(_topPath, dashedPaint);
+    canvas.drawPath(_rightPath, dashedPaint);
+    canvas.drawPath(_bottomPath, dashedPaint);
+    canvas.drawPath(_leftPath, dashedPaint);
+  }
+
+  Path getDashedPath({
+    required Point a,
+    required Point b,
+    required double gap,
+  }) {
+    Size size = Size(b.x - a.x, b.y - a.y);
+    Path path = Path();
+    path.moveTo(a.x, a.y);
+    bool shouldDraw = true;
+    Point currentPoint = Point(a.x, a.y);
+
+    num radians = dart_math.atan(size.height / size.width);
+
+    num dx = gap * dart_math.cos(radians);
+    num dy = gap * dart_math.sin(radians);
+
+    while (shouldDraw) {
+      currentPoint = Point(
+        currentPoint.x + dx,
+        currentPoint.y + dy,
+      );
+      if (shouldDraw) {
+        path.lineTo(currentPoint.x, currentPoint.y);
+      } else {
+        path.moveTo(currentPoint.x, currentPoint.y);
+      }
+      shouldDraw = !shouldDraw;
+    }
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class Point {
+  final double x;
+  final double y;
+  const Point(this.x, this.y);
 }

@@ -162,7 +162,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               color: theme.colorScheme.primary, size: 48),
                           const SizedBox(height: 16),
                           Text(
-                            'Unlock SumQuiz Pro',
+                            'Master Your Exams',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface,
@@ -171,7 +171,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Supercharge your learning with unlimited access.',
+                            'Identify what matters, test your knowledge, \nand retain everything forever.',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.6),
@@ -192,13 +192,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                             child: Column(
                               children: [
-                                _buildFeatureRow('Unlimited content generation',
+                                _buildFeatureRow('Know exactly what matters to read',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Unlimited folders & decks',
+                                _buildFeatureRow('Practice with possible exam questions',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Smart Spaced Repetition',
+                                _buildFeatureRow('Daily review with Spaced Repetition',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Offline access & Sync',
+                                _buildFeatureRow('Build a masterful study habit',
                                     isUnlocked: true, theme: theme),
                               ],
                             ),

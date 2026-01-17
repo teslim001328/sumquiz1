@@ -192,13 +192,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                             child: Column(
                               children: [
-                                _buildFeatureRow('Know exactly what matters to read',
+                                _buildFeatureRow('Unlimited AI Summaries (Know what matters)',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Practice with possible exam questions',
+                                _buildFeatureRow('Unlimited Exam Prep Quizzes',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Daily review with Spaced Repetition',
+                                _buildFeatureRow('Daily Review with Spaced Repetition',
                                     isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Build a masterful study habit',
+                                _buildFeatureRow('Offline Access & Remote Sync',
                                     isUnlocked: true, theme: theme),
                               ],
                             ),

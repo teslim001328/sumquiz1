@@ -267,6 +267,19 @@ class NotificationService {
     }
   }
 
+  Future<bool> areNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(notificationEnabledKey) ?? true;
+  }
+
+  Future<void> initializeNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Set default value if not set
+    if (!prefs.containsKey(notificationEnabledKey)) {
+      await prefs.setBool(notificationEnabledKey, true);
+    }
+  }
+
   // Mission Engine Notifications
 
   /// Schedules a "Priming" notification 30 minutes before the user's preferred study time

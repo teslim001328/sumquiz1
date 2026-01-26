@@ -16,6 +16,7 @@ class NotificationManager {
 
   /// Schedule daily learning reminder
   Future<void> scheduleDailyLearningReminder(UserModel user) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       100, // Unique ID
       'Time to Learn! 📚',
@@ -28,6 +29,7 @@ class NotificationManager {
 
   /// Schedule quiz reminder after 3 days of inactivity
   Future<void> scheduleInactivityReminder(UserModel user) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       101,
       'We Miss You! 👋',
@@ -40,6 +42,7 @@ class NotificationManager {
 
   /// Schedule flashcard review reminder
   Future<void> scheduleFlashcardReview(UserModel user) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       102,
       'Review Time! 🎯',
@@ -56,6 +59,7 @@ class NotificationManager {
 
   /// Schedule notification after completing a quiz
   Future<void> schedulePostQuizNudge(String topic) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       200,
       'Great Job! 🎉',
@@ -69,6 +73,7 @@ class NotificationManager {
   /// Schedule personalized topic recommendation
   Future<void> scheduleTopicRecommendation(
       String topic, String relatedTopic) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       201,
       'New Content Ready! 📖',
@@ -81,6 +86,7 @@ class NotificationManager {
 
   /// Schedule challenge notification
   Future<void> scheduleChallenge(String topic) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       202,
       'Challenge Time! 💪',
@@ -97,6 +103,7 @@ class NotificationManager {
 
   /// Schedule Pro upgrade reminder after hitting free limit
   Future<void> scheduleProUpgradeReminder() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       300,
       'Unlock Your Potential! ⭐',
@@ -109,6 +116,7 @@ class NotificationManager {
 
   /// Schedule Pro feature showcase
   Future<void> scheduleProFeatureShowcase() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       301,
       'Discover Pro Features! 🚀',
@@ -121,6 +129,7 @@ class NotificationManager {
 
   /// Schedule Pro trial reminder
   Future<void> scheduleProTrialReminder() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       302,
       'Limited Time Offer! 🎁',
@@ -137,6 +146,7 @@ class NotificationManager {
 
   /// Schedule referral invitation reminder
   Future<void> scheduleReferralReminder() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       400,
       'Share & Earn! 🎁',
@@ -149,6 +159,7 @@ class NotificationManager {
 
   /// Schedule referral reward notification
   Future<void> scheduleReferralReward() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       401,
       'Referral Bonus! 🎉',
@@ -165,6 +176,7 @@ class NotificationManager {
 
   /// Schedule new feature announcement
   Future<void> scheduleNewFeatureAnnouncement() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       500,
       'New Feature! 🎉',
@@ -177,6 +189,7 @@ class NotificationManager {
 
   /// Schedule maintenance notification
   Future<void> scheduleMaintenanceNotification() async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       501,
       'Scheduled Maintenance ⚙️',
@@ -189,6 +202,7 @@ class NotificationManager {
 
   /// Schedule welcome notification for new users
   Future<void> scheduleWelcomeNotification(UserModel user) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleNotification(
       502,
       'Welcome to SumQuiz! 👋',
@@ -210,6 +224,7 @@ class NotificationManager {
     required int cardCount,
     required int estimatedMinutes,
   }) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.schedulePrimingNotification(
       userId: userId,
       preferredStudyTime: preferredStudyTime,
@@ -220,6 +235,7 @@ class NotificationManager {
 
   /// Schedule mission recall notification
   Future<void> scheduleMissionRecall({required int momentumGain}) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleRecallNotification(
       momentumGain: momentumGain,
     );
@@ -230,6 +246,7 @@ class NotificationManager {
     required int currentStreak,
     required int remainingCards,
   }) async {
+    if (!(await _notificationService.areNotificationsEnabled())) return;
     await _notificationService.scheduleStreakSaverNotification(
       currentStreak: currentStreak,
       remainingCards: remainingCards,
@@ -258,5 +275,4 @@ class NotificationManager {
   Future<void> enableAllNotifications() async {
     await _notificationService.toggleNotifications(true);
   }
-
 }

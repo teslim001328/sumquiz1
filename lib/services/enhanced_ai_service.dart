@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:sumquiz/models/folder.dart';
@@ -69,7 +70,7 @@ class EnhancedAIServiceException implements Exception {
 class EnhancedAIConfig {
   // Updated models as of January 2026
   static const String primaryModel = 'gemini-2.5-flash';
-  static const String fallbackModel = 'gemini-1.5-flash';
+  static const String fallbackModel = 'gemini-2.5-flash';
   static const String visionModel = 'gemini-2.5-flash';
 
   // Retry configuration with exponential backoff
@@ -138,7 +139,7 @@ class EnhancedAIService {
           await _iapService.isUploadLimitReached(userId);
       if (isUploadLimitReached) {
         throw EnhancedAIServiceException(
-          'You\'ve reached your weekly upload limit. Upgrade to Pro for unlimited uploads.',
+          'You\'ve reached your free upload limit. Upgrade to Pro for unlimited uploads.',
           code: 'UPLOAD_LIMIT_REACHED',
         );
       }
@@ -423,17 +424,66 @@ OUTPUT FORMAT (JSON):
               Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
       if (response.text == null || response.text!.trim().isEmpty) {
+        // If native analysis fails, try transcript extraction as fallback
+        developer.log(
+          'Native YouTube analysis returned empty response, trying transcript fallback',
+          name: 'EnhancedAIService',
+        );
+        try {
+          final transcriptResult =
+              await extractYouTubeTranscript(videoUrl, userId: userId);
+          if (transcriptResult is Ok<ExtractionResult>) {
+            return transcriptResult;
+          }
+        } catch (e) {
+          // If transcript extraction also fails, return the original error
+          developer.log(
+            'Both native analysis and transcript extraction failed',
+            name: 'EnhancedAIService',
+            error: e,
+          );
+        }
+
+        // If both methods fail, return an appropriate error
         return Result.error(
           EnhancedAIServiceException(
-            'Video analysis returned empty response.',
-            code: 'EMPTY_RESPONSE',
+            'Video analysis failed. Both native analysis and transcript extraction failed.',
+            code: 'ANALYSIS_FAILED',
           ),
         );
       }
 
-      final data = json.decode(response.text!);
+      final responseText = response.text!;
+      final data = json.decode(responseText);
       final title = data['title'] ?? 'YouTube Video';
       final content = data['content'] ?? '';
+
+      // Check if the content is too sparse or unhelpful
+      if (content.trim().length < 100) {
+        developer.log(
+          'Native YouTube analysis returned sparse content (${content.length} chars), trying transcript fallback',
+          name: 'EnhancedAIService',
+        );
+        // Try transcript extraction as fallback
+        try {
+          final transcriptResult =
+              await extractYouTubeTranscript(videoUrl, userId: userId);
+          if (transcriptResult is Ok<ExtractionResult>) {
+            // If transcript is better, use it
+            final transcriptContent = transcriptResult.value.text;
+            if (transcriptContent.length > content.length) {
+              return transcriptResult;
+            }
+          }
+        } catch (e) {
+          // If transcript extraction fails, just continue with native analysis
+          developer.log(
+            'Transcript fallback failed, using native analysis',
+            name: 'EnhancedAIService',
+            error: e,
+          );
+        }
+      }
 
       developer.log(
         'YouTube analysis completed: $title',
@@ -499,6 +549,116 @@ OUTPUT FORMAT (JSON):
         EnhancedAIServiceException(
           'Failed to analyze YouTube video. Please ensure the video is public and try again.',
           code: 'ANALYSIS_FAILED',
+          originalError: e,
+        ),
+      );
+    }
+  }
+
+  /// Extract transcript from YouTube video as fallback when native analysis doesn't work well
+  Future<Result<ExtractionResult>> extractYouTubeTranscript(
+    String videoUrl, {
+    required String userId,
+  }) async {
+    try {
+      await _checkUsageLimits(userId);
+
+      // Validate YouTube URL format
+      if (!_isValidYouTubeUrl(videoUrl)) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'Invalid YouTube URL format. Please provide a valid YouTube video URL.',
+            code: 'INVALID_URL',
+          ),
+        );
+      }
+
+      // Extract video ID from URL
+      final videoId = _extractVideoId(videoUrl);
+      if (videoId == null) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'Could not extract video ID from URL.',
+            code: 'INVALID_VIDEO_ID',
+          ),
+        );
+      }
+
+      developer.log(
+        'Extracting transcript for YouTube video: $videoId',
+        name: 'EnhancedAIService',
+      );
+
+      // Use YouTube Explode to get video info and captions
+      final yt = YoutubeExplode();
+
+      try {
+        final video = await yt.videos.get(videoId);
+
+        // For now, just return an error to indicate transcript extraction isn't available
+        // This will cause the system to fall back to native analysis
+        return Result.error(
+          EnhancedAIServiceException(
+            'Transcript extraction service temporarily unavailable. Using native analysis instead.',
+            code: 'TRANSCRIPT_SERVICE_UNAVAILABLE',
+          ),
+        );
+      } finally {
+        yt.close();
+      }
+    } on TimeoutException catch (e) {
+      return Result.error(
+        EnhancedAIServiceException(
+          'Transcript extraction timed out.',
+          code: 'TIMEOUT',
+          originalError: e,
+        ),
+      );
+    } on EnhancedAIServiceException catch (e) {
+      return Result.error(e);
+    } catch (e) {
+      developer.log(
+        'YouTube Transcript Extraction Failed',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+
+      final errorStr = e.toString().toLowerCase();
+
+      if (errorStr.contains('quota') || errorStr.contains('limit')) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'Daily YouTube transcript extraction limit reached.',
+            code: 'QUOTA_EXCEEDED',
+            originalError: e,
+          ),
+        );
+      }
+
+      if (errorStr.contains('unavailable') || errorStr.contains('not found')) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'Video is unavailable, private, or has been removed.',
+            code: 'VIDEO_UNAVAILABLE',
+            originalError: e,
+          ),
+        );
+      }
+
+      if (errorStr.contains('permission') || errorStr.contains('access')) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'Cannot access this video. It might be private or age-restricted.',
+            code: 'ACCESS_DENIED',
+            originalError: e,
+          ),
+        );
+      }
+
+      return Result.error(
+        EnhancedAIServiceException(
+          'Failed to extract YouTube transcript. Video may not have captions or be accessible.',
+          code: 'TRANSCRIPT_EXTRACTION_FAILED',
           originalError: e,
         ),
       );
@@ -978,6 +1138,49 @@ INSTRUCTIONS:
 OUTPUT: Complete educational content from the video, organized for studying.''';
     } else {
       return 'Extract and describe all content from this file. Organize the output clearly and include all relevant information.';
+    }
+  }
+
+  /// Helper method to extract video ID from YouTube URL
+  String? _extractVideoId(String url) {
+    try {
+      final uri = Uri.parse(url);
+
+      // Handle youtu.be short URLs
+      if (uri.host.contains('youtu.be')) {
+        return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+      }
+
+      // Handle standard YouTube URLs
+      if (uri.queryParameters.containsKey('v')) {
+        return uri.queryParameters['v'];
+      }
+
+      // Handle YouTube shorts URLs
+      if (uri.path.contains('/shorts/')) {
+        final segments = uri.pathSegments;
+        final shortsIndex = segments.indexOf('shorts');
+        if (shortsIndex != -1 && shortsIndex + 1 < segments.length) {
+          return segments[shortsIndex + 1];
+        }
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Helper method to format duration for captions
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } else {
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
   }
 

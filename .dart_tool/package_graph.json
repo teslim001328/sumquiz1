@@ -57,7 +57,8 @@
         "syncfusion_flutter_pdf",
         "timezone",
         "url_launcher",
-        "uuid"
+        "uuid",
+        "youtube_explode_dart"
       ],
       "devDependencies": [
         "build_runner",
@@ -245,6 +246,22 @@
         "path",
         "web",
         "win32"
+      ]
+    },
+    {
+      "name": "youtube_explode_dart",
+      "version": "2.5.3",
+      "dependencies": [
+        "collection",
+        "freezed_annotation",
+        "html",
+        "http",
+        "http_parser",
+        "json_annotation",
+        "logging",
+        "meta",
+        "unicode",
+        "xml"
       ]
     },
     {
@@ -1244,6 +1261,33 @@
       "dependencies": []
     },
     {
+      "name": "unicode",
+      "version": "1.1.9",
+      "dependencies": [
+        "archive",
+        "simple_sparse_list"
+      ]
+    },
+    {
+      "name": "http_parser",
+      "version": "4.1.2",
+      "dependencies": [
+        "collection",
+        "source_span",
+        "string_scanner",
+        "typed_data"
+      ]
+    },
+    {
+      "name": "freezed_annotation",
+      "version": "3.1.0",
+      "dependencies": [
+        "collection",
+        "json_annotation",
+        "meta"
+      ]
+    },
+    {
       "name": "source_span",
       "version": "1.10.1",
       "dependencies": [
@@ -1546,16 +1590,6 @@
       "dependencies": [
         "flutter",
         "url_launcher_platform_interface"
-      ]
-    },
-    {
-      "name": "http_parser",
-      "version": "4.1.2",
-      "dependencies": [
-        "collection",
-        "source_span",
-        "string_scanner",
-        "typed_data"
       ]
     },
     {
@@ -2103,6 +2137,11 @@
         "flutter_inappwebview_internal_annotations",
         "plugin_platform_interface"
       ]
+    },
+    {
+      "name": "simple_sparse_list",
+      "version": "0.1.4",
+      "dependencies": []
     },
     {
       "name": "path_parsing",

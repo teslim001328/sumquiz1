@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/web_payment_service.dart';
+import 'package:sumquiz/providers/subscription_provider.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -17,7 +18,6 @@ class SubscriptionScreen extends StatefulWidget {
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   ProductDetails? _selectedProduct;
   List<ProductDetails> _products = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -47,13 +47,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         setState(() {
           _products = products;
           _setDefaultSelection();
-          _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      // Error handling is now managed by SubscriptionProvider
     }
   }
 
@@ -66,59 +63,79 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> _buyProduct() async {
     if (_selectedProduct == null) return;
-    setState(() => _isLoading = true);
 
-    try {
-      if (kIsWeb) {
-        // Web Payment Flow
-        final user = context.read<UserModel?>();
-        if (user == null) {
-          throw Exception('User not logged in');
-        }
+    final subscriptionProvider = context.read<SubscriptionProvider>();
 
-        final result = await WebPaymentService().processWebPurchase(
-          context: context,
-          product: _selectedProduct!,
-          user: user,
-        );
+    bool success;
 
+    if (kIsWeb) {
+      // Web Payment Flow
+      final user = context.read<UserModel?>();
+      if (user == null) {
         if (mounted) {
-          if (result.success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Upgrade Successful! Refreshing...'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            // Optional: Delay to let user see the checkmark or confetti
-            await Future.delayed(const Duration(seconds: 1));
-            if (mounted) context.pop(); // Go back to main/home
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result.errorMessage ?? 'Payment Failed'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please log in to make a purchase'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-      } else {
-        // Mobile Payment Flow
-        final iapService = context.read<IAPService?>();
-        if (iapService != null) {
-          await iapService.purchaseProduct(_selectedProduct!.id);
-          // Note: Mobile IAP flow is async via stream listener in previous setup.
-          // We might want to show some "Processing..." UI until stream updates.
-        }
+        return;
       }
-    } catch (e) {
+
+      final result = await WebPaymentService().processWebPurchase(
+        context: context,
+        product: _selectedProduct!,
+        user: user,
+      );
+
+      success = result.success;
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Upgrade Successful!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Give user time to see success message
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) context.pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ?? 'Payment failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    } else {
+      // Mobile Payment Flow
+      success =
+          await subscriptionProvider.purchaseProduct(_selectedProduct!.id);
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Upgrade Successful!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Give user time to see success message
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) context.pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Purchase failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -126,6 +143,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
 
     // Check if user is already Pro
     final user = context.watch<UserModel?>();
@@ -143,7 +161,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: _isLoading
+      body: subscriptionProvider.isLoading
           ? Center(
               child:
                   CircularProgressIndicator(color: theme.colorScheme.primary))
@@ -214,10 +232,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                     'Creator Dashboard & Publishing',
                                     isUnlocked: true,
                                     theme: theme),
-                                _buildFeatureRow(
-                                    'Expert Difficulty & Large Review Sets',
-                                    isUnlocked: true,
-                                    theme: theme),
+                                _buildFeatureRow('Advanced Study Analytics',
+                                    isUnlocked: true, theme: theme),
+                                _buildFeatureRow('Priority Support',
+                                    isUnlocked: true, theme: theme),
                               ],
                             ),
                           ),
@@ -292,8 +310,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed:
-                                _selectedProduct != null ? _buyProduct : null,
+                            onPressed: _selectedProduct != null &&
+                                    !subscriptionProvider.isLoading
+                                ? _buyProduct
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.colorScheme.primary,
                               foregroundColor: theme.colorScheme.onPrimary,
@@ -302,14 +322,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: _selectedProduct != null
-                                ? Text(
-                                    'Start ${_getProductTitle(_selectedProduct!.id)} Plan',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ))
-                                : const Text('Select a Plan'),
+                            child: subscriptionProvider.isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    ),
+                                  )
+                                : _selectedProduct != null
+                                    ? Text(
+                                        'Start ${_getProductTitle(_selectedProduct!.id)} Plan',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ))
+                                    : const Text('Select a Plan'),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -323,7 +353,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 children: const [
                                   TextSpan(
                                       text:
-                                          'Invite 3 friends and get 1 week of Pro free 🎁'),
+                                          '🎁 Invite friends and earn free Pro time'),
                                 ]),
                           ),
                         ),
@@ -606,6 +636,37 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Widget _buildAlreadyProView(BuildContext context, ThemeData theme) {
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
+    final user = context.watch<UserModel?>();
+
+    String statusText = 'Pro Member';
+    String? expiryText;
+    IconData statusIcon = Icons.check_circle_rounded;
+    Color statusColor = theme.colorScheme.primary;
+
+    if (user != null) {
+      if (user.isCreatorPro) {
+        statusText = 'Creator Pro';
+        statusIcon = Icons.workspace_premium;
+        statusColor = Colors.purple;
+      } else if (user.isTrial) {
+        statusText = 'Trial Member';
+        statusIcon = Icons.timelapse;
+        statusColor = Colors.orange;
+        expiryText =
+            'Trial ends in ${subscriptionProvider.getFormattedExpiry()}';
+      } else if (subscriptionProvider.subscriptionExpiry != null) {
+        expiryText = 'Expires in ${subscriptionProvider.getFormattedExpiry()}';
+        if (subscriptionProvider.isExpiringSoon()) {
+          statusText = 'Pro (Expiring Soon)';
+          statusColor = Colors.orange;
+        }
+      } else {
+        // Lifetime access
+        expiryText = 'Lifetime access';
+      }
+    }
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -620,11 +681,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle_rounded,
-                color: theme.colorScheme.primary, size: 80),
+            Icon(statusIcon, color: statusColor, size: 80),
             const SizedBox(height: 24),
             Text(
-              'You are a Pro Member!',
+              statusText,
               style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface),
@@ -634,7 +694,50 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               'Thank you for supporting SumQuiz.',
               style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+              textAlign: TextAlign.center,
             ),
+            if (expiryText != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  expiryText,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+                ),
+              ),
+            ],
+            const SizedBox(height: 32),
+            if (!user!.isCreatorPro &&
+                !user
+                    .isTrial) // Only show restore button for regular subscribers
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await subscriptionProvider.restorePurchases();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Purchases restored successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.restore),
+                label: const Text('Restore Purchases'),
+                style: OutlinedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
           ],
         ),
       ),

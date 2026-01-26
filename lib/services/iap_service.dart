@@ -9,26 +9,26 @@ import 'package:flutter/foundation.dart'
 import 'package:sumquiz/models/user_model.dart';
 
 /// IAP Service for handling Play Store purchases
-/// Replaces RevenueCat with direct Play Store integration
+/// Direct Play Store integration for subscription management
 class IAPService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _proMonthlyId = 'sumquiz_pro_monthly';
   static const String _proYearlyId = 'sumquiz_pro_yearly';
   static const String _proLifetimeId = 'sumquiz_pro_lifetime';
-  static const String _examPassId = 'sumquiz_exam_24h';     // NEW: 24-hour pass
-  static const String _weekPassId = 'sumquiz_week_pass';    // NEW: 7-day pass
+  static const String _examPassId = 'sumquiz_exam_24h'; // NEW: 24-hour pass
+  static const String _weekPassId = 'sumquiz_week_pass'; // NEW: 7-day pass
 
   late StreamSubscription<List<PurchaseDetails>> _subscription;
   final Set<String> _productIds = {
     _proMonthlyId,
     _proYearlyId,
     _proLifetimeId,
-    _examPassId,    // NEW
-    _weekPassId,    // NEW
+    _examPassId, // NEW
+    _weekPassId, // NEW
   };
 
   // Freemium limits
-  static const int freeUploadsPerWeek = 3;
+  static const int freeUploadsLifetime = 1;
   static const int freeFoldersMax = 2;
   static const int freeSrsCardsMax = 50;
 
@@ -176,7 +176,7 @@ class IAPService {
 
       // Make purchase - use consumable for passes, non-consumable for subscriptions
       final purchaseParam = PurchaseParam(productDetails: product);
-      
+
       if (productId == _examPassId || productId == _weekPassId) {
         // Consumable: can be purchased multiple times
         return await InAppPurchase.instance.buyConsumable(
@@ -248,7 +248,7 @@ class IAPService {
       if (data == null) return {};
 
       return {
-        'weeklyUploads': data['weeklyUploads'] ?? 0,
+        'totalUploads': data['totalUploads'] ?? 0,
         'folderCount': data['folderCount'] ?? 0,
         'srsCardCount': data['srsCardCount'] ?? 0,
       };
@@ -261,8 +261,8 @@ class IAPService {
   /// Check if FREE tier user has reached upload limit
   Future<bool> isUploadLimitReached(String uid) async {
     final usage = await getFreeTierUsage(uid);
-    final weeklyUploads = usage['weeklyUploads'] as int? ?? 0;
-    return weeklyUploads >= freeUploadsPerWeek;
+    final totalUploads = usage['totalUploads'] as int? ?? 0;
+    return totalUploads >= freeUploadsLifetime;
   }
 
   /// Check if FREE tier user has reached folder limit
@@ -301,7 +301,7 @@ class IAPService {
       final data = snapshot.data() as Map<String, dynamic>;
 
       return {
-        'weeklyUploads': data['weeklyUploads'] ?? 0,
+        'totalUploads': data['totalUploads'] ?? 0,
         'folderCount': data['folderCount'] ?? 0,
         'srsCardCount': data['srsCardCount'] ?? 0,
       };

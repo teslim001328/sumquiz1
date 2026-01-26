@@ -27,6 +27,7 @@ class UserModel {
 
   // Freemium Usage Tracking
   final int weeklyUploads;
+  final int totalUploads;
   final int folderCount;
   final int srsCardCount;
   final DateTime? lastWeeklyReset;
@@ -42,6 +43,9 @@ class UserModel {
   // Creator Profile
   final Map<String, dynamic> creatorProfile;
 
+  // Subscription Info
+  final String? currentProduct;
+
   UserModel({
     required this.uid,
     required this.email,
@@ -56,6 +60,7 @@ class UserModel {
     this.dailyGoal = 5,
     this.itemsCompletedToday = 0,
     this.weeklyUploads = 0,
+    this.totalUploads = 0,
     this.folderCount = 0,
     this.srsCardCount = 0,
     this.lastWeeklyReset,
@@ -67,6 +72,7 @@ class UserModel {
     this.isCreatorPro = false,
     this.referralCode,
     this.creatorProfile = const {},
+    this.currentProduct,
   }) : _isTrialUser = isTrial;
 
   /// Returns true if user has active Pro access
@@ -112,6 +118,7 @@ class UserModel {
       dailyGoal: data['dailyGoal'] ?? 5,
       itemsCompletedToday: data['itemsCompletedToday'] ?? 0,
       weeklyUploads: data['weeklyUploads'] ?? 0,
+      totalUploads: data['totalUploads'] ?? 0,
       folderCount: data['folderCount'] ?? 0,
       srsCardCount: data['srsCardCount'] ?? 0,
       lastWeeklyReset: (data['lastWeeklyReset'] as Timestamp?)?.toDate(),
@@ -128,6 +135,7 @@ class UserModel {
       isCreatorPro: data['isCreatorPro'] ?? false,
       referralCode: data['referralCode'],
       creatorProfile: data['creatorProfile'] ?? {},
+      currentProduct: data['currentProduct'],
     );
   }
 
@@ -146,6 +154,7 @@ class UserModel {
       'dailyGoal': dailyGoal,
       'itemsCompletedToday': itemsCompletedToday,
       'weeklyUploads': weeklyUploads,
+      'totalUploads': totalUploads,
       'folderCount': folderCount,
       'srsCardCount': srsCardCount,
       'dailyDecksGenerated': dailyDecksGenerated,
@@ -159,6 +168,7 @@ class UserModel {
       'isCreatorPro': isCreatorPro,
       if (referralCode != null) 'referralCode': referralCode,
       'creatorProfile': creatorProfile,
+      if (currentProduct != null) 'currentProduct': currentProduct,
     };
   }
 
@@ -175,6 +185,7 @@ class UserModel {
     int? dailyGoal,
     int? itemsCompletedToday,
     int? weeklyUploads,
+    int? totalUploads,
     int? folderCount,
     int? srsCardCount,
     int? dailyDecksGenerated,
@@ -187,6 +198,7 @@ class UserModel {
     bool? isCreatorPro,
     String? referralCode,
     Map<String, dynamic>? creatorProfile,
+    String? currentProduct,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -203,6 +215,7 @@ class UserModel {
       dailyGoal: dailyGoal ?? this.dailyGoal,
       itemsCompletedToday: itemsCompletedToday ?? this.itemsCompletedToday,
       weeklyUploads: weeklyUploads ?? this.weeklyUploads,
+      totalUploads: totalUploads ?? this.totalUploads,
       folderCount: folderCount ?? this.folderCount,
       srsCardCount: srsCardCount ?? this.srsCardCount,
       dailyDecksGenerated: dailyDecksGenerated ?? this.dailyDecksGenerated,
@@ -215,6 +228,7 @@ class UserModel {
       isCreatorPro: isCreatorPro ?? this.isCreatorPro,
       referralCode: referralCode ?? this.referralCode,
       creatorProfile: creatorProfile ?? this.creatorProfile,
+      currentProduct: currentProduct ?? this.currentProduct,
     );
   }
 }

@@ -1,8 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:sumquiz/models/user_model.dart';
-import 'package:sumquiz/services/user_service.dart';
 import 'package:uuid/uuid.dart';
 
 class WebPaymentResult {
@@ -109,9 +109,9 @@ class WebPaymentService {
         // 2. Determine Duration based on product
         Duration? duration;
         if (product.id.contains('24h')) {
-          duration = const Duration(hours: 24);  // Exam Pass
+          duration = const Duration(hours: 24); // Exam Pass
         } else if (product.id.contains('week')) {
-          duration = const Duration(days: 7);    // Week Pass
+          duration = const Duration(days: 7); // Week Pass
         } else if (product.id.contains('monthly')) {
           duration = const Duration(days: 30);
         } else if (product.id.contains('yearly')) {
@@ -119,8 +119,18 @@ class WebPaymentService {
         }
         // Lifetime: duration is null
 
-        // 3. Upgrade User
-        await UserService().upgradeToPro(user.uid, duration: duration);
+        // 3. Upgrade User - Update Firestore directly
+        final expiryDate =
+            duration != null ? DateTime.now().add(duration) : null;
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'subscriptionExpiry':
+              expiryDate != null ? Timestamp.fromDate(expiryDate) : null,
+          'isTrial': false,
+          'currentProduct': product.id,
+          'lastVerified': FieldValue.serverTimestamp(),
+          'transactionId': response.transactionId,
+        }, SetOptions(merge: true));
 
         return WebPaymentResult(
           success: true,

@@ -5,6 +5,7 @@ import 'package:sumquiz/services/notification_service.dart';
 import 'package:sumquiz/services/notification_manager.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/user_model.dart';
+import 'package:sumquiz/services/auth_service.dart';
 
 /// Centralized notification integration helper
 /// Call these methods at appropriate points in your app
@@ -160,7 +161,8 @@ class NotificationIntegration {
         estimatedMinutes: estimatedMinutes,
       );
 
-      debugPrint('✅ Mission priming notification scheduled for $preferredStudyTime');
+      debugPrint(
+          '✅ Mission priming notification scheduled for $preferredStudyTime');
     } catch (e) {
       debugPrint('❌ Failed to schedule mission priming: $e');
     }
@@ -187,7 +189,8 @@ class NotificationIntegration {
         momentumGain: momentumGain,
       );
 
-      debugPrint('✅ Mission recall notification scheduled and streak saver cancelled');
+      debugPrint(
+          '✅ Mission recall notification scheduled and streak saver cancelled');
     } catch (e) {
       debugPrint('❌ Failed to schedule mission recall: $e');
     }
@@ -320,6 +323,22 @@ class NotificationIntegration {
       );
 
       await notificationManager.enableAllNotifications();
+
+      // Reschedule notifications for current user
+      final authService = context.read<AuthService>();
+      final user = authService.currentUser;
+      if (user != null) {
+        // Get user model from Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final userModel = UserModel.fromFirestore(userDoc);
+          await notificationManager.scheduleAllNotifications(userModel);
+        }
+      }
 
       debugPrint('✅ All notifications enabled');
     } catch (e) {

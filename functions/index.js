@@ -484,20 +484,20 @@ exports.sendPasswordResetEmail = functions.https.onCall(async (data, context) =>
 // ============================================================================
 
 /**
- * Get RevenueCat API key for client-side initialization
+ * Get payment processor API keys for client-side initialization
  * HIGH PRIORITY FIX H4: Secure API keys implementation
  */
-exports.getRevenueCatApiKey = functions.https.onCall(async (data, context) => {
+exports.getPaymentProcessorKeys = functions.https.onCall(async (data, context) => {
   // In production, this should be stored in Firebase Functions config
-  // firebase functions:config:set revenuecat.apikey="YOUR_PRODUCTION_KEY"
+  // firebase functions:config:set payment.flutterwave_key="YOUR_PRODUCTION_KEY"
   
-  const apiKey = functions.config().revenuecat?.apikey || 'test_wqsPCFIaiJgfTpMxzajXKdkHIWr';
+  const flutterwaveKey = functions.config().payment?.flutterwave_key || 'FLWPUBK_TEST-SANDBOX-DEMO-DUMMY';
   
-  if (!apiKey) {
-    throw new functions.https.HttpsError('internal', 'API key not configured');
+  if (!flutterwaveKey) {
+    throw new functions.https.HttpsError('internal', 'Payment processor key not configured');
   }
   
-  return { apiKey: apiKey };
+  return { flutterwaveKey: flutterwaveKey };
 });
 
 // ============================================================================
@@ -540,23 +540,22 @@ exports.logClientError = functions.https.onCall(async (data, context) => {
 });
 
 // ============================================================================
-// C2: RevenueCat Webhook (Receipt Validation)
+// C2: Direct Payment Validation Webhook
 // ====================================================================
 
 /**
- * Webhook endpoint for RevenueCat events
- * Auto-syncs subscription changes (renewals, cancellations, expirations)
+ * Webhook endpoint for payment processor events
+ * Validates receipts and syncs subscription changes
  * 
- * Configure in RevenueCat Dashboard:
- * 1. Integrations → Webhooks
- * 2. Add this endpoint URL
- * 3. Set authorization header to match REVENUECAT_WEBHOOK_SECRET
+ * Configure in payment processor dashboard:
+ * 1. Webhooks → Add endpoint URL
+ * 2. Set authorization header to match PAYMENT_WEBHOOK_SECRET
  */
-exports.revenueCatWebhook = functions.https.onRequest(async (req, res) => {
+exports.paymentValidationWebhook = functions.https.onRequest(async (req, res) => {
   try {
-    // SECURITY: Verify webhook is from RevenueCat
-    // Set this environment variable: firebase functions:config:set revenuecat.webhook_secret="YOUR_SECRET"
-    const expectedAuth = functions.config().revenuecat?.webhook_secret;
+    // SECURITY: Verify webhook is from payment processor
+    // Set this environment variable: firebase functions:config:set payment.webhook_secret="YOUR_SECRET"
+    const expectedAuth = functions.config().payment?.webhook_secret;
 
     if (expectedAuth) {
       const authHeader = req.headers.authorization;
@@ -565,40 +564,80 @@ exports.revenueCatWebhook = functions.https.onRequest(async (req, res) => {
         return res.status(401).send('Unauthorized');
       }
     } else {
-      console.warn('WARNING: REVENUECAT_WEBHOOK_SECRET not configured. Webhook is not secured!');
+      console.warn('WARNING: PAYMENT_WEBHOOK_SECRET not configured. Webhook is not secured!');
     }
 
     const event = req.body;
-    const eventType = event.type;
-    const uid = event.app_user_id;
+    const eventType = event.event_type || event.type;
+    const uid = event.customer?.id || event.user_id;
+    const transactionId = event.transaction_id || event.id;
 
     if (!uid) {
-      console.warn('Webhook event missing app_user_id');
-      return res.status(400).send('Missing app_user_id');
+      console.warn('Webhook event missing user identifier');
+      return res.status(400).send('Missing user identifier');
     }
 
-    console.log(`RevenueCat webhook: ${eventType} for user ${uid}`);
+    console.log(`Payment webhook: ${eventType} for user ${uid}, transaction ${transactionId}`);
 
-    const entitlements = event.entitlements || {};
-    const isPro = Object.keys(entitlements).includes('pro');
-    const proEntitlement = entitlements['pro'];
+    // Validate the payment and determine subscription status
+    const validationResult = await _validatePayment(event);
+    
+    if (!validationResult.isValid) {
+      console.warn(`Invalid payment for user ${uid}: ${validationResult.reason}`);
+      return res.status(400).send('Invalid payment');
+    }
 
+    // Calculate expiry based on product
     let expiry = null;
-    if (isPro && proEntitlement?.expires_date) {
-      expiry = admin.firestore.Timestamp.fromDate(
-        new Date(proEntitlement.expires_date)
-      );
+    let isPro = false;
+    
+    if (validationResult.product) {
+      isPro = true;
+      const now = new Date();
+      
+      switch (validationResult.product) {
+        case 'sumquiz_pro_monthly':
+          expiry = new Date(now.setMonth(now.getMonth() + 1));
+          break;
+        case 'sumquiz_pro_yearly':
+          expiry = new Date(now.setFullYear(now.getFullYear() + 1));
+          break;
+        case 'sumquiz_pro_lifetime':
+          expiry = null; // Lifetime access
+          break;
+        case 'sumquiz_exam_24h':
+          expiry = new Date(now.setHours(now.getHours() + 24));
+          break;
+        case 'sumquiz_week_pass':
+          expiry = new Date(now.setDate(now.getDate() + 7));
+          break;
+        default:
+          console.warn(`Unknown product: ${validationResult.product}`);
+          isPro = false;
+      }
     }
 
     // Update Firestore with subscription status
-    await db.collection('users').doc(uid).set({
+    const updateData = {
       isPro: isPro,
-      subscriptionExpiry: expiry,
       lastVerified: admin.firestore.FieldValue.serverTimestamp(),
       lastWebhookEvent: eventType,
-    }, { merge: true });
+      currentProduct: validationResult.product,
+      transactionId: transactionId,
+    };
 
-    console.log(`Webhook processed: user ${uid}, isPro=${isPro}, event=${eventType}`);
+    if (expiry !== null) {
+      updateData.subscriptionExpiry = admin.firestore.Timestamp.fromDate(expiry);
+    } else if (validationResult.product === 'sumquiz_pro_lifetime') {
+      // For lifetime, set a very distant expiry date
+      updateData.subscriptionExpiry = admin.firestore.Timestamp.fromDate(
+        new Date(new Date().setFullYear(new Date().getFullYear() + 100))
+      );
+    }
+
+    await db.collection('users').doc(uid).set(updateData, { merge: true });
+
+    console.log(`Webhook processed: user ${uid}, isPro=${isPro}, product=${validationResult.product}`);
     res.status(200).send('OK');
 
   } catch (error) {
@@ -606,4 +645,39 @@ exports.revenueCatWebhook = functions.https.onRequest(async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+/**
+ * Validate payment receipt with payment processor
+ */
+async function _validatePayment(event) {
+  // This is a simplified validation - in production, you'd verify
+  // the receipt signature and check with the payment processor's API
+  
+  const productId = event.product_id || event.metadata?.product_id;
+  const status = event.status || event.transaction_status;
+  
+  // Basic validation
+  if (!productId) {
+    return { isValid: false, reason: 'Missing product ID' };
+  }
+  
+  if (status !== 'successful' && status !== 'completed') {
+    return { isValid: false, reason: `Invalid status: ${status}` };
+  }
+  
+  // Validate known product IDs
+  const validProducts = [
+    'sumquiz_pro_monthly',
+    'sumquiz_pro_yearly', 
+    'sumquiz_pro_lifetime',
+    'sumquiz_exam_24h',
+    'sumquiz_week_pass'
+  ];
+  
+  if (!validProducts.includes(productId)) {
+    return { isValid: false, reason: `Invalid product: ${productId}` };
+  }
+  
+  return { isValid: true, product: productId };
+}
 

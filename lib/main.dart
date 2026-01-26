@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/providers/sync_provider.dart';
 import 'package:sumquiz/providers/theme_provider.dart';
+import 'package:sumquiz/providers/subscription_provider.dart';
 import 'package:sumquiz/services/auth_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/user_model.dart';
@@ -70,6 +71,7 @@ void main() async {
 
   final notificationService = NotificationService();
   await notificationService.initialize();
+  await notificationService.initializeNotificationSettings();
 
   if (!kIsWeb) {
     await FirebaseAppCheck.instance.activate(
@@ -165,6 +167,10 @@ class _MyAppState extends State<MyApp> {
             return null;
           },
           dispose: (_, service) => service?.dispose(),
+        ),
+        ProxyProvider<IAPService, SubscriptionProvider>(
+          update: (context, iapService, previous) =>
+              SubscriptionProvider(iapService),
         ),
         ProxyProvider<IAPService, EnhancedAIService>(
           update: (context, iapService, previous) =>

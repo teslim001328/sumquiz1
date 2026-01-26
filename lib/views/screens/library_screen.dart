@@ -2,10 +2,17 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/user_model.dart';
 import '../../models/library_item.dart';
 import '../../models/folder.dart';
+import '../../models/editable_content.dart';
+import '../../models/local_summary.dart';
+import '../../models/local_quiz.dart';
+import '../../models/local_flashcard_set.dart';
+import '../../models/quiz_question.dart';
+import '../../models/flashcard.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_database_service.dart';
 import '../../services/sync_service.dart';
@@ -14,6 +21,9 @@ import '../../view_models/library_view_model.dart';
 import '../screens/summary_screen.dart';
 import '../screens/quiz_screen.dart';
 import '../screens/flashcards_screen.dart';
+import '../screens/edit_summary_screen.dart';
+import '../screens/edit_quiz_screen.dart';
+import '../screens/edit_flashcards_screen.dart';
 import '../widgets/enter_code_dialog.dart';
 import '../../utils/library_share_helper.dart';
 
@@ -496,9 +506,21 @@ class _LibraryViewState extends State<_LibraryView>
                   await LibraryShareHelper.shareLibraryItem(
                       context, item, user);
                 }
+              } else if (value == 'edit') {
+                _navigateToEdit(context, item);
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 20),
+                    SizedBox(width: 12),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'share',
                 child: Row(
@@ -707,6 +729,114 @@ class _LibraryViewState extends State<_LibraryView>
 
       if (mounted) {
         Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _navigateToEdit(BuildContext context, LibraryItem item) async {
+    if (!mounted) return;
+    final user = Provider.of<UserModel?>(context, listen: false);
+    final viewModel = context.read<LibraryViewModel>();
+    if (user == null) return;
+
+    try {
+      // Get the specific content based on its type
+      dynamic contentData;
+      switch (item.type) {
+        case LibraryItemType.summary:
+          contentData = await viewModel.localDb.getSummary(item.id);
+          break;
+        case LibraryItemType.quiz:
+          contentData = await viewModel.localDb.getQuiz(item.id);
+          break;
+        case LibraryItemType.flashcards:
+          contentData = await viewModel.localDb.getFlashcardSet(item.id);
+          break;
+      }
+
+      if (!mounted) return;
+
+      if (contentData == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Error: Could not load content for editing.')),
+          );
+        }
+        return;
+      }
+
+      // Convert to EditableContent
+      EditableContent editableContent;
+      switch (item.type) {
+        case LibraryItemType.summary:
+          final summary = contentData as LocalSummary;
+          editableContent = EditableContent(
+            id: summary.id,
+            type: 'summary',
+            title: summary.title,
+            content: summary.content,
+            tags: summary.tags,
+            timestamp: Timestamp.fromDate(summary.timestamp),
+          );
+          break;
+        case LibraryItemType.quiz:
+          final quiz = contentData as LocalQuiz;
+          final quizQuestions = quiz.questions
+              .map((q) => QuizQuestion(
+                    question: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                  ))
+              .toList();
+          editableContent = EditableContent(
+            id: quiz.id,
+            type: 'quiz',
+            title: quiz.title,
+            questions: quizQuestions,
+            timestamp: Timestamp.fromDate(quiz.timestamp),
+          );
+          break;
+        case LibraryItemType.flashcards:
+          final flashcardSet = contentData as LocalFlashcardSet;
+          final flashcards = flashcardSet.flashcards
+              .map((f) => Flashcard(
+                    id: f.id,
+                    question: f.question,
+                    answer: f.answer,
+                  ))
+              .toList();
+          editableContent = EditableContent(
+            id: flashcardSet.id,
+            type: 'flashcards',
+            title: flashcardSet.title,
+            flashcards: flashcards,
+            timestamp: Timestamp.fromDate(flashcardSet.timestamp),
+          );
+          break;
+      }
+
+      Widget editScreen;
+      switch (item.type) {
+        case LibraryItemType.summary:
+          editScreen = EditSummaryScreen(content: editableContent);
+          break;
+        case LibraryItemType.quiz:
+          editScreen = EditQuizScreen(content: editableContent);
+          break;
+        case LibraryItemType.flashcards:
+          editScreen = EditFlashcardsScreen(content: editableContent);
+          break;
+      }
+
+      if (mounted) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => editScreen));
       }
     } catch (e) {
       if (mounted) {

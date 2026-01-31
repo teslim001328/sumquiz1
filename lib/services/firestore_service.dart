@@ -16,6 +16,7 @@ import 'package:sumquiz/models/local_flashcard.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:sumquiz/models/public_deck.dart';
 import 'package:sumquiz/services/local_database_service.dart';
+import 'package:sumquiz/utils/share_code_generator.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -389,27 +390,32 @@ class FirestoreService {
   // CREATOR TOOLS
 
   Future<String> publishDeck(PublicDeck deck) async {
-    final docRef = _db.collection('public_decks').doc();
-    // We ignore deck.id if provided and generate new one for public listing?
-    // Or we use doc.id.
-    // Let's create a new doc.
+    try {
+      final docRef = _db.collection('public_decks').doc();
+      // We ignore deck.id if provided and generate new one for public listing?
+      // Or we use doc.id.
+      // Let's create a new doc.
 
-    // We need to ensure deck.id matches docRef.id before saving if we want consistency
-    final deckToSave = PublicDeck(
-      id: docRef.id,
-      creatorId: deck.creatorId,
-      creatorName: deck.creatorName,
-      title: deck.title,
-      description: deck.description,
-      shareCode: deck.shareCode,
-      summaryData: deck.summaryData,
-      quizData: deck.quizData,
-      flashcardData: deck.flashcardData,
-      publishedAt: DateTime.now(),
-    );
+      // We need to ensure deck.id matches docRef.id before saving if we want consistency
+      final deckToSave = PublicDeck(
+        id: docRef.id,
+        creatorId: deck.creatorId,
+        creatorName: deck.creatorName,
+        title: deck.title,
+        description: deck.description,
+        shareCode: deck.shareCode,
+        summaryData: deck.summaryData,
+        quizData: deck.quizData,
+        flashcardData: deck.flashcardData,
+        publishedAt: DateTime.now(),
+      );
 
-    await docRef.set(deckToSave.toFirestore());
-    return docRef.id;
+      await docRef.set(deckToSave.toFirestore());
+      return docRef.id;
+    } catch (e) {
+      debugPrint('Error publishing deck: $e');
+      rethrow; // Re-throw to let caller handle it appropriately
+    }
   }
 
   Future<List<PublicDeck>> fetchCreatorDecks(String creatorId) async {

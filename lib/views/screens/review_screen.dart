@@ -133,7 +133,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Future<void> _startMission() async {
-    if (_dailyMission == null) return;
+    if (_dailyMission == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'No mission available. Please create some study content first.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -144,9 +155,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    'Could not find mission cards. They might be deleted.',
-                    style: Theme.of(context).textTheme.bodyMedium)),
+              content: Text(
+                'Could not find mission cards. They might be deleted.\nPlease create new study content.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
           );
           setState(() => _isLoading = false);
         }
@@ -170,14 +185,25 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ),
       );
 
-      if (result != null && result is double) {
+      if (result != null && result is double && mounted) {
         await _completeMission(result);
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = "Failed to start mission: $e";
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = "Failed to start mission: $e";
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                "Error starting mission: ${e.toString().split(':').first}"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -317,38 +343,73 @@ class _ReviewScreenState extends State<ReviewScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.auto_awesome_rounded,
-                    size: 64,
-                    color: theme.colorScheme.primary.withOpacity(0.5)),
-                const SizedBox(height: 24),
-                Text(
-                  'Your mission is waiting...',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary.withValues(alpha: 0.1),
+                        theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
                   ),
-                ),
-                const SizedBox(height: 12),
+                  child: Icon(Icons.auto_awesome_rounded,
+                      size: 64, color: theme.colorScheme.primary),
+                ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
+                const SizedBox(height: 32),
                 Text(
-                  'Summarize a document or a link to generate your first study mission for today.',
+                  'Your Learning Journey Awaits',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ).animate().fadeIn(delay: 200.ms),
+                const SizedBox(height: 16),
+                Text(
+                  'Transform any content into personalized study materials.\nStart by summarizing a document or article.',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    height: 1.6,
                   ),
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton.icon(
-                  onPressed: () => context.push('/create'),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Create New Topic'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                ).animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 40),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push('/create'),
+                    icon: const Icon(Icons.auto_awesome, size: 24),
+                    label: const Text('Generate My First Mission',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ).animate().scale(delay: 600.ms),
               ],
             ),
           ),
@@ -362,11 +423,96 @@ class _ReviewScreenState extends State<ReviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Welcome Header
-          Text(
-            'Hello, ${user?.displayName ?? 'Student'}',
-            style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+          // Premium Welcome Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary.withValues(alpha: 0.1),
+                  theme.colorScheme.secondary.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child:
+                      Icon(Icons.auto_awesome, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                      Text(
+                        user?.displayName ?? 'Learner',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department,
+                          color: Colors.amber[700], size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${user?.missionCompletionStreak ?? 0} day streak',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.amber[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ).animate().fadeIn().slideX(),
 
           const SizedBox(height: 24),
@@ -375,71 +521,141 @@ class _ReviewScreenState extends State<ReviewScreen> {
           _buildSrsBanner(theme),
           const SizedBox(height: 24),
 
-          // Mastery Overview Header
-          _buildGlassCard(
-            theme: theme,
-            padding: const EdgeInsets.all(20),
+          // Premium Mastery Overview
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.surface,
+                  theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
             child: Row(
               children: [
+                // Circular progress with enhanced styling
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    SizedBox(
-                      height: 50,
-                      width: 50,
-                      child: CircularProgressIndicator(
-                        value: _masteryScore / 100,
-                        strokeWidth: 4,
-                        color: theme.colorScheme.secondary,
-                        backgroundColor:
-                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                    Container(
+                      height: 80,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
+                            theme.colorScheme.secondary.withValues(alpha: 0.05),
+                          ],
+                        ),
                       ),
                     ),
-                    Icon(Icons.auto_awesome_rounded,
-                        color: theme.colorScheme.secondary, size: 24),
+                    SizedBox(
+                      height: 70,
+                      width: 70,
+                      child: CircularProgressIndicator(
+                        value: _masteryScore / 100,
+                        strokeWidth: 8,
+                        color: theme.colorScheme.primary,
+                        backgroundColor: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.2),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.auto_awesome_rounded,
+                          color: theme.colorScheme.primary, size: 28),
+                    ),
                   ],
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 24),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Mastery Level',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.6))),
-                      Text(
-                          '${_masteryScore.toStringAsFixed(0)}% Overall Progress',
+                      Text('Knowledge Mastery',
                           style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.8))),
+                      const SizedBox(height: 8),
+                      Text(
+                          '${_masteryScore.toStringAsFixed(1)}% Overall Proficiency',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
                               color: theme.colorScheme.onSurface)),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: _masteryScore / 100,
+                        backgroundColor: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.2),
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(10),
+                        minHeight: 8,
+                      ),
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () => context.push('/progress'),
-                  child: const Text('Details'),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: TextButton(
+                    onPressed: () => context.push('/progress'),
+                    child: const Text('View Insights',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
                 ),
               ],
             ),
-          ).animate().fadeIn(delay: 50.ms).slideX(),
+          ).animate().fadeIn(delay: 100.ms).slideX(),
 
           const SizedBox(height: 24),
 
-          // Momentum & Goal Row
+          // Premium Stats Row
           Row(
             children: [
               Expanded(
-                  child: _buildGlassStatCard(
-                      'Momentum',
-                      (user?.currentMomentum ?? 0).toStringAsFixed(0),
-                      Icons.local_fire_department_rounded,
-                      Colors.orangeAccent,
-                      theme)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildDailyGoalCard(user, theme)),
+                child: _buildPremiumStatCard(
+                  title: 'Learning Momentum',
+                  value: (user?.currentMomentum ?? 0).toStringAsFixed(0),
+                  subtitle: 'XP Points',
+                  icon: Icons.local_fire_department_rounded,
+                  iconColor: Colors.orange,
+                  gradient: const LinearGradient(
+                    colors: [Colors.orange, Colors.deepOrange],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  theme: theme,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: _buildPremiumGoalCard(user, theme),
+              ),
             ],
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+          ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1),
 
           const SizedBox(height: 24),
 
@@ -497,82 +713,197 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 
-  Widget _buildGlassStatCard(String label, String value, IconData icon,
-      Color iconColor, ThemeData theme) {
-    return _buildGlassCard(
-      theme: theme,
+  Widget _buildPremiumStatCard({
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required LinearGradient gradient,
+    required ThemeData theme,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: iconColor, size: 28),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: gradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(value,
               style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   color: theme.colorScheme.onSurface)),
-          Text(label,
+          const SizedBox(height: 4),
+          Text(title,
               style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+          Text(subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
         ],
       ),
-    );
+    ).animate().fadeIn().slideY(begin: 0.1);
   }
 
-  Widget _buildDailyGoalCard(UserModel? user, ThemeData theme) {
+  Widget _buildPremiumGoalCard(UserModel? user, ThemeData theme) {
     final current = user?.itemsCompletedToday ?? 0;
     final target = user?.dailyGoal ?? 5;
     final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
     final isDone = current >= target;
 
-    return _buildGlassCard(
-      theme: theme,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDone
+              ? Colors.green.withValues(alpha: 0.3)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircularProgressIndicator(
-                value: progress,
-                backgroundColor: theme.disabledColor.withValues(alpha: 0.2),
-                color: isDone ? Colors.green : theme.colorScheme.primary,
-                strokeWidth: 6,
-                strokeCap: StrokeCap.round,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDone
+                        ? [Colors.green, Colors.lightGreen]
+                        : [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary
+                          ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDone
+                          ? Colors.green.withValues(alpha: 0.3)
+                          : theme.colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isDone ? Icons.check_circle : Icons.track_changes,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
-              Text(
-                '${(progress * 100).toInt()}%',
-                style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isDone
-                        ? Colors.green
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.8)),
-              ),
+              if (isDone)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text('COMPLETED',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      )),
+                ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text('$current/$target items',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+          const SizedBox(height: 20),
+          Text('$current/$target',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
                   color: theme.colorScheme.onSurface)),
+          const SizedBox(height: 4),
           Text('Daily Goal',
               style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+          Text(isDone ? 'Goal achieved! 🎉' : 'Keep going!',
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDone
+                      ? Colors.green
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor:
+                  theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+              color: isDone ? Colors.green : theme.colorScheme.primary,
+              minHeight: 10,
+            ),
+          ),
         ],
       ),
-    );
+    ).animate().fadeIn().slideY(begin: 0.1);
   }
 
   Widget _buildMissionCard(bool isCompleted, ThemeData theme) {
-    return _buildGlassCard(
-        theme: theme,
-        borderColor: isCompleted
-            ? Colors.green.withValues(alpha: 0.5)
-            : theme.colorScheme.primary.withValues(alpha: 0.3),
+    // Handle case where daily mission is null
+    if (_dailyMission == null) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
         child: Column(
           children: [
             Row(
@@ -580,17 +911,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isCompleted
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : theme.colorScheme.primary.withValues(alpha: 0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isCompleted
-                        ? Icons.check_circle_rounded
-                        : Icons.rocket_launch_rounded,
-                    color:
-                        isCompleted ? Colors.green : theme.colorScheme.primary,
+                    Icons.info_outline,
+                    color: theme.colorScheme.primary,
                     size: 32,
                   ),
                 ),
@@ -600,106 +926,214 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                          isCompleted
-                              ? 'Mission Accomplished!'
-                              : "Today's Mission",
-                          style: theme.textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold)),
-                      if (!isCompleted)
-                        Text('Boost your momentum now',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.6))),
+                        'No Mission Available',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Create some study content first to generate your daily mission.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6)),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            if (!isCompleted) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildMissionMetric(Icons.timelapse,
-                      "${_dailyMission!.estimatedTimeMinutes}m", theme),
-                  _buildMissionMetric(Icons.style,
-                      "${_dailyMission!.flashcardIds.length} cards", theme),
-                  _buildMissionMetric(Icons.speed,
-                      "+${_dailyMission!.momentumReward} pts", theme),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _startMission,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    elevation: 4,
-                    shadowColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.4),
-                  ),
-                  child: Text('Start Mission',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onPrimary)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => context.push('/create'),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Create Study Content'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
                 ),
               ),
-            ] else ...[
-              Text(
-                "You've earned +${_dailyMission!.momentumReward} momentum score today!",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
-              ),
-              const SizedBox(height: 16),
-              // Growth CTA when finished
+            ),
+          ],
+        ),
+      ).animate().fadeIn().slideY(begin: 0.1);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCompleted
+              ? Colors.green.withValues(alpha: 0.3)
+              : theme.colorScheme.primary.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                  color: isCompleted
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : theme.colorScheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(
+                  isCompleted
+                      ? Icons.check_circle_rounded
+                      : Icons.rocket_launch_rounded,
+                  color: isCompleted ? Colors.green : theme.colorScheme.primary,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ready for more?',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary)),
-                    const SizedBox(height: 8),
-                    Text('Generate a new quiz to strengthen your knowledge.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7))),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => context.push('/create'),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text('New Review Content'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
+                    Text(
+                      isCompleted ? 'Mission Accomplished!' : "Today's Mission",
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
+                    if (!isCompleted)
+                      Text('Boost your momentum now',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6))),
                   ],
                 ),
               ),
+              if (isCompleted)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text('COMPLETED',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      )),
+                ),
             ],
+          ),
+          const SizedBox(height: 20),
+          if (!isCompleted) ...[
+            // Mission metrics row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildMissionMetric(Icons.timelapse,
+                    "${_dailyMission!.estimatedTimeMinutes}m", theme),
+                _buildMissionMetric(Icons.style,
+                    "${_dailyMission!.flashcardIds.length} cards", theme),
+                _buildMissionMetric(Icons.speed,
+                    "+${_dailyMission!.momentumReward} pts", theme),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Start mission button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _startMission,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  elevation: 4,
+                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.play_arrow, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Text('Start Mission',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onPrimary)),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            // Completion message
+            Text(
+              "You've earned +${_dailyMission!.momentumReward} momentum score today!",
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+            ),
+            const SizedBox(height: 16),
+            // Growth CTA when finished
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                children: [
+                  Text('Ready for more?',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary)),
+                  const SizedBox(height: 8),
+                  Text('Generate a new quiz to strengthen your knowledge.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7))),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/create'),
+                    icon: const Icon(Icons.auto_awesome, size: 20),
+                    label: const Text('Create New Content'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ));
+        ],
+      ),
+    ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1);
   }
 
   Widget _buildMissionMetric(IconData icon, String label, ThemeData theme) {

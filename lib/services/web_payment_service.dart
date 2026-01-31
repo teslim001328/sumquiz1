@@ -1,18 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:sumquiz/models/user_model.dart';
-import 'package:uuid/uuid.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WebPaymentResult {
   final bool success;
   final String? errorMessage;
-  final String? transactionId;
+  final String? checkoutUrl;
 
   WebPaymentResult(
-      {required this.success, this.errorMessage, this.transactionId});
+      {required this.success, this.errorMessage, this.checkoutUrl});
 }
 
 class WebPaymentService {
@@ -107,91 +107,63 @@ class WebPaymentService {
     return webProducts;
   }
 
-  /// Process the entire Web Purchase flow: Payment -> Verification -> Upgrade
+  /// Process the entire Web Purchase flow: Redirect to Cloud Function generated link
   Future<WebPaymentResult> processWebPurchase({
     required BuildContext context,
     required ProductDetails product,
     required UserModel user,
   }) async {
-    // Validate configuration first
     try {
-      validateConfiguration();
-    } catch (e) {
-      return WebPaymentResult(
-        success: false,
-        errorMessage: e.toString(),
-      );
-    }
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('createPayment');
 
-    final email = user.email.isNotEmpty ? user.email : 'customer@sumquiz.app';
-    final name =
-        user.displayName.isNotEmpty ? user.displayName : 'Valued Customer';
-    final txRef = "sumquiz_${const Uuid().v4()}";
+      final result = await callable.call({
+        'amount': product.rawPrice,
+        'currency': currency,
+        'email': user.email,
+        'name': user.displayName,
+        'productId': product.id,
+      });
 
-    // 1. Initialize Flutterwave Charge
-    final customer = Customer(
-      name: name,
-      phoneNumber: "0000000000",
-      email: email,
-    );
+      final checkoutUrl = result.data['checkoutUrl'] as String?;
 
-    final flutterwave = Flutterwave(
-      publicKey: publicKey,
-      currency: currency,
-      redirectUrl: "https://sumquiz.web.app",
-      txRef: txRef,
-      amount: product.rawPrice.toString(),
-      customer: customer,
-      paymentOptions: "card, payattitude, barter, bank transfer, ussd",
-      customization: Customization(title: appName),
-      isTestMode: false, // Set to false for production
-    );
-
-    try {
-      final ChargeResponse response = await flutterwave.charge(context);
-
-      if (response.success == true) {
-        // 2. Determine Duration based on product
-        Duration? duration;
-        if (product.id.contains('24h')) {
-          duration = const Duration(hours: 24); // Exam Pass
-        } else if (product.id.contains('week')) {
-          duration = const Duration(days: 7); // Week Pass
-        } else if (product.id.contains('monthly')) {
-          duration = const Duration(days: 30);
-        } else if (product.id.contains('yearly')) {
-          duration = const Duration(days: 365);
+      if (checkoutUrl != null) {
+        final uri = Uri.parse(checkoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return WebPaymentResult(success: true, checkoutUrl: checkoutUrl);
+        } else {
+          return WebPaymentResult(
+            success: false,
+            errorMessage: 'Could not launch payment URL',
+          );
         }
-        // Lifetime: duration is null
-
-        // 3. Upgrade User - Update Firestore directly
-        final expiryDate =
-            duration != null ? DateTime.now().add(duration) : null;
-
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'subscriptionExpiry':
-              expiryDate != null ? Timestamp.fromDate(expiryDate) : null,
-          'isTrial': false,
-          'currentProduct': product.id,
-          'lastVerified': FieldValue.serverTimestamp(),
-          'transactionId': response.transactionId,
-        }, SetOptions(merge: true));
-
-        return WebPaymentResult(
-          success: true,
-          transactionId: response.transactionId,
-        );
       } else {
         return WebPaymentResult(
           success: false,
-          errorMessage: 'Payment Cancelled or Failed',
+          errorMessage: 'Failed to generate payment link',
         );
       }
     } catch (e) {
+      debugPrint('Payment error: $e');
       return WebPaymentResult(
         success: false,
         errorMessage: 'Payment Error: $e',
       );
     }
+  }
+
+  /// Listen for premium status change (used for the "Processing payment..." screen)
+  Stream<bool> watchPremiumStatus(String uid) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((doc) {
+      if (!doc.exists) return false;
+      final data = doc.data() as Map<String, dynamic>;
+      // Check both fields for robustness
+      return (data['isPremium'] == true) || (data['isPro'] == true);
+    });
   }
 }

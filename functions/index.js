@@ -540,144 +540,159 @@ exports.logClientError = functions.https.onCall(async (data, context) => {
 });
 
 // ============================================================================
-// C2: Direct Payment Validation Webhook
-// ====================================================================
+// Flutterwave Payment Integration
+// ============================================================================
 
 /**
- * Webhook endpoint for payment processor events
- * Validates receipts and syncs subscription changes
- * 
- * Configure in payment processor dashboard:
- * 1. Webhooks → Add endpoint URL
- * 2. Set authorization header to match PAYMENT_WEBHOOK_SECRET
+ * Creates a Flutterwave payment link
+ * Returns checkout URL to frontend
  */
-exports.paymentValidationWebhook = functions.https.onRequest(async (req, res) => {
+exports.createPayment = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User not authenticated');
+  }
+
+  const { amount, currency, email, name, productId } = data;
+  if (!amount || !currency || !productId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing payment details');
+  }
+
+  const tx_ref = `sumquiz_${uid}_${Date.now()}`;
+  const secretKey = functions.config().payment?.flutterwave_secret_key;
+
+  if (!secretKey) {
+    console.error('FLUTTERWAVE_SECRET_KEY not configured');
+    throw new functions.https.HttpsError('internal', 'Payment system not configured');
+  }
+
   try {
-    // SECURITY: Verify webhook is from payment processor
-    // Set this environment variable: firebase functions:config:set payment.webhook_secret="YOUR_SECRET"
-    const expectedAuth = functions.config().payment?.webhook_secret;
+    const response = await fetch('https://api.flutterwave.com/v3/payments', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        tx_ref: tx_ref,
+        amount: amount,
+        currency: currency,
+        redirect_url: 'https://sumquiz.web.app/payment-callback',
+        customer: {
+          email: email || 'customer@sumquiz.app',
+          name: name || 'Valued Customer',
+        },
+        meta: {
+          uid: uid,
+          product_id: productId,
+        },
+        customizations: {
+          title: 'SumQuiz Pro',
+          description: 'Unlock Premium Features',
+          logo: 'https://sumquiz.web.app/assets/icon.png',
+        },
+      }),
+    });
 
-    if (expectedAuth) {
-      const authHeader = req.headers.authorization;
-      if (authHeader !== `Bearer ${expectedAuth}`) {
-        console.warn('Unauthorized webhook attempt');
-        return res.status(401).send('Unauthorized');
-      }
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      // Log the pending payment
+      await db.collection('payments').doc(tx_ref).set({
+        uid: uid,
+        amount: amount,
+        currency: currency,
+        productId: productId,
+        status: 'pending',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { checkoutUrl: result.data.link };
     } else {
-      console.warn('WARNING: PAYMENT_WEBHOOK_SECRET not configured. Webhook is not secured!');
+      console.error('Flutterwave API error:', result);
+      throw new functions.https.HttpsError('internal', 'Failed to create payment link');
     }
-
-    const event = req.body;
-    const eventType = event.event_type || event.type;
-    const uid = event.customer?.id || event.user_id;
-    const transactionId = event.transaction_id || event.id;
-
-    if (!uid) {
-      console.warn('Webhook event missing user identifier');
-      return res.status(400).send('Missing user identifier');
-    }
-
-    console.log(`Payment webhook: ${eventType} for user ${uid}, transaction ${transactionId}`);
-
-    // Validate the payment and determine subscription status
-    const validationResult = await _validatePayment(event);
-    
-    if (!validationResult.isValid) {
-      console.warn(`Invalid payment for user ${uid}: ${validationResult.reason}`);
-      return res.status(400).send('Invalid payment');
-    }
-
-    // Calculate expiry based on product
-    let expiry = null;
-    let isPro = false;
-    
-    if (validationResult.product) {
-      isPro = true;
-      const now = new Date();
-      
-      switch (validationResult.product) {
-        case 'sumquiz_pro_monthly':
-          expiry = new Date(now.setMonth(now.getMonth() + 1));
-          break;
-        case 'sumquiz_pro_yearly':
-          expiry = new Date(now.setFullYear(now.getFullYear() + 1));
-          break;
-        case 'sumquiz_pro_lifetime':
-          expiry = null; // Lifetime access
-          break;
-        case 'sumquiz_exam_24h':
-          expiry = new Date(now.setHours(now.getHours() + 24));
-          break;
-        case 'sumquiz_week_pass':
-          expiry = new Date(now.setDate(now.getDate() + 7));
-          break;
-        default:
-          console.warn(`Unknown product: ${validationResult.product}`);
-          isPro = false;
-      }
-    }
-
-    // Update Firestore with subscription status
-    const updateData = {
-      isPro: isPro,
-      lastVerified: admin.firestore.FieldValue.serverTimestamp(),
-      lastWebhookEvent: eventType,
-      currentProduct: validationResult.product,
-      transactionId: transactionId,
-    };
-
-    if (expiry !== null) {
-      updateData.subscriptionExpiry = admin.firestore.Timestamp.fromDate(expiry);
-    } else if (validationResult.product === 'sumquiz_pro_lifetime') {
-      // For lifetime, set a very distant expiry date
-      updateData.subscriptionExpiry = admin.firestore.Timestamp.fromDate(
-        new Date(new Date().setFullYear(new Date().getFullYear() + 100))
-      );
-    }
-
-    await db.collection('users').doc(uid).set(updateData, { merge: true });
-
-    console.log(`Webhook processed: user ${uid}, isPro=${isPro}, product=${validationResult.product}`);
-    res.status(200).send('OK');
-
   } catch (error) {
-    console.error('Webhook processing error:', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error creating payment:', error);
+    throw new functions.https.HttpsError('internal', 'Error creating payment');
   }
 });
 
 /**
- * Validate payment receipt with payment processor
+ * Flutterwave Webhook Listener
+ * Verifies signature and updates user status
  */
-async function _validatePayment(event) {
-  // This is a simplified validation - in production, you'd verify
-  // the receipt signature and check with the payment processor's API
-  
-  const productId = event.product_id || event.metadata?.product_id;
-  const status = event.status || event.transaction_status;
-  
-  // Basic validation
-  if (!productId) {
-    return { isValid: false, reason: 'Missing product ID' };
+exports.flutterwaveWebhook = functions.https.onRequest(async (req, res) => {
+  // 1. Verify Signature
+  const secretHash = functions.config().payment?.flutterwave_secret_hash;
+  const signature = req.headers['verif-hash'];
+
+  if (!secretHash || signature !== secretHash) {
+    console.warn('Unauthorized webhook signature');
+    return res.status(401).send('Unauthorized');
   }
-  
-  if (status !== 'successful' && status !== 'completed') {
-    return { isValid: false, reason: `Invalid status: ${status}` };
+
+  const event = req.body;
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
   }
-  
-  // Validate known product IDs
-  const validProducts = [
-    'sumquiz_pro_monthly',
-    'sumquiz_pro_yearly', 
-    'sumquiz_pro_lifetime',
-    'sumquiz_exam_24h',
-    'sumquiz_week_pass'
-  ];
-  
-  if (!validProducts.includes(productId)) {
-    return { isValid: false, reason: `Invalid product: ${productId}` };
+
+  // 2. Accept only charge.completed with status=successful
+  if (event.event !== 'charge.completed' || event.data.status !== 'successful') {
+    console.log(`Ignoring webhook event: ${event.event} - ${event.data.status}`);
+    return res.status(200).send('Event ignored');
   }
-  
-  return { isValid: true, product: productId };
-}
+
+  const { tx_ref, amount, currency, id: transactionId } = event.data;
+  const uid = event.data.meta?.uid;
+  const productId = event.data.meta?.product_id;
+
+  if (!tx_ref || !uid) {
+    console.error('Webhook missing critical data:', { tx_ref, uid });
+    return res.status(400).send('Missing data');
+  }
+
+  try {
+    // 3. Idempotency Check: if payments/{tx_ref} exists and status is successful → do nothing
+    const paymentRef = db.collection('payments').doc(tx_ref);
+    const paymentDoc = await paymentRef.get();
+
+    if (paymentDoc.exists && paymentDoc.data().status === 'successful') {
+      console.log(`Payment ${tx_ref} already processed`);
+      return res.status(200).send('Already processed');
+    }
+
+    // 4. Update Firestore
+    const batch = db.batch();
+
+    // Update payment record
+    batch.set(paymentRef, {
+      status: 'successful',
+      transactionId: transactionId,
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      amount: amount,
+      currency: currency,
+      productId: productId,
+      raw_data: event.data,
+    }, { merge: true });
+
+    // Update user record
+    const userRef = db.collection('users').doc(uid);
+    batch.update(userRef, {
+      isPro: true,
+      isPremium: true, // Supporting both legacy and new field
+      subscriptionExpiry: null, // As specified: one-time payment for premium unlock
+      lastVerified: admin.firestore.FieldValue.serverTimestamp(),
+      currentProduct: productId,
+    });
+
+    await batch.commit();
+
+    console.log(`Premium unlocked for user ${uid} via transaction ${tx_ref}`);
+    return res.status(200).send('OK');
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    return res.status(500).send('Internal Error');
+  }
+});
 

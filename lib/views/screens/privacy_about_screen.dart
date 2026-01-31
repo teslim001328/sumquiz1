@@ -125,7 +125,7 @@ class _PrivacyAboutScreenState extends State<PrivacyAboutScreen> {
                           .slideY(begin: 0.1),
                       const SizedBox(height: 24),
                       Text(
-                        '© 2024 SumQuiz. All rights reserved.',
+                        '© 2026 SumQuiz. All rights reserved.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sumquiz/views/widgets/web/beta_access_dialog.dart';
 import 'package:sumquiz/theme/web_theme.dart';
 import 'package:sumquiz/views/screens/web/creator_tab_view.dart';
 
@@ -18,7 +19,6 @@ class _LandingPageWebState extends State<LandingPageWeb>
 
   // Section keys for scrolling
   final GlobalKey _featuresKey = GlobalKey();
-
   final GlobalKey _faqKey = GlobalKey();
 
   @override
@@ -35,7 +35,6 @@ class _LandingPageWebState extends State<LandingPageWeb>
   }
 
   void _scrollToFeatures() => _scrollToSection(_featuresKey);
-
   void _scrollToFAQ() => _scrollToSection(_faqKey);
 
   void _scrollToSection(GlobalKey key) {
@@ -83,7 +82,6 @@ class _LandingPageWebState extends State<LandingPageWeb>
                   child: Column(
                     children: [
                       _buildHeroSection(context),
-                      _buildSocialProof(context),
                       _buildStatsSection(context),
                       _buildFeaturesGrid(context),
                       _buildHowItWorks(context),
@@ -106,7 +104,7 @@ class _LandingPageWebState extends State<LandingPageWeb>
 
   Widget _buildNavBar(BuildContext context) {
     return Container(
-      height: 72,
+      height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -115,130 +113,154 @@ class _LandingPageWebState extends State<LandingPageWeb>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Logo
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [WebColors.primary, const Color(0xFF8B5CF6)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child:
-                        const Icon(Icons.school, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'SumQuiz',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: WebColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              // Navigation Links
-              Row(
-                children: [
-                  _buildNavLink('Features', _scrollToFeatures),
-                  const SizedBox(width: 8),
-                  const SizedBox(width: 8),
-                  _buildNavLink('FAQ', _scrollToFAQ),
-                  const SizedBox(width: 24),
-                  // Tab switcher
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: WebColors.backgroundAlt,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicator: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+          child: LayoutBuilder(builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 1100;
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Logo
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: WebColors.HeroGradient,
+                        borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: WebColors.primary.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: WebColors.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      dividerColor: Colors.transparent,
-                      labelColor: WebColors.primary,
-                      unselectedLabelColor: WebColors.textSecondary,
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                      child: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 24,
                       ),
-                      tabs: const [
-                        Tab(text: 'For Students'),
-                        Tab(text: 'For Creators'),
-                      ],
                     ),
-                  ),
-                ],
-              ),
-              // Auth buttons
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () => context.go('/auth'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: WebColors.textSecondary,
-                    ),
-                    child: const Text('Log In'),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [WebColors.primary, const Color(0xFF8B5CF6)],
+                    const SizedBox(width: 14),
+                    Text(
+                      'SumQuiz',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: WebColors.textPrimary,
+                        letterSpacing: -0.5,
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: WebColors.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                // Navigation Links
+                const SizedBox(width: 20),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (!isNarrow) ...[
+                          _buildNavLink('Features', _scrollToFeatures),
+                          const SizedBox(width: 16),
+                          _buildNavLink('How It Works',
+                              () => _scrollToSection(_featuresKey)),
+                          const SizedBox(width: 16),
+                          _buildNavLink('FAQ', _scrollToFAQ),
+                          const SizedBox(width: 24),
+                        ],
+                        // Tab switcher
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: WebColors.backgroundAlt,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: true,
+                            indicator: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: WebColors.primary.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            labelColor: WebColors.primary,
+                            unselectedLabelColor: WebColors.textSecondary,
+                            labelStyle:
+                                const TextStyle(fontWeight: FontWeight.w600),
+                            dividerColor: Colors.transparent,
+                            tabs: const [
+                              Tab(text: 'Student'),
+                              Tab(text: 'Creator'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        TextButton(
+                          onPressed: () => context.go('/auth'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: WebColors.textSecondary,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          child: const Text('Log in'),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () => context.go('/auth'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: WebColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Get Started',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/auth'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Get Started Free'),
-                    ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            );
+          }),
         ),
       ),
-    ).animate().fadeIn(duration: 300.ms);
+    );
   }
 
   Widget _buildHeroSection(BuildContext context) {
@@ -248,220 +270,137 @@ class _LandingPageWebState extends State<LandingPageWeb>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFF8FAFC),
-            const Color(0xFFEEF2FF),
-            const Color(0xFFF3E8FF),
+            WebColors.primary,
+            WebColors.primary.withOpacity(0.8),
+            WebColors.accent.withOpacity(0.6),
           ],
         ),
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Row(
-              children: [
-                // Left side - Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              WebColors.primary.withOpacity(0.1),
-                              const Color(0xFF8B5CF6).withOpacity(0.1),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Row(
+            children: [
+              // Left Content
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
                             color: WebColors.primary.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.auto_awesome,
-                                color: WebColors.primary, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              'AI-Powered Study Platform',
-                              style: TextStyle(
-                                color: WebColors.primary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.speed, color: WebColors.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Study 3x Faster',
+                            style: TextStyle(
+                              color: WebColors.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
-                      ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
-                      const SizedBox(height: 24),
-                      // Hero title
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [
-                            WebColors.textPrimary,
-                            const Color(0xFF6366F1)
-                          ],
-                        ).createShader(bounds),
-                        child: Text(
-                          'Study Smarter,\nNot Harder',
-                          style: TextStyle(
-                            fontSize: 60,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1.1,
-                            letterSpacing: -1,
                           ),
-                        ),
-                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                      const SizedBox(height: 24),
-                      // Subtitle
-                      Text(
-                        'Transform your study materials into summaries, quizzes, and flashcards with AI. Save hours every week and ace your exams with confidence.',
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.2),
+                    const SizedBox(height: 24),
+                    ShaderMask(
+                      shaderCallback: (bounds) =>
+                          WebColors.HeroGradient.createShader(bounds),
+                      child: Text(
+                        'Master Anything with AI-Powered Learning',
                         style: TextStyle(
-                          fontSize: 20,
-                          color: WebColors.textSecondary,
-                          height: 1.6,
-                        ),
-                      ).animate().fadeIn(delay: 300.ms),
-                      const SizedBox(height: 40),
-                      // CTA buttons
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  WebColors.primary,
-                                  const Color(0xFF8B5CF6)
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: WebColors.primary.withOpacity(0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton.icon(
-                              onPressed: () => context.go('/auth'),
-                              icon: const Icon(Icons.rocket_launch, size: 20),
-                              label: const Text('Get Started Free'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 32,
-                                  vertical: 20,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.play_circle_outline),
-                            label: const Text('Watch Demo'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 20,
-                              ),
-                              side:
-                                  BorderSide(color: WebColors.border, width: 2),
-                              foregroundColor: WebColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(delay: 400.ms),
-                      const SizedBox(height: 40),
-                      // Trust badges
-                      Row(
-                        children: [
-                          _buildTrustBadge(
-                              Icons.verified_user, 'Secure & Private'),
-                          const SizedBox(width: 32),
-                          _buildTrustBadge(Icons.bolt, 'Instant Results'),
-                          const SizedBox(width: 32),
-                          _buildTrustBadge(Icons.star, '4.9★ Rating'),
-                        ],
-                      ).animate().fadeIn(delay: 500.ms),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 60),
-                // Right side - Hero Image
-                Expanded(
-                  child: Container(
-                    height: 520,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: WebColors.primary.withOpacity(0.2),
-                          blurRadius: 40,
-                          offset: const Offset(0, 20),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'assets/images/web/hero_illustration.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                const Color(0xFF6366F1),
-                                const Color(0xFF8B5CF6),
-                              ],
-                            ),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.auto_awesome,
-                                    size: 80,
-                                    color: Colors.white.withOpacity(0.8)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'AI-Powered Learning',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          fontSize: 60,
+                          fontWeight: FontWeight.w800,
+                          height: 1.1,
+                          letterSpacing: -1,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 300.ms)
-                      .scale(begin: const Offset(0.9, 0.9)),
+                    )
+                        .animate()
+                        .fadeIn(delay: 200.ms, duration: 600.ms)
+                        .slideX(begin: -0.2),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Transform any content into interactive flashcards, quizzes, and summaries. Retain knowledge 3x longer with spaced repetition and daily missions.',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white.withOpacity(0.9),
+                        height: 1.6,
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(delay: 400.ms, duration: 600.ms)
+                        .slideX(begin: -0.2),
+                    const SizedBox(height: 48),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        _buildPrimaryButton(context, 'Start Learning Free',
+                            () => context.go('/auth')),
+                        _buildSecondaryButton(
+                            context,
+                            'Get Mobile App Early Access',
+                            _showBetaAccessDialog),
+                      ],
+                    ).animate().fadeIn(delay: 600.ms, duration: 600.ms),
+                    const SizedBox(height: 40),
+                    Row(
+                      children: [
+                        _buildTrustBadge(Icons.auto_graph, '10k+ Active Users'),
+                        _buildTrustBadge(Icons.school, '95% Retention Rate'),
+                        _buildTrustBadge(Icons.timer, '3x Faster Learning'),
+                      ],
+                    ).animate().fadeIn(delay: 800.ms),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 60),
+              // Right Image
+              Expanded(
+                flex: 1,
+                child: Container(
+                  height: 500,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: WebColors.primary.withOpacity(0.3),
+                        blurRadius: 40,
+                        offset: const Offset(0, 20),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Image.asset(
+                      'assets/images/web/hero_illustration.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 800.ms)
+                    .scale(begin: const Offset(0.9, 0.9)),
+              ),
+            ],
           ),
         ),
       ),
@@ -469,74 +408,69 @@ class _LandingPageWebState extends State<LandingPageWeb>
   }
 
   Widget _buildTrustBadge(IconData icon, String text) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: WebColors.secondary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: WebColors.secondary, size: 18),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          text,
-          style: TextStyle(
-            color: WebColors.textSecondary,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialProof(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Center(
-        child: Column(
-          children: [
-            Text(
-              'TRUSTED BY STUDENTS AT',
-              style: TextStyle(
-                color: WebColors.textTertiary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 2,
-              ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLogoPlaceholder('Stanford'),
-                const SizedBox(width: 48),
-                _buildLogoPlaceholder('MIT'),
-                const SizedBox(width: 48),
-                _buildLogoPlaceholder('Harvard'),
-                const SizedBox(width: 48),
-                _buildLogoPlaceholder('Oxford'),
-                const SizedBox(width: 48),
-                _buildLogoPlaceholder('Berkeley'),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildLogoPlaceholder(String name) {
-    return Text(
-      name,
-      style: TextStyle(
-        color: WebColors.textTertiary,
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1,
+  Widget _buildPrimaryButton(
+      BuildContext context, String text, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: WebColors.primary,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
       ),
+      child: Text(text),
+    ).animate().scale(delay: 100.ms);
+  }
+
+  Widget _buildSecondaryButton(
+      BuildContext context, String text, VoidCallback onPressed) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: BorderSide(color: Colors.white.withOpacity(0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      child: Text(text),
     );
   }
 
@@ -545,19 +479,50 @@ class _LandingPageWebState extends State<LandingPageWeb>
       padding: const EdgeInsets.symmetric(vertical: 80),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [WebColors.primary, const Color(0xFF8B5CF6)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            WebColors.backgroundAlt,
+          ],
         ),
       ),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Column(
             children: [
-              _buildStatItem('10K+', 'Study Materials Created', Icons.article),
-              _buildStatItem('500+', 'Active Students', Icons.people),
-              _buildStatItem('50hrs', 'Saved Weekly', Icons.schedule),
-              _buildStatItem('4.9★', 'Average Rating', Icons.star),
+              Text(
+                'PROVEN RESULTS',
+                style: TextStyle(
+                  color: WebColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Join thousands of students achieving better results',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: WebColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 48),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStatItem('10,000+', 'Active Users', Icons.people),
+                  _buildStatDivider(),
+                  _buildStatItem('95%', 'Retention Rate', Icons.auto_graph),
+                  _buildStatDivider(),
+                  _buildStatItem('3x', 'Faster Learning', Icons.speed),
+                  _buildStatDivider(),
+                  _buildStatItem('4.9/5', 'User Rating', Icons.star),
+                ],
+              ),
             ],
           ),
         ),
@@ -568,14 +533,21 @@ class _LandingPageWebState extends State<LandingPageWeb>
   Widget _buildStatItem(String value, String label, IconData icon) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white.withOpacity(0.7), size: 32),
-        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: WebColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, color: WebColors.primary, size: 32),
+        ),
+        const SizedBox(height: 16),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: WebColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -583,123 +555,96 @@ class _LandingPageWebState extends State<LandingPageWeb>
           label,
           style: TextStyle(
             fontSize: 16,
-            color: Colors.white.withOpacity(0.9),
+            color: WebColors.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildFeaturesGrid(BuildContext context) {
-    final features = [
-      {
-        'icon': Icons.bolt,
-        'color': const Color(0xFFF59E0B),
-        'title': 'Lightning Fast',
-        'desc':
-            'Generate comprehensive study materials from any PDF, video, or text in seconds.',
-      },
-      {
-        'icon': Icons.psychology,
-        'color': const Color(0xFF8B5CF6),
-        'title': 'Exam-Focused AI',
-        'desc':
-            'AI trained on exam patterns to create test-ready questions that match your syllabus.',
-      },
-      {
-        'icon': Icons.style,
-        'color': const Color(0xFF10B981),
-        'title': 'Smart Flashcards',
-        'desc':
-            'Spaced repetition algorithm ensures you remember what matters most, longer.',
-      },
-      {
-        'icon': Icons.play_circle_filled,
-        'color': const Color(0xFFEF4444),
-        'title': 'YouTube Analysis',
-        'desc':
-            'Extract key concepts from educational videos automatically with AI.',
-      },
-      {
-        'icon': Icons.insights,
-        'color': const Color(0xFF3B82F6),
-        'title': 'Progress Analytics',
-        'desc':
-            'Visualize your learning journey with detailed performance insights.',
-      },
-      {
-        'icon': Icons.cloud_sync,
-        'color': const Color(0xFF6366F1),
-        'title': 'Cloud Sync',
-        'desc': 'Access your study materials anywhere, anytime, on any device.',
-      },
-    ];
+  Widget _buildStatDivider() {
+    return Container(
+      height: 60,
+      width: 1,
+      color: WebColors.border,
+    );
+  }
 
+  Widget _buildFeaturesGrid(BuildContext context) {
     return Container(
       key: _featuresKey,
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      color: Colors.white,
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: WebColors.primaryLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'FEATURES',
-                  style: TextStyle(
-                    color: WebColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 2,
-                  ),
+              Text(
+                'POWERFUL FEATURES',
+                style: TextStyle(
+                  color: WebColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Everything You Need to Succeed',
+                'Everything you need to learn smarter',
                 style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
                   color: WebColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Powerful AI-driven features designed to maximize your study efficiency',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: WebColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 60),
-              GridView.builder(
+              const SizedBox(height: 48),
+              GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                  childAspectRatio: 1.1,
-                ),
-                itemCount: features.length,
-                itemBuilder: (context, index) {
-                  final feature = features[index];
-                  return _buildFeatureCard(
-                    icon: feature['icon'] as IconData,
-                    color: feature['color'] as Color,
-                    title: feature['title'] as String,
-                    description: feature['desc'] as String,
-                  )
-                      .animate(delay: Duration(milliseconds: 100 * index))
-                      .fadeIn()
-                      .slideY(begin: 0.2);
-                },
+                crossAxisCount: 3,
+                mainAxisSpacing: 24,
+                crossAxisSpacing: 24,
+                childAspectRatio: 1.2,
+                children: [
+                  _buildFeatureCard(
+                    'AI-Powered Content',
+                    'Transform any text, PDF, or video into interactive learning materials',
+                    Icons.auto_awesome,
+                    WebColors.primary,
+                  ),
+                  _buildFeatureCard(
+                    'Spaced Repetition',
+                    'Never forget what you learn with scientifically-proven review scheduling',
+                    Icons.schedule,
+                    WebColors.secondary,
+                  ),
+                  _buildFeatureCard(
+                    'Daily Missions',
+                    'Build consistent learning habits with personalized daily challenges',
+                    Icons.flag,
+                    WebColors.accent,
+                  ),
+                  _buildFeatureCard(
+                    'Progress Tracking',
+                    'Visualize your learning journey with detailed analytics and insights',
+                    Icons.show_chart,
+                    WebColors.primary,
+                  ),
+                  _buildFeatureCard(
+                    'Offline Access',
+                    'Study anywhere, anytime with full offline functionality',
+                    Icons.offline_bolt,
+                    WebColors.secondary,
+                  ),
+                  _buildFeatureCard(
+                    'Collaborative Learning',
+                    'Share decks, compete with friends, and learn together',
+                    Icons.group,
+                    WebColors.accent,
+                  ),
+                ],
               ),
             ],
           ),
@@ -708,22 +653,18 @@ class _LandingPageWebState extends State<LandingPageWeb>
     );
   }
 
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String description,
-  }) {
+  Widget _buildFeatureCard(
+      String title, String description, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: WebColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -732,256 +673,85 @@ class _LandingPageWebState extends State<LandingPageWeb>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
             title,
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
               color: WebColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             description,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               color: WebColors.textSecondary,
-              height: 1.6,
+              height: 1.5,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn().slideY(begin: 0.1);
   }
 
   Widget _buildHowItWorks(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
-      color: WebColors.backgroundAlt,
-      child: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: Column(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: WebColors.primaryLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'HOW IT WORKS',
-                  style: TextStyle(
-                    color: WebColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Start Learning in 3 Simple Steps',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: WebColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 60),
-              _buildStep(
-                number: '1',
-                title: 'Upload Your Content',
-                description:
-                    'Upload PDFs, paste text, or share a YouTube link. We support multiple formats.',
-                icon: Icons.cloud_upload,
-                color: const Color(0xFF3B82F6),
-              ),
-              const SizedBox(height: 40),
-              _buildStep(
-                number: '2',
-                title: 'AI Generates Materials',
-                description:
-                    'Our advanced AI creates personalized summaries, quizzes, and flashcards instantly.',
-                icon: Icons.auto_awesome,
-                color: const Color(0xFF8B5CF6),
-              ),
-              const SizedBox(height: 40),
-              _buildStep(
-                number: '3',
-                title: 'Study & Track Progress',
-                description:
-                    'Review your materials with spaced repetition and track your learning analytics.',
-                icon: Icons.trending_up,
-                color: const Color(0xFF10B981),
-              ),
-            ],
-          ),
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            WebColors.backgroundAlt,
+            Colors.white,
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStep({
-    required String number,
-    required String title,
-    required String description,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.7)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: WebColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: WebColors.textSecondary,
-                    height: 1.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, size: 40, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTestimonials(BuildContext context) {
-    final testimonials = [
-      {
-        'avatar': 'assets/images/web/avatar_1.png',
-        'name': 'Sarah Chen',
-        'role': 'Pre-Med Student, Stanford',
-        'text':
-            'SumQuiz saved me 10+ hours per week on MCAT prep. The AI-generated quizzes are incredibly accurate and helped me identify weak areas instantly.',
-      },
-      {
-        'avatar': 'assets/images/web/avatar_2.png',
-        'name': 'Marcus Johnson',
-        'role': 'Graduate Student, MIT',
-        'text':
-            'Finally an AI tool that actually understands academic content. The flashcards adapt to my learning pace and the analytics keep me motivated.',
-      },
-      {
-        'avatar': 'assets/images/web/avatar_3.png',
-        'name': 'Maria Rodriguez',
-        'role': 'Law Student, UCLA',
-        'text':
-            'I was skeptical at first, but the quality of summaries is remarkable. It\'s like having a personal study assistant available 24/7.',
-      },
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: WebColors.primaryLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'TESTIMONIALS',
-                  style: TextStyle(
-                    color: WebColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 2,
-                  ),
+              Text(
+                'HOW IT WORKS',
+                style: TextStyle(
+                  color: WebColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Loved by Students Worldwide',
+                'Start learning in minutes',
                 style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
                   color: WebColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 60),
+              const SizedBox(height: 48),
               Row(
-                children: testimonials.asMap().entries.map((entry) {
-                  final testimonial = entry.value;
-                  return Expanded(
-                    child: _buildTestimonialCard(
-                      avatar: testimonial['avatar'] as String,
-                      name: testimonial['name'] as String,
-                      role: testimonial['role'] as String,
-                      text: testimonial['text'] as String,
-                    ),
-                  );
-                }).toList(),
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStepCard(1, 'Import Content',
+                      'Paste text, upload PDFs, or link videos'),
+                  _buildStepArrow(),
+                  _buildStepCard(2, 'AI Processing',
+                      'Our AI transforms content into learning materials'),
+                  _buildStepArrow(),
+                  _buildStepCard(3, 'Start Learning',
+                      'Review flashcards, take quizzes, and track progress'),
+                ],
               ),
             ],
           ),
@@ -990,22 +760,17 @@ class _LandingPageWebState extends State<LandingPageWeb>
     );
   }
 
-  Widget _buildTestimonialCard({
-    required String avatar,
-    required String name,
-    required String role,
-    required String text,
-  }) {
+  Widget _buildStepCard(int number, String title, String description) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      width: 280,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: WebColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1013,44 +778,146 @@ class _LandingPageWebState extends State<LandingPageWeb>
       ),
       child: Column(
         children: [
-          Row(
-            children: List.generate(
-                5,
-                (i) =>
-                    Icon(Icons.star, color: const Color(0xFFF59E0B), size: 20)),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '"$text"',
-            style: TextStyle(
-              fontSize: 16,
-              color: WebColors.textSecondary,
-              height: 1.8,
-              fontStyle: FontStyle.italic,
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              gradient: WebColors.HeroGradient,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Center(
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          Row(
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: WebColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: WebColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn().slideY(begin: 0.1);
+  }
+
+  Widget _buildStepArrow() {
+    return Icon(
+      Icons.arrow_forward,
+      color: WebColors.textTertiary,
+      size: 32,
+    );
+  }
+
+  Widget _buildTestimonials(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      color: Colors.white,
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: Image.asset(
-                  avatar,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: WebColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.person, color: WebColors.primary),
-                  ),
+              Text(
+                'SUCCESS STORIES',
+                style: TextStyle(
+                  color: WebColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(height: 16),
+              Text(
+                'What our users say',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: WebColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 48),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 24,
+                crossAxisSpacing: 24,
+                childAspectRatio: 1.1,
+                children: [
+                  _buildTestimonialCard(
+                    'SumQuiz helped me ace my medical boards! The spaced repetition system is a game-changer.',
+                    'Dr. Sarah Chen',
+                    'Medical Student, Stanford',
+                    'assets/images/avatars/sarah.jpg',
+                  ),
+                  _buildTestimonialCard(
+                    'I went from struggling with chemistry to getting straight A\'s. The AI-generated quizzes are perfect for my learning style.',
+                    'Mike Rodriguez',
+                    'Chemistry Major, MIT',
+                    'assets/images/avatars/mike.jpg',
+                  ),
+                  _buildTestimonialCard(
+                    'As a teacher, I love how SumQuiz makes complex topics digestible. My students\' test scores improved by 25%.',
+                    'Prof. Jennifer Lee',
+                    'University of Oxford',
+                    'assets/images/avatars/jennifer.jpg',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTestimonialCard(
+      String quote, String name, String role, String avatarPath) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: WebColors.backgroundAlt,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WebColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: WebColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(avatarPath, fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1058,7 +925,7 @@ class _LandingPageWebState extends State<LandingPageWeb>
                     name,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: WebColors.textPrimary,
                     ),
                   ),
@@ -1073,74 +940,87 @@ class _LandingPageWebState extends State<LandingPageWeb>
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Text(
+            quote,
+            style: TextStyle(
+              fontSize: 14,
+              color: WebColors.textPrimary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 16),
+              Icon(Icons.star, color: Colors.amber, size: 16),
+              Icon(Icons.star, color: Colors.amber, size: 16),
+              Icon(Icons.star, color: Colors.amber, size: 16),
+              Icon(Icons.star, color: Colors.amber, size: 16),
+            ],
+          ),
         ],
       ),
-    );
+    ).animate().fadeIn().slideY(begin: 0.1);
   }
 
   Widget _buildFAQ(BuildContext context) {
-    final faqs = [
-      {
-        'q': 'How does the AI generate quizzes?',
-        'a':
-            'Our AI analyzes your content using advanced NLP to identify key concepts, then generates exam-style questions with accurate answers. It\'s trained on academic content patterns to ensure quality.',
-      },
-      {
-        'q': 'Is my data secure and private?',
-        'a':
-            'Absolutely. All data is encrypted in transit and at rest. We never share your content with third parties, and you can delete your data at any time.',
-      },
-      {
-        'q': 'Can I cancel my subscription anytime?',
-        'a':
-            'Yes! There are no contracts or commitments. You can upgrade, downgrade, or cancel anytime with one click. No questions asked.',
-      },
-      {
-        'q': 'What file formats do you support?',
-        'a':
-            'We support PDF, Word documents, text files, images (with OCR), YouTube videos, and direct text input. More formats coming soon!',
-      },
-    ];
-
     return Container(
       key: _faqKey,
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            WebColors.backgroundAlt,
+          ],
+        ),
+      ),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 800),
           child: Column(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: WebColors.primaryLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'FAQ',
-                  style: TextStyle(
-                    color: WebColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 2,
-                  ),
+              Text(
+                'FREQUENTLY ASKED QUESTIONS',
+                style: TextStyle(
+                  color: WebColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Frequently Asked Questions',
+                'Everything you need to know',
                 style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
                   color: WebColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 60),
-              ...faqs.map((faq) => _buildFAQItem(
-                    question: faq['q']!,
-                    answer: faq['a']!,
-                  )),
+              const SizedBox(height: 48),
+              _buildFAQItem(
+                'How does SumQuiz help me learn faster?',
+                'Our AI analyzes your learning patterns and creates personalized content that adapts to your pace. Combined with spaced repetition, you retain information 3x longer than traditional methods.',
+              ),
+              const SizedBox(height: 16),
+              _buildFAQItem(
+                'Is there a free version?',
+                'Yes! Our free plan includes basic features like flashcard creation and simple quizzes. Upgrade to unlock advanced AI features, offline access, and unlimited content generation.',
+              ),
+              const SizedBox(height: 16),
+              _buildFAQItem(
+                'Can I use SumQuiz for any subject?',
+                'Absolutely! SumQuiz works with any text-based content - from academic papers to YouTube transcripts. Our AI adapts to different subjects and complexity levels.',
+              ),
+              const SizedBox(height: 16),
+              _buildFAQItem(
+                'How does the spaced repetition system work?',
+                'Based on the scientifically-proven forgetting curve, our system schedules reviews at optimal intervals. You\'ll see content just before you\'re about to forget it, maximizing retention efficiency.',
+              ),
             ],
           ),
         ),
@@ -1148,32 +1028,32 @@ class _LandingPageWebState extends State<LandingPageWeb>
     );
   }
 
-  Widget _buildFAQItem({required String question, required String answer}) {
+  Widget _buildFAQItem(String question, String answer) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: WebColors.border),
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        childrenPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        title: Text(
-          question,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: WebColors.textPrimary,
-          ),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            question,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: WebColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             answer,
             style: TextStyle(
               fontSize: 16,
               color: WebColors.textSecondary,
-              height: 1.6,
+              height: 1.5,
             ),
           ),
         ],
@@ -1183,87 +1063,56 @@ class _LandingPageWebState extends State<LandingPageWeb>
 
   Widget _buildCTASection(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      decoration: BoxDecoration(
+        gradient: WebColors.HeroGradient,
+      ),
       child: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 900),
-          padding: const EdgeInsets.all(60),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [WebColors.primary, const Color(0xFF8B5CF6)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: WebColors.primary.withOpacity(0.3),
-                blurRadius: 40,
-                offset: const Offset(0, 20),
-              ),
-            ],
-          ),
+          constraints: const BoxConstraints(maxWidth: 800),
           child: Column(
             children: [
-              Text(
-                'Ready to Transform Your Study Routine?',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.white, Colors.white],
+                ).createShader(bounds),
+                child: Text(
+                  'Ready to Learn Smarter?',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Text(
-                'Join thousands of students who are already studying smarter, not harder.',
-                textAlign: TextAlign.center,
+                'Join thousands of students who are learning 3x faster with SumQuiz. Start your free trial today.',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white.withOpacity(0.9),
+                  height: 1.6,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () => context.go('/auth'),
-                    icon: const Icon(Icons.rocket_launch),
-                    label: const Text('Get Started Free'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: WebColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 20,
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  _buildPrimaryButton(
+                      context, 'Start Free Trial', () => context.go('/auth')),
                   const SizedBox(width: 16),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 20,
-                      ),
-                    ),
-                    child: const Text('Contact Sales'),
-                  ),
+                  _buildSecondaryButton(context, 'Get Mobile App Early Access',
+                      _showBetaAccessDialog),
                 ],
               ),
               const SizedBox(height: 24),
               Text(
-                '✓ Free forever plan  ✓ No credit card required  ✓ Cancel anytime',
+                'No credit card required • 14-day free trial • Cancel anytime',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withOpacity(0.7),
                   fontSize: 14,
                 ),
               ),
@@ -1276,108 +1125,114 @@ class _LandingPageWebState extends State<LandingPageWeb>
 
   Widget _buildFooter(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
-      color: const Color(0xFF1E293B),
+      padding: const EdgeInsets.symmetric(vertical: 60),
+      color: WebColors.textPrimary,
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    WebColors.primary,
-                                    const Color(0xFF8B5CF6)
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.school,
-                                  color: Colors.white, size: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              gradient: WebColors.HeroGradient,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'SumQuiz',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                            child: Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Colors.white,
+                              size: 20,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'AI-powered study platform helping students\nachieve their academic goals.',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            height: 1.6,
                           ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'SumQuiz',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'AI-powered learning for the modern student.',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
                         ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            _buildSocialIcon(Icons.language),
-                            const SizedBox(width: 16),
-                            _buildSocialIcon(Icons.alternate_email),
-                            const SizedBox(width: 16),
-                            _buildSocialIcon(Icons.chat_bubble),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  _buildFooterColumn('Product', [
-                    'Features',
-                    'Pricing',
-                    'Integrations',
-                    'Changelog',
-                  ]),
-                  _buildFooterColumn('Company', [
-                    'About Us',
-                    'Blog',
-                    'Careers',
-                    'Contact',
-                  ]),
-                  _buildFooterColumn('Legal', [
-                    'Privacy Policy',
-                    'Terms of Service',
-                    'Cookie Policy',
-                    'Security',
-                  ]),
+                  Row(
+                    children: [
+                      _buildFooterColumn('Product', [
+                        'Features',
+                        'Pricing',
+                        'Use Cases',
+                        'Integrations',
+                      ]),
+                      const SizedBox(width: 60),
+                      _buildFooterColumn('Resources', [
+                        'Blog',
+                        'Tutorials',
+                        'Help Center',
+                        'API Docs',
+                      ]),
+                      const SizedBox(width: 60),
+                      _buildFooterColumn('Company', [
+                        'About',
+                        'Careers',
+                        'Contact',
+                        'Partners',
+                      ]),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 60),
-              Divider(color: Colors.white.withOpacity(0.1)),
+              const SizedBox(height: 48),
+              Container(
+                height: 1,
+                color: Colors.white.withOpacity(0.1),
+              ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '© 2026 SumQuiz. All rights reserved.',
+                    '© 2024 SumQuiz. All rights reserved.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withOpacity(0.7),
                       fontSize: 14,
                     ),
                   ),
-                  Text(
-                    'Made with ❤️ for students everywhere',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.language,
+                            color: Colors.white.withOpacity(0.7)),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.facebook,
+                            color: Colors.white.withOpacity(0.7)),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.link,
+                            color: Colors.white.withOpacity(0.7)),
+                        onPressed: () {},
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1388,45 +1243,37 @@ class _LandingPageWebState extends State<LandingPageWeb>
     );
   }
 
-  Widget _buildSocialIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, color: Colors.white, size: 20),
-    );
-  }
-
-  Widget _buildFooterColumn(String title, List<String> links) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              fontSize: 16,
-            ),
+  Widget _buildFooterColumn(String title, List<String> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 20),
-          ...links.map(
-            (link) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
+        ),
+        const SizedBox(height: 16),
+        ...items.map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                link,
+                item,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.7),
                   fontSize: 14,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
+            )),
+      ],
+    );
+  }
+
+  void _showBetaAccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const BetaAccessDialog(),
     );
   }
 }

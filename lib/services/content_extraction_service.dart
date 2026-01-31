@@ -1,6 +1,4 @@
 import 'package:sumquiz/services/enhanced_ai_service.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as parser;
 import 'dart:typed_data';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -55,7 +53,7 @@ class ContentExtractionService {
             if (result is Ok<ExtractionResult>) {
               return result.value;
             } else {
-              throw (result as Error).error;
+              throw (result as ResultError).error;
             }
 
           case UrlContentType.document:
@@ -75,7 +73,7 @@ class ContentExtractionService {
             if (result is Ok<ExtractionResult>) {
               return result.value;
             } else {
-              throw (result as Error).error;
+              throw (result as ResultError).error;
             }
 
           case UrlContentType.webpage:
@@ -90,18 +88,46 @@ class ContentExtractionService {
             if (result is Ok<ExtractionResult>) {
               return result.value;
             } else {
-              throw (result as Error).error;
+              throw (result as ResultError).error;
             }
         }
-        break;
       case 'pdf':
         onProgress?.call('Reading PDF document...');
         rawText = await _extractFromPdfBytes(input as Uint8List);
+
+        // If PDF extraction yielded no text, it might be a scanned document.
+        // Use AI multimodal analysis as fallback.
+        if (rawText.trim().isEmpty ||
+            rawText.contains('[No text found in PDF.')) {
+          onProgress?.call('No text found. Analyzing scanned PDF with AI...');
+          if (userId == null) {
+            throw Exception('User ID is required for scanned PDF analysis.');
+          }
+          final result = await _enhancedAiService.analyzeContentFromBytes(
+            bytes: input,
+            mimeType: 'application/pdf',
+            userId: userId,
+          );
+          if (result is Ok<ExtractionResult>) {
+            return result.value;
+          }
+        }
         suggestedTitle = 'PDF Document';
         break;
       case 'image':
-        onProgress?.call('Scanning image for text...');
-        rawText = await _extractFromImageBytes(input as Uint8List);
+        onProgress?.call('Scanning image with AI Vision...');
+        if (userId == null) {
+          throw Exception('User ID is required for image analysis.');
+        }
+        // Use AI for better OCR and web compatibility
+        try {
+          rawText = await _enhancedAiService.extractTextFromImage(input,
+              userId: userId);
+        } catch (e) {
+          // Fallback to local OCR if on mobile and AI fails
+          onProgress?.call('AI scan failed. Attempting local scan...');
+          rawText = await _extractFromImageBytes(input);
+        }
         suggestedTitle = 'Scanned Image';
         break;
       default:
@@ -190,14 +216,17 @@ class ContentExtractionService {
     // Documents
     if (path.endsWith('.pdf')) return 'application/pdf';
     if (path.endsWith('.doc')) return 'application/msword';
-    if (path.endsWith('.docx'))
+    if (path.endsWith('.docx')) {
       return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
     if (path.endsWith('.txt')) return 'text/plain';
     if (path.endsWith('.rtf')) return 'application/rtf';
-    if (path.endsWith('.pptx'))
+    if (path.endsWith('.pptx')) {
       return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-    if (path.endsWith('.xlsx'))
+    }
+    if (path.endsWith('.xlsx')) {
       return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    }
     if (path.endsWith('.csv')) return 'text/csv';
 
     // Images
@@ -225,24 +254,6 @@ class ContentExtractionService {
 
     // Default
     return 'application/octet-stream';
-  }
-
-  Future<String> _extractWebContent(String url) async {
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final document = parser.parse(response.body);
-        final paragraphs = document.querySelectorAll('p');
-        if (paragraphs.isEmpty) {
-          return document.body?.text ?? 'No content found.';
-        }
-        return paragraphs.map((e) => e.text).join('\n\n');
-      } else {
-        throw Exception('Failed to load page: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Could not extract content from URL: $e');
-    }
   }
 
   /// Extract text from PDF using Syncfusion PDF library

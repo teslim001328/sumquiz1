@@ -66,7 +66,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
 
     void processItems(List<dynamic> items) {
       for (var item in items) {
-        final itemDate = item.timestamp.toDate();
+        final itemDate = item.timestamp;
         final date = DateTime(itemDate.year, itemDate.month, itemDate.day);
 
         final daysDiff = today.difference(date).inDays;

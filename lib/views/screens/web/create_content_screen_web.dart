@@ -187,13 +187,14 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           throw Exception('Please provide some content first.');
       }
 
-      if (extractionResult == null || extractionResult.text.trim().isEmpty) {
+      if (extractionResult.text.trim().isEmpty) {
         throw Exception('Could not extract any content from the source.');
       }
 
       await usageService.recordDeckGeneration(user.uid);
-      if (mounted)
-        context.go('/create/extraction-view', extra: extractionResult);
+      if (mounted) {
+        context.push('/create/extraction-view', extra: extractionResult);
+      }
     } catch (e) {
       if (mounted) {
         setState(
@@ -271,7 +272,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
   Widget _buildMainCard() {
     return Container(
       width: 1100,
-      constraints: const BoxConstraints(minHeight: 600),
+      height: 850,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
@@ -1000,34 +1001,34 @@ class DashedRectPainter extends CustomPainter {
     double x = size.width;
     double y = size.height;
 
-    Path _topPath = getDashedPath(
+    Path topPath = getDashedPath(
       a: const Point(0, 0),
       b: Point(x, 0),
       gap: gap,
     );
 
-    Path _rightPath = getDashedPath(
+    Path rightPath = getDashedPath(
       a: Point(x, 0),
       b: Point(x, y),
       gap: gap,
     );
 
-    Path _bottomPath = getDashedPath(
+    Path bottomPath = getDashedPath(
       a: Point(0, y),
       b: Point(x, y),
       gap: gap,
     );
 
-    Path _leftPath = getDashedPath(
+    Path leftPath = getDashedPath(
       a: const Point(0, 0),
       b: Point(0, y),
       gap: gap,
     );
 
-    canvas.drawPath(_topPath, dashedPaint);
-    canvas.drawPath(_rightPath, dashedPaint);
-    canvas.drawPath(_bottomPath, dashedPaint);
-    canvas.drawPath(_leftPath, dashedPaint);
+    canvas.drawPath(topPath, dashedPaint);
+    canvas.drawPath(rightPath, dashedPaint);
+    canvas.drawPath(bottomPath, dashedPaint);
+    canvas.drawPath(leftPath, dashedPaint);
   }
 
   Path getDashedPath({

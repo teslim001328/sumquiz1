@@ -47,7 +47,8 @@ class SpacedRepetitionService {
         });
       } catch (e, s) {
         // Log error but don't fail the operation
-        developer.log('Error updating SRS card count', name: 'SpacedRepetitionService', error: e, stackTrace: s);
+        developer.log('Error updating SRS card count',
+            name: 'SpacedRepetitionService', error: e, stackTrace: s);
       }
     }
   }

@@ -106,19 +106,8 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          WebColors.background, // Keep simple background, content has gradient
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              WebColors.background,
-              WebColors.primaryLight.withValues(alpha: 0.3),
-            ],
-          ),
-        ),
+      backgroundColor: WebColors.background,
+      body: SafeArea(
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: WebColors.primary))
             : _errorMessage != null
@@ -126,10 +115,10 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
                 : Column(
                     children: [
                       _buildHeader(),
+                      const SizedBox(height: 24),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -167,17 +156,13 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: WebColors.border)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: WebColors.border, width: 1.5),
+        boxShadow: WebColors.cardShadow,
       ),
       child: Row(
         children: [
@@ -253,20 +238,28 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
             ),
           ),
           const SizedBox(width: 24),
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                WebColors.HeroGradient.createShader(bounds),
-            child: Text(
-              'Content Ready',
-              style: GoogleFonts.outfit(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: -1,
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Content Ready',
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: WebColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Your AI-generated learning materials',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    color: WebColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -291,7 +284,7 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
               ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 24),
           Container(
             decoration: BoxDecoration(
               gradient: WebColors.HeroGradient,
@@ -334,67 +327,91 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
   Widget _buildSidebar() {
     return Container(
       width: 280,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: WebColors.border, width: 1.5),
+        boxShadow: WebColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'CONTENTS',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: WebColors.textTertiary,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (_summary != null)
-            _buildNavItem(
-                0, 'Summary Notes', Icons.article_rounded, WebColors.primary),
-          const SizedBox(height: 8),
-          if (_quiz != null)
-            _buildNavItem(
-                1, 'Practice Quiz', Icons.quiz_rounded, WebColors.secondary),
-          const SizedBox(height: 8),
-          if (_flashcardSet != null)
-            _buildNavItem(2, 'Flashcards Deck', Icons.style_rounded,
-                WebColors.accentPink),
-          const SizedBox(height: 32),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: WebColors.primaryLight.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: WebColors.primary.withOpacity(0.1)),
+              color: WebColors.backgroundAlt,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border(bottom: BorderSide(color: WebColors.border)),
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.tips_and_updates_rounded,
-                    color: WebColors.primary, size: 22),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    'PRO TIP: Review the summary first, then master it with the quiz and flashcards.',
-                    style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: WebColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: WebColors.HeroGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.menu_book, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Contents',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: WebColors.textPrimary,
                   ),
                 ),
               ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_summary != null)
+                    _buildNavItem(0, 'Summary Notes', Icons.article_rounded,
+                        WebColors.primary),
+                  const SizedBox(height: 12),
+                  if (_quiz != null)
+                    _buildNavItem(1, 'Practice Quiz', Icons.quiz_rounded,
+                        WebColors.secondary),
+                  const SizedBox(height: 12),
+                  if (_flashcardSet != null)
+                    _buildNavItem(2, 'Flashcards Deck', Icons.style_rounded,
+                        WebColors.accentPink),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: WebColors.primaryLight.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border:
+                          Border.all(color: WebColors.primary.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.tips_and_updates_rounded,
+                            color: WebColors.primary, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Review the summary first, then master it with the quiz and flashcards.',
+                            style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                color: WebColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -412,39 +429,32 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
           duration: 200.ms,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
-            color: isSelected ? color : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    )
-                  ]
-                : null,
+            color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : WebColors.border,
+              width: isSelected ? 2 : 1,
+            ),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : WebColors.textSecondary,
+                color: isSelected ? color : WebColors.textSecondary,
                 size: 24,
               ),
-              const SizedBox(width: 16),
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  color: isSelected ? Colors.white : WebColors.textSecondary,
-                  fontSize: 16,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? color : WebColors.textSecondary,
+                    fontSize: 15,
+                  ),
                 ),
               ),
-              if (isSelected) ...[
-                const Spacer(),
-                const Icon(Icons.keyboard_arrow_right_rounded,
-                    color: Colors.white, size: 20),
-              ],
+              if (isSelected) Icon(Icons.check_circle, color: color, size: 20),
             ],
           ),
         ),
@@ -454,17 +464,11 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
 
   Widget _buildContentArea() {
     return Container(
-      padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: WebColors.border, width: 1.5),
+        boxShadow: WebColors.cardShadow,
       ),
       child: _buildSelectedTabView()
           .animate(key: ValueKey(_selectedTab))
@@ -502,31 +506,38 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
 
   Widget _buildSummaryTab() {
     if (_summary == null) return _buildEmptyTab();
-    return SummaryView(
-      title: _summary!.title,
-      content: _summary!.content,
-      tags: _summary!.tags,
-      showActions: true,
-      onCopy: () {
-        Clipboard.setData(ClipboardData(text: _summary!.content));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Summary copied to clipboard'),
-              behavior: SnackBarBehavior.floating,
-              width: 300),
-        );
-      },
+
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: SummaryView(
+        title: _summary!.title,
+        content: _summary!.content,
+        tags: _summary!.tags,
+        showActions: true,
+        onCopy: () {
+          Clipboard.setData(ClipboardData(text: _summary!.content));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Summary copied to clipboard'),
+                behavior: SnackBarBehavior.floating,
+                width: 300),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildQuizzesTab() {
     if (_quiz == null) return _buildEmptyTab();
-    // Wrap QuizView to ensure it takes available space but doesn't overflow
-    return QuizView(
-      title: _quiz!.title,
-      questions: _quiz!.questions,
-      onAnswer: (isCorrect) {},
-      onFinish: () {},
+
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: QuizView(
+        title: _quiz!.title,
+        questions: _quiz!.questions,
+        onAnswer: (isCorrect) {},
+        onFinish: () {},
+      ),
     );
   }
 
@@ -541,14 +552,17 @@ class _ResultsViewScreenWebState extends State<ResultsViewScreenWeb> {
             ))
         .toList();
 
-    return Center(
-      child: Container(
-        constraints: BoxConstraints(maxHeight: 700),
-        child: FlashcardsView(
-          title: _flashcardSet!.title,
-          flashcards: flashcards,
-          onReview: (index, knewIt) {},
-          onFinish: () {},
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: Container(
+          constraints: BoxConstraints(maxHeight: 700),
+          child: FlashcardsView(
+            title: _flashcardSet!.title,
+            flashcards: flashcards,
+            onReview: (index, knewIt) {},
+            onFinish: () {},
+          ),
         ),
       ),
     );

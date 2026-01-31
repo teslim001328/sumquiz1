@@ -241,11 +241,21 @@ class _MyAppState extends State<MyApp> {
               return NotificationNavigator(
                 child: MaterialApp.router(
                   title: 'SumQuiz',
-                  theme:
-                      kIsWeb ? WebTheme.lightTheme : ThemeProvider.lightTheme,
-                  darkTheme:
-                      kIsWeb ? WebTheme.lightTheme : ThemeProvider.darkTheme,
-                  themeMode: kIsWeb ? ThemeMode.light : themeProvider.themeMode,
+                  theme: kIsWeb
+                      ? (themeProvider.themeMode == ThemeMode.dark
+                          ? WebTheme.darkTheme
+                          : WebTheme.lightTheme)
+                      : themeProvider.getTheme(),
+                  darkTheme: kIsWeb
+                      ? (themeProvider.themeMode == ThemeMode.dark
+                          ? WebTheme.darkTheme
+                          : WebTheme.lightTheme)
+                      : themeProvider.getTheme(),
+                  themeMode: kIsWeb
+                      ? (themeProvider.themeMode == ThemeMode.dark
+                          ? ThemeMode.dark
+                          : ThemeMode.light)
+                      : themeProvider.themeMode,
                   routerConfig: _router,
                   debugShowCheckedModeBanner: false,
                   localizationsDelegates: const [

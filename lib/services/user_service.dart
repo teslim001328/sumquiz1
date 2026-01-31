@@ -43,25 +43,25 @@ class UserService {
     } else {
       // New day: Apply momentum decay
       newMomentum = newMomentum * (1 - user.momentumDecayRate);
-      
+
       // Streak maintenance: if not active today AND not active yesterday, reset streak
       if (!wasActiveYesterday && !isSameDay) {
         newStreak = 0;
       }
-      
+
       newItemsCompleted = 1; // Reset for new day
     }
 
     // Momentum Gain: +5 per item (Pro gets 1.0x, Free gets 0.2x)
     double momentumGain = 5.0;
-    if (!user.isPro) momentumGain *= 0.2; 
+    if (!user.isPro) momentumGain *= 0.2;
     newMomentum += momentumGain;
 
     // Cap Momentum at 500 (standardized)
     if (newMomentum > 500) newMomentum = 500;
 
-    // Streak increment: if reaching daily goal today
-    if (newItemsCompleted == user.dailyGoal) {
+    // Streak increment: if it's the first item of the day
+    if (newItemsCompleted == 1) {
       newStreak++;
     }
 
@@ -71,8 +71,9 @@ class UserService {
       'currentMomentum': newMomentum,
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    
-    developer.log('Progress updated for $userId: Streak=$newStreak, Momentum=${newMomentum.toStringAsFixed(1)}',
+
+    developer.log(
+        'Progress updated for $userId: Streak=$newStreak, Momentum=${newMomentum.toStringAsFixed(1)}',
         name: 'UserService');
   }
 

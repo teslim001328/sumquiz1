@@ -35,7 +35,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
   int _currentCardIndex = 0;
   bool _isFlipped = false;
   int _correctCount = 0;
-  Stopwatch _stopwatch = Stopwatch();
+  final Stopwatch _stopwatch = Stopwatch();
   Timer? _timer;
 
   @override
@@ -58,11 +58,12 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     final userId = authService.currentUser?.uid;
 
     if (userId == null) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _error = "User not found.";
         });
+      }
       return;
     }
 
@@ -79,7 +80,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       final stats = await srsService.getStatistics(userId);
       final nextDate = srsService.getNextReviewDate(userId);
 
-      if (mounted)
+      if (mounted) {
         setState(() {
           _dailyMission = mission;
           _dueCount = stats['dueForReviewCount'] as int? ?? 0;
@@ -87,12 +88,14 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
           _isLoading = false;
           _error = null;
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _error = "Error loading mission: $e";
         });
+      }
     }
   }
 

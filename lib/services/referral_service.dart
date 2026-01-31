@@ -185,7 +185,7 @@ class ReferralService {
           return existingCode;
         }
       }
-      
+
       // Generate new code
       String code = await _generateUniqueCode();
       await userDocRef.set({'referralCode': code}, SetOptions(merge: true));
@@ -222,7 +222,7 @@ class ReferralService {
     bool isUnique = false;
     int attempts = 0;
     const maxAttempts = 10;
-    
+
     while (!isUnique && attempts < maxAttempts) {
       attempts++;
       code = _uuid.v4().substring(0, 8).toUpperCase();
@@ -235,12 +235,12 @@ class ReferralService {
         isUnique = true;
       }
     }
-    
+
     if (!isUnique) {
       // Fallback: use longer code if we can't find unique short one
       code = _uuid.v4().replaceAll('-', '').substring(0, 12).toUpperCase();
     }
-    
+
     return code;
   }
 

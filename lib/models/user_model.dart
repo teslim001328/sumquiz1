@@ -18,6 +18,7 @@ class UserModel {
   final int itemsCompletedToday;
   final int dailyDecksGenerated;
   final int totalDecksGenerated;
+  final int totalUploads;
   final DateTime? lastDeckGenerationDate;
   final DateTime? updatedAt;
   final double momentumDecayRate; // Default 0.05 (5% daily)
@@ -27,7 +28,6 @@ class UserModel {
 
   // Freemium Usage Tracking
   final int weeklyUploads;
-  final int totalUploads;
   final int folderCount;
   final int srsCardCount;
   final DateTime? lastWeeklyReset;
@@ -36,15 +36,13 @@ class UserModel {
   // Trial & Creator Logic (stored fields)
   final bool _isTrialUser; // Private - use isTrial getter
   final bool isCreatorPro;
+  final String? currentProduct; // Selected subscription product ID
 
   // Referral
   final String? referralCode;
 
   // Creator Profile
   final Map<String, dynamic> creatorProfile;
-
-  // Subscription Info
-  final String? currentProduct;
 
   UserModel({
     required this.uid,
@@ -60,19 +58,19 @@ class UserModel {
     this.dailyGoal = 5,
     this.itemsCompletedToday = 0,
     this.weeklyUploads = 0,
-    this.totalUploads = 0,
     this.folderCount = 0,
     this.srsCardCount = 0,
     this.lastWeeklyReset,
     this.dailyDecksGenerated = 0,
     this.totalDecksGenerated = 0,
+    this.totalUploads = 0,
     this.lastDeckGenerationDate,
     this.updatedAt,
     bool isTrial = false,
     this.isCreatorPro = false,
+    this.currentProduct,
     this.referralCode,
     this.creatorProfile = const {},
-    this.currentProduct,
   }) : _isTrialUser = isTrial;
 
   /// Returns true if user has active Pro access
@@ -118,12 +116,12 @@ class UserModel {
       dailyGoal: data['dailyGoal'] ?? 5,
       itemsCompletedToday: data['itemsCompletedToday'] ?? 0,
       weeklyUploads: data['weeklyUploads'] ?? 0,
-      totalUploads: data['totalUploads'] ?? 0,
       folderCount: data['folderCount'] ?? 0,
       srsCardCount: data['srsCardCount'] ?? 0,
       lastWeeklyReset: (data['lastWeeklyReset'] as Timestamp?)?.toDate(),
       dailyDecksGenerated: data['dailyDecksGenerated'] ?? 0,
       totalDecksGenerated: data['totalDecksGenerated'] ?? 0,
+      totalUploads: data['totalUploads'] ?? 0,
       lastDeckGenerationDate:
           (data['lastDeckGenerationDate'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -133,9 +131,9 @@ class UserModel {
       ),
       isTrial: data['isTrial'] ?? false,
       isCreatorPro: data['isCreatorPro'] ?? false,
+      currentProduct: data['currentProduct'],
       referralCode: data['referralCode'],
       creatorProfile: data['creatorProfile'] ?? {},
-      currentProduct: data['currentProduct'],
     );
   }
 
@@ -154,11 +152,11 @@ class UserModel {
       'dailyGoal': dailyGoal,
       'itemsCompletedToday': itemsCompletedToday,
       'weeklyUploads': weeklyUploads,
-      'totalUploads': totalUploads,
       'folderCount': folderCount,
       'srsCardCount': srsCardCount,
       'dailyDecksGenerated': dailyDecksGenerated,
       'totalDecksGenerated': totalDecksGenerated,
+      'totalUploads': totalUploads,
       if (lastDeckGenerationDate != null)
         'lastDeckGenerationDate': Timestamp.fromDate(lastDeckGenerationDate!),
       if (lastWeeklyReset != null)
@@ -166,9 +164,9 @@ class UserModel {
       if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
       'isTrial': _isTrialUser, // Store the private field
       'isCreatorPro': isCreatorPro,
+      'currentProduct': currentProduct,
       if (referralCode != null) 'referralCode': referralCode,
       'creatorProfile': creatorProfile,
-      if (currentProduct != null) 'currentProduct': currentProduct,
     };
   }
 
@@ -185,20 +183,20 @@ class UserModel {
     int? dailyGoal,
     int? itemsCompletedToday,
     int? weeklyUploads,
-    int? totalUploads,
     int? folderCount,
     int? srsCardCount,
     int? dailyDecksGenerated,
     int? totalDecksGenerated,
+    int? totalUploads,
     DateTime? lastDeckGenerationDate,
     DateTime? lastWeeklyReset,
     DateTime? updatedAt,
     UserRole? role,
     bool? isTrial,
     bool? isCreatorPro,
+    String? currentProduct,
     String? referralCode,
     Map<String, dynamic>? creatorProfile,
-    String? currentProduct,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -215,20 +213,20 @@ class UserModel {
       dailyGoal: dailyGoal ?? this.dailyGoal,
       itemsCompletedToday: itemsCompletedToday ?? this.itemsCompletedToday,
       weeklyUploads: weeklyUploads ?? this.weeklyUploads,
-      totalUploads: totalUploads ?? this.totalUploads,
       folderCount: folderCount ?? this.folderCount,
       srsCardCount: srsCardCount ?? this.srsCardCount,
       dailyDecksGenerated: dailyDecksGenerated ?? this.dailyDecksGenerated,
       totalDecksGenerated: totalDecksGenerated ?? this.totalDecksGenerated,
+      totalUploads: totalUploads ?? this.totalUploads,
       lastDeckGenerationDate:
           lastDeckGenerationDate ?? this.lastDeckGenerationDate,
       lastWeeklyReset: lastWeeklyReset ?? this.lastWeeklyReset,
       updatedAt: updatedAt ?? this.updatedAt,
       isTrial: isTrial ?? _isTrialUser,
       isCreatorPro: isCreatorPro ?? this.isCreatorPro,
+      currentProduct: currentProduct ?? this.currentProduct,
       referralCode: referralCode ?? this.referralCode,
       creatorProfile: creatorProfile ?? this.creatorProfile,
-      currentProduct: currentProduct ?? this.currentProduct,
     );
   }
 }

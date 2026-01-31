@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final didReceiveLocalNotificationSubject =
@@ -42,6 +43,12 @@ class NotificationService {
     _localNotifications = FlutterLocalNotificationsPlugin();
     _firebaseMessaging = FirebaseMessaging.instance;
     tz.initializeTimeZones();
+
+    // Set local time zone
+    final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+    final String timeZoneName = timeZoneInfo.identifier;
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+
     await _loadNotificationTemplates();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -144,6 +151,20 @@ class NotificationService {
   Future<void> requestPermissions() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(notificationEnabledKey) ?? true) {
+      // Request Android notification permission (required for Android 13+)
+      final androidPlugin =
+          _localNotifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final granted = await androidPlugin.requestNotificationsPermission();
+        debugPrint('🔔 Android notification permission granted: $granted');
+
+        // Also request exact alarm permission for scheduled notifications (Android 12+)
+        await androidPlugin.requestExactAlarmsPermission();
+        debugPrint('🔔 Android exact alarm permission requested');
+      }
+
+      // Request iOS notification permissions
       await _localNotifications
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
@@ -153,6 +174,7 @@ class NotificationService {
             sound: true,
           );
 
+      // Request Firebase Messaging permissions (for push notifications)
       await _firebaseMessaging.requestPermission(
         alert: true,
         announcement: false,
@@ -237,23 +259,38 @@ class NotificationService {
 
   tz.TZDateTime _getScheduledDateTime({int days = 1}) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+
     if (days == 0) {
       return now.add(const Duration(seconds: 5));
     }
 
+    // Start with today at 10 AM
     tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, 10)
-            .add(Duration(days: days));
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
 
-    // If the scheduled time is in the past, schedule it for the next day.
+    // Add the specified days
+    scheduledDate = scheduledDate.add(Duration(days: days));
+
+    // If the resulting time is in the past, move it to the next day
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
     // Ensure notifications are not sent during quiet hours (10 PM to 7 AM)
+    // If it falls in quiet hours, push to 8 AM the next (or current) available day
     if (scheduledDate.hour >= 22 || scheduledDate.hour < 7) {
-      scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, 7)
-          .add(Duration(days: days + (scheduledDate.isBefore(now) ? 1 : 0)));
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        8,
+      );
+
+      // If after adjusting to 8 AM it's still in the past, move to tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
     }
 
     return scheduledDate;

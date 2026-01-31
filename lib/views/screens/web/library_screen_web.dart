@@ -502,9 +502,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       builder: (context, snapshot) {
         if (!snapshot.hasData) return _buildLoading();
         final folders = snapshot.data ?? [];
-        if (folders.isEmpty)
+        if (folders.isEmpty) {
           return _buildEmptyState(
               'No folders yet', 'Organize your study materials into folders');
+        }
 
         return _buildMasonryGrid(
           folders
@@ -533,9 +534,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             .toList();
 
         if (filtered.isEmpty) {
-          if (_searchQuery.isNotEmpty)
+          if (_searchQuery.isNotEmpty) {
             return _buildEmptyState(
                 'No results found', 'Try adjusting your search query');
+          }
           return _buildEmptyState('Your library is empty',
               'Start creating content to populate your library');
         }
@@ -552,9 +554,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       builder: (context, snapshot) {
         if (!snapshot.hasData) return _buildLoading();
         final items = snapshot.data ?? [];
-        if (items.isEmpty)
+        if (items.isEmpty) {
           return _buildEmptyState(
-              'No ${type} yet', 'Create your first ${type} now');
+              'No $type yet', 'Create your first $type now');
+        }
         return _buildContentGrid(items, userId);
       },
     );
@@ -570,9 +573,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                 type: LibraryItemType.quiz,
                 timestamp: Timestamp.fromDate(q.timestamp)))
             .toList();
-        if (items.isEmpty)
+        if (items.isEmpty) {
           return _buildEmptyState(
               'No quizzes yet', 'Generate a quiz from any content');
+        }
         return _buildContentGrid(items, userId);
       },
     );

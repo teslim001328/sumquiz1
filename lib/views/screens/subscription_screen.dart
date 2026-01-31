@@ -7,6 +7,7 @@ import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/web_payment_service.dart';
 import 'package:sumquiz/providers/subscription_provider.dart';
+import 'package:sumquiz/views/widgets/web/beta_access_dialog.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -40,6 +41,47 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         }
       }
 
+      // If still empty on mobile, provide fallback informational products
+      if (products.isEmpty && !kIsWeb) {
+        products = [
+          _FallbackProductDetails(
+            id: 'daily_pass',
+            title: 'Daily Pass',
+            description: '24 hours unlimited access',
+            price: 'US\$0.99',
+            rawPrice: 0.99,
+          ),
+          _FallbackProductDetails(
+            id: 'weekly_pass',
+            title: 'Weekly Pass',
+            description: '7 days unlimited access',
+            price: 'US\$3.99',
+            rawPrice: 3.99,
+          ),
+          _FallbackProductDetails(
+            id: 'monthly_subscription',
+            title: 'Monthly Pro',
+            description: 'Standard monthly plan',
+            price: 'US\$9.99',
+            rawPrice: 9.99,
+          ),
+          _FallbackProductDetails(
+            id: 'yearly_subscription',
+            title: 'Annual Pro',
+            description: 'Best value annual plan',
+            price: 'US\$59.99',
+            rawPrice: 59.99,
+          ),
+          _FallbackProductDetails(
+            id: 'lifetime_access',
+            title: 'Lifetime',
+            description: 'One-time payment',
+            price: 'US\$129.99',
+            rawPrice: 129.99,
+          ),
+        ];
+      }
+
       // Sort: Monthly < Yearly < Lifetime
       products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
@@ -69,7 +111,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     bool success;
 
     if (kIsWeb) {
-      // Web Payment Flow
+      // Web Payment Redirect to Mobile Beta
+      // NOTE: Web payments are temporarily disabled in favor of mobile app beta access
+      /*
       final user = context.read<UserModel?>();
       if (user == null) {
         if (mounted) {
@@ -104,27 +148,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         user: user,
       );
 
-      success = result.success;
+      if (result.success && mounted) {
+        // Show "Processing payment..." dialog
+        _showProcessingDialog(context, user.uid);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Payment failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      */
 
+      // Show Beta Access Dialog instead
       if (mounted) {
-        if (result.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Upgrade Successful!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Give user time to see success message
-          await Future.delayed(const Duration(seconds: 1));
-          if (mounted) context.pop();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.errorMessage ?? 'Payment failed'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        showDialog(
+          context: context,
+          builder: (context) => const BetaAccessDialog(),
+        );
       }
     } else {
       // Mobile Payment Flow
@@ -505,7 +547,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  /// Quick Access Section for Daily Pass and Weekly Pass
   Widget _buildQuickAccessSection(ThemeData theme, bool isDark) {
     final passes = _products
         .where((p) => p.id.contains('daily') || p.id.contains('weekly'))
@@ -627,6 +668,74 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       ),
     );
   }
+
+  /*
+  void _showProcessingDialog(BuildContext context, String uid) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StreamBuilder<bool>(
+          stream: WebPaymentService().watchPremiumStatus(uid),
+          builder: (context, snapshot) {
+            final isPremium = snapshot.data ?? false;
+
+            if (isPremium) {
+              // Automatically close dialog and screen on success
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context); // Close dialog
+                  context.pop(); // Close subscription screen
+                }
+              });
+
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 64),
+                    const SizedBox(height: 16),
+                    Text('Payment Successful!',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    const Text('Your premium features are now unlocked.'),
+                  ],
+                ),
+              );
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  Text('Processing Payment...',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'We are waiting for confirmation from the payment provider. This usually takes a few seconds.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Wait in background'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+  */
 
   String _getProductTitle(String id) {
     if (id.contains('daily')) return 'Daily';
@@ -762,4 +871,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       ),
     );
   }
+}
+
+/// Fallback product details for when the store is offline
+class _FallbackProductDetails implements ProductDetails {
+  @override
+  final String id;
+  @override
+  final String title;
+  @override
+  final String description;
+  @override
+  final String price;
+  @override
+  final double rawPrice;
+  @override
+  final String currencyCode = 'USD';
+  @override
+  final String currencySymbol = '\$';
+
+  _FallbackProductDetails({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.price,
+    required this.rawPrice,
+  });
 }

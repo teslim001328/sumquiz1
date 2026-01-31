@@ -79,7 +79,7 @@ class DataStorageScreen extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: Column(
                     children: [
-                      _buildStorageInfoCard(context, theme)
+                      _buildStorageInfoCard(context, localDB, user, theme)
                           .animate()
                           .fadeIn(delay: 100.ms)
                           .slideY(begin: 0.1),
@@ -192,7 +192,8 @@ class DataStorageScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStorageInfoCard(BuildContext context, ThemeData theme) {
+  Widget _buildStorageInfoCard(BuildContext context,
+      LocalDatabaseService localDB, UserModel? user, ThemeData theme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -231,36 +232,61 @@ class DataStorageScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  '42.5 MB Used',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: 0.42,
-                    minHeight: 10,
-                    backgroundColor: theme.disabledColor.withValues(alpha: 0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('0 MB',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.disabledColor, fontSize: 12)),
-                    Text('100 MB Limit',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.disabledColor, fontSize: 12)),
-                  ],
-                )
+                if (user != null)
+                  FutureBuilder<double>(
+                    future: _calculateStorageUsage(localDB, user.uid),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final usageMB = snapshot.data!;
+                      final usagePercent = (usageMB / 100).clamp(0.0, 1.0);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${usageMB.toStringAsFixed(1)} MB Used',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: usagePercent,
+                              minHeight: 10,
+                              backgroundColor:
+                                  theme.disabledColor.withValues(alpha: 0.1),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('0 MB',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.disabledColor,
+                                      fontSize: 12)),
+                              Text('100 MB Limit',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.disabledColor,
+                                      fontSize: 12)),
+                            ],
+                          )
+                        ],
+                      );
+                    },
+                  )
+                else
+                  const Center(
+                    child: Text('Please log in to see storage usage'),
+                  )
               ],
             ),
           ),
@@ -510,5 +536,39 @@ class DataStorageScreen extends StatelessWidget {
       ),
     );
     // TODO: Implement actual sync functionality
+  }
+
+  Future<double> _calculateStorageUsage(
+      LocalDatabaseService localDB, String userId) async {
+    try {
+      // Initialize database if not already done
+      await localDB.init();
+
+      // Get counts of all stored items
+      final summaries = await localDB.getAllSummaries(userId);
+      final quizzes = await localDB.getAllQuizzes(userId);
+      final flashcardSets = await localDB.getAllFlashcardSets(userId);
+      final folders = await localDB.getAllFolders(userId);
+
+      // Estimate storage usage based on item counts
+      // Rough estimates: Summary (~2KB), Quiz (~3KB), FlashcardSet (~4KB), Folder (~0.5KB)
+      const double summarySizeKB = 2.0;
+      const double quizSizeKB = 3.0;
+      const double flashcardSetSizeKB = 4.0;
+      const double folderSizeKB = 0.5;
+
+      final totalKB = (summaries.length * summarySizeKB) +
+          (quizzes.length * quizSizeKB) +
+          (flashcardSets.length * flashcardSetSizeKB) +
+          (folders.length * folderSizeKB);
+
+      // Convert to MB and add some overhead
+      final totalMB = (totalKB / 1024) + 0.5; // Add 0.5MB overhead for metadata
+
+      return totalMB.clamp(0.1, 100.0); // Clamp between 0.1MB and 100MB
+    } catch (e) {
+      debugPrint('Error calculating storage usage: $e');
+      return 0.1; // Return minimum value on error
+    }
   }
 }

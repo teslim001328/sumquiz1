@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sumquiz/theme/web_theme.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
@@ -165,244 +166,404 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: WebColors.background,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Row(
-              children: [
-                // Left: Editor
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: WebColors.border),
-                        boxShadow: WebColors.cardShadow,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: WebColors.primaryLight,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(Icons.edit_note,
-                                      color: WebColors.primary, size: 20),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Source Content",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: WebColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Divider(height: 1, color: WebColors.border),
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              maxLines: null,
-                              expands: true,
-                              style: TextStyle(
-                                color: WebColors.textPrimary,
-                                fontSize: 16,
-                                height: 1.6,
-                              ),
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(24),
-                                border: InputBorder.none,
-                                hintText:
-                                    "Review and edit your content here...",
-                                hintStyle: TextStyle(
-                                  color: WebColors.textTertiary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ).animate().slideX(begin: -0.05).fadeIn(),
-                // Right: Configuration
-                SizedBox(
-                  width: 400,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(top: 24, right: 24, bottom: 24),
-                    child: Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: WebColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Configuration",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: WebColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          // Title
-                          Text(
-                            "Title",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: WebColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _titleController,
-                            style: TextStyle(
-                                color: WebColors.textPrimary, fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText: "Enter title...",
-                              hintStyle:
-                                  TextStyle(color: WebColors.textTertiary),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: WebColors.border),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          // Output types
-                          Text(
-                            "Generate",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: WebColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ...OutputType.values.map((type) {
-                            final isSelected = _selectedOutputs.contains(type);
-                            final gradients = {
-                              OutputType.summary: const LinearGradient(
-                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                              ),
-                              OutputType.quiz: const LinearGradient(
-                                colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
-                              ),
-                              OutputType.flashcards: const LinearGradient(
-                                colors: [Color(0xFFEC4899), Color(0xFFF97316)],
-                              ),
-                            };
-                            final icons = {
-                              OutputType.summary: Icons.article,
-                              OutputType.quiz: Icons.quiz,
-                              OutputType.flashcards: Icons.style,
-                            };
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: GestureDetector(
-                                onTap: () => _toggleOutput(type),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient:
-                                        isSelected ? gradients[type] : null,
-                                    color: !isSelected
-                                        ? Colors.white.withOpacity(0.05)
-                                        : null,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? Colors.transparent
-                                          : Colors.white.withOpacity(0.1),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 24),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left: Editor
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border:
+                              Border.all(color: WebColors.border, width: 1.5),
+                          boxShadow: WebColors.cardShadow,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      gradient: WebColors.HeroGradient,
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: gradients[type]!
-                                                  .colors
-                                                  .first
-                                                  .withOpacity(0.4),
-                                              blurRadius: 20,
-                                              offset: const Offset(0, 4),
+                                    child: Icon(Icons.edit_note,
+                                        color: Colors.white, size: 24),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Source Content",
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w700,
+                                            color: WebColors.textPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Review and edit your content before generating",
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 14,
+                                            color: WebColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: TextField(
+                                  controller: _textController,
+                                  maxLines: null,
+                                  expands: true,
+                                  style: GoogleFonts.outfit(
+                                    color: WebColors.textPrimary,
+                                    fontSize: 16,
+                                    height: 1.7,
+                                  ),
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(20),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      borderSide: BorderSide(
+                                          color: WebColors.border, width: 1.5),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      borderSide: BorderSide(
+                                          color: WebColors.border, width: 1.5),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      borderSide: BorderSide(
+                                          color: WebColors.primary, width: 2),
+                                    ),
+                                    hintText:
+                                        "Edit your content here... The AI will process this text to generate summaries, quizzes, and flashcards",
+                                    hintStyle: GoogleFonts.outfit(
+                                      color: WebColors.textTertiary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).animate().slideX(begin: -0.05).fadeIn(),
+
+                    const SizedBox(width: 32),
+
+                    // Right: Configuration
+                    SizedBox(
+                      width: 380,
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border:
+                              Border.all(color: WebColors.border, width: 1.5),
+                          boxShadow: WebColors.cardShadow,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Configuration",
+                              style: GoogleFonts.outfit(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: WebColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Customize your learning materials",
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                color: WebColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+
+                            // Title Section
+                            Text(
+                              "TITLE",
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: WebColors.textTertiary,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _titleController,
+                              style: GoogleFonts.outfit(
+                                  color: WebColors.textPrimary, fontSize: 16),
+                              decoration: InputDecoration(
+                                hintText: "Enter a title for your content...",
+                                hintStyle: GoogleFonts.outfit(
+                                    color: WebColors.textTertiary),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: WebColors.border),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: WebColors.border),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color: WebColors.primary, width: 2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Output types section
+                            Text(
+                              "OUTPUT TYPES",
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: WebColors.textTertiary,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ...OutputType.values.map((type) {
+                              final isSelected =
+                                  _selectedOutputs.contains(type);
+                              final gradients = {
+                                OutputType.summary: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF6366F1),
+                                    Color(0xFF8B5CF6)
+                                  ],
+                                ),
+                                OutputType.quiz: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF10B981),
+                                    Color(0xFF06B6D4)
+                                  ],
+                                ),
+                                OutputType.flashcards: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFEC4899),
+                                    Color(0xFFF97316)
+                                  ],
+                                ),
+                              };
+                              final icons = {
+                                OutputType.summary: Icons.article_outlined,
+                                OutputType.quiz: Icons.quiz_outlined,
+                                OutputType.flashcards: Icons.style_outlined,
+                              };
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: GestureDetector(
+                                  onTap: () => _toggleOutput(type),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient:
+                                          isSelected ? gradients[type] : null,
+                                      color: !isSelected
+                                          ? WebColors.backgroundAlt
+                                          : null,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? Colors.transparent
+                                            : WebColors.border,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: gradients[type]!
+                                                    .colors
+                                                    .first
+                                                    .withOpacity(0.3),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          icons[type],
+                                          color: isSelected
+                                              ? Colors.white
+                                              : WebColors.textSecondary,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            type.name.toUpperCase(),
+                                            style: GoogleFonts.outfit(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : WebColors.textPrimary,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              fontSize: 16,
                                             ),
-                                          ]
-                                        : null,
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+
+                            const SizedBox(height: 32),
+
+                            // Confidence indicator
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: WebColors.backgroundAlt,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: WebColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: WebColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(Icons.shield_outlined,
+                                        color: WebColors.primary, size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'AI Confidence',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: WebColors.textPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          'High confidence in content quality',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            color: WebColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const Spacer(),
+
+                            // Generate button
+                            if (_isLoading)
+                              _buildLoadingIndicator()
+                            else
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: WebColors.HeroGradient,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: WebColors.primary.withOpacity(0.3),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _handleGenerate,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 20),
+                                    minimumSize: const Size(double.infinity, 0),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
                                   child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        icons[type],
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
+                                      const Icon(Icons.auto_awesome,
+                                          color: Colors.white),
                                       const SizedBox(width: 12),
                                       Text(
-                                        type.name.toUpperCase(),
-                                        style: const TextStyle(
+                                        'GENERATE CONTENT',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
                                           color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          letterSpacing: 0.5,
                                         ),
                                       ),
-                                      const Spacer(),
-                                      if (isSelected)
-                                        const Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
                                     ],
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                          const Spacer(),
-                          // Generate button
-                          if (_isLoading)
-                            _buildLoadingIndicator()
-                          else
-                            ElevatedButton.icon(
-                              onPressed: _handleGenerate,
-                              icon: const Icon(Icons.auto_awesome),
-                              label: const Text('GENERATE CONTENT'),
-                              style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 20),
-                                minimumSize: const Size(double.infinity, 0),
-                              ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                ).animate().slideX(begin: 0.05).fadeIn(),
-              ],
+                    ).animate().slideX(begin: 0.05).fadeIn(),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -410,11 +571,12 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
   Widget _buildHeader() {
     return Container(
       margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: WebColors.border),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WebColors.border, width: 1.5),
+        boxShadow: WebColors.cardShadow,
       ),
       child: Row(
         children: [
@@ -423,12 +585,48 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
             onPressed: () => context.pop(),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Review & Generate',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: WebColors.textPrimary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Review & Generate',
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: WebColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Refine your content before AI processing',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    color: WebColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: WebColors.backgroundAlt,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome, color: WebColors.primary, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'AI Ready',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: WebColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -440,16 +638,16 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: WebColors.primaryLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: WebColors.primary),
+        color: WebColors.backgroundAlt,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: WebColors.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             child: CircularProgressIndicator(
               color: WebColors.primary,
               strokeWidth: 3,
@@ -458,12 +656,20 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
           const SizedBox(height: 16),
           Text(
             _loadingMessage,
-            style: TextStyle(
-              color: WebColors.primary,
+            style: GoogleFonts.outfit(
+              color: WebColors.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Processing with AI...',
+            style: GoogleFonts.outfit(
+              color: WebColors.textSecondary,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 16),
           TextButton.icon(

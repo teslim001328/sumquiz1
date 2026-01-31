@@ -46,6 +46,7 @@ class _QuizScreenState extends State<QuizScreen> {
   QuizState _state = QuizState.creation;
   String _loadingMessage = 'Generating Quiz...';
   String _errorMessage = '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   late List<LocalQuizQuestion> _questions;
 
@@ -64,6 +65,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _titleController.text = widget.quiz!.title;
       _quizId = widget.quiz!.id;
       _state = QuizState.inProgress;
+      _stopwatch.start();
     } else {
       _questions = [];
       _quizId = const Uuid().v4();
@@ -137,6 +139,7 @@ class _QuizScreenState extends State<QuizScreen> {
           _questions = quiz.questions;
           _quizId = quiz.id;
           _state = QuizState.inProgress;
+          _stopwatch.start();
         });
       } else {
         throw Exception('AI service returned an empty quiz.');
@@ -171,6 +174,7 @@ class _QuizScreenState extends State<QuizScreen> {
       questions: _questions,
       timestamp: DateTime.now(),
       scores: widget.quiz?.scores ?? [],
+      timeSpent: (widget.quiz?.timeSpent ?? 0) + _stopwatch.elapsed.inSeconds,
     );
 
     try {
@@ -198,10 +202,14 @@ class _QuizScreenState extends State<QuizScreen> {
     final percentageScore =
         _questions.isNotEmpty ? (_score / _questions.length) * 100.0 : 0.0;
 
+    _stopwatch.stop();
+    final currentSessionSeconds = _stopwatch.elapsed.inSeconds;
+
     var quizToSave = await _localDbService.getQuiz(_quizId!);
 
     if (quizToSave != null) {
       quizToSave.scores.add(percentageScore);
+      quizToSave.timeSpent += currentSessionSeconds;
     } else {
       quizToSave = LocalQuiz(
         id: _quizId!,
@@ -210,6 +218,7 @@ class _QuizScreenState extends State<QuizScreen> {
         questions: _questions,
         timestamp: DateTime.now(),
         scores: [percentageScore],
+        timeSpent: (widget.quiz?.timeSpent ?? 0) + currentSessionSeconds,
       );
     }
 
@@ -265,6 +274,8 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _resetQuizState() {
+    _stopwatch.reset();
+    _stopwatch.start();
     setState(() {
       _state = QuizState.inProgress;
       _score = 0;
@@ -272,6 +283,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _retry() {
+    _stopwatch.reset();
     setState(() {
       _state = QuizState.creation;
       _errorMessage = '';

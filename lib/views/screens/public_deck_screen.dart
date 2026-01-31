@@ -38,13 +38,23 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
     try {
       final deck = await FirestoreService().fetchPublicDeck(widget.deckId);
 
+      if (deck == null) {
+        if (mounted) {
+          setState(() {
+            _error = 'Deck not found or has been removed.';
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
       // Record View for Creator Bonus
       // Fire and forget - don't block UI
       // Note: reading context in async method after await is risky for mounted check,
       // but we need the user ID.
       // Safer to rely on FirebaseAuth if we don't want to depend on Provider readiness here, matches other services
       // But let's use the Provider if mounted.
-      if (mounted && deck != null) {
+      if (mounted) {
         final user = context.read<UserModel?>();
         if (user != null) {
           FirestoreService().recordDeckView(widget.deckId, user.uid);
@@ -58,9 +68,10 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
         });
       }
     } catch (e) {
+      debugPrint('Error fetching deck: $e');
       if (mounted) {
         setState(() {
-          _error = 'Failed to load deck';
+          _error = 'Failed to load deck. Please check your connection.';
           _isLoading = false;
         });
       }
@@ -84,6 +95,39 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
       final localDb = LocalDatabaseService();
       // Ensure DB initialized? Usually done in main. assume yes.
 
+      // Check if deck with same publicDeckId already exists
+      final existingFlashcardSets = await localDb.getAllFlashcardSets(user.uid);
+      final existingQuiz = await localDb.getAllQuizzes(user.uid);
+      final existingSummary = await localDb.getAllSummaries(user.uid);
+
+      // Check for existing items with the same publicDeckId
+      final existingFlashcardSet = existingFlashcardSets.firstWhere(
+        (set) => set.publicDeckId == _deck!.id,
+        orElse: () => LocalFlashcardSet.empty(),
+      );
+
+      final existingQuizItem = existingQuiz.firstWhere(
+        (quiz) => quiz.publicDeckId == _deck!.id,
+        orElse: () => LocalQuiz.empty(),
+      );
+
+      final existingSummaryItem = existingSummary.firstWhere(
+        (summary) => summary.publicDeckId == _deck!.id,
+        orElse: () => LocalSummary.empty(),
+      );
+
+      // Don't import if deck already exists (any component already exists)
+      if (existingFlashcardSet.id.isNotEmpty ||
+          existingQuizItem.id.isNotEmpty ||
+          existingSummaryItem.id.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('This deck has already been imported.')));
+          setState(() => _isImporting = false);
+        }
+        return;
+      }
+
       // 1. Save Summary
       if (_deck!.summaryData.isNotEmpty) {
         final summary = LocalSummary(
@@ -95,6 +139,8 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
           timestamp: DateTime.now(),
           isSynced: false,
           isReadOnly: true,
+          publicDeckId: _deck!.id,
+          creatorName: _deck!.creatorName,
         );
         await localDb.saveSummary(summary);
       }
@@ -158,9 +204,10 @@ class _PublicDeckScreenState extends State<PublicDeckScreen> {
         context.go('/library');
       }
     } catch (e) {
+      debugPrint('Error importing deck: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error importing deck: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error importing deck: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isImporting = false);

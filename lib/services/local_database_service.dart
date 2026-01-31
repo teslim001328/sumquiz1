@@ -263,7 +263,9 @@ class LocalDatabaseService {
   // --- DELETERS ---
 
   Future<void> _removeContentRelations(String contentId) async {
-    final relations = _contentFoldersBox.values.where((cf) => cf.contentId == contentId).toList();
+    final relations = _contentFoldersBox.values
+        .where((cf) => cf.contentId == contentId)
+        .toList();
     for (final relation in relations) {
       await _contentFoldersBox.delete(relation.key);
     }

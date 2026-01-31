@@ -24,7 +24,7 @@ import 'package:sumquiz/models/extraction_result.dart';
 sealed class Result<T> {
   const Result();
   factory Result.ok(T value) = Ok._;
-  factory Result.error(Exception error) = Error._;
+  factory Result.error(Exception error) = ResultError._;
 }
 
 final class Ok<T> extends Result<T> {
@@ -34,8 +34,8 @@ final class Ok<T> extends Result<T> {
   String toString() => 'Result<$T>.ok($value)';
 }
 
-final class Error<T> extends Result<T> {
-  const Error._(this.error);
+final class ResultError<T> extends Result<T> {
+  const ResultError._(this.error);
   final Exception error;
   @override
   String toString() => 'Result<$T>.error($error)';
@@ -276,6 +276,47 @@ class EnhancedAIService {
     );
   }
 
+  /// Extracts JSON from potentially markdown-wrapped responses.
+  /// Handles cases where AI wraps JSON in ```json ... ``` or ``` ... ``` blocks.
+  String _extractJsonFromResponse(String response) {
+    String cleaned = response.trim();
+
+    // Handle ```json ... ``` or ```JSON ... ``` blocks
+    final jsonBlockRegex =
+        RegExp(r'```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```', multiLine: true);
+    final match = jsonBlockRegex.firstMatch(cleaned);
+    if (match != null && match.group(1) != null) {
+      cleaned = match.group(1)!.trim();
+    }
+
+    // If no markdown block found, try to find JSON object/array directly
+    if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+      // Try to find the first { or [ and last } or ]
+      final firstBrace = cleaned.indexOf('{');
+      final firstBracket = cleaned.indexOf('[');
+      int start = -1;
+
+      if (firstBrace >= 0 && firstBracket >= 0) {
+        start = firstBrace < firstBracket ? firstBrace : firstBracket;
+      } else if (firstBrace >= 0) {
+        start = firstBrace;
+      } else if (firstBracket >= 0) {
+        start = firstBracket;
+      }
+
+      if (start >= 0) {
+        final isObject = cleaned[start] == '{';
+        final lastIndex =
+            isObject ? cleaned.lastIndexOf('}') : cleaned.lastIndexOf(']');
+        if (lastIndex > start) {
+          cleaned = cleaned.substring(start, lastIndex + 1);
+        }
+      }
+    }
+
+    return cleaned;
+  }
+
   String _sanitizeInput(String input) {
     input = input
         .replaceAll(RegExp(r'\n{3,}'), '\n\n')
@@ -359,7 +400,8 @@ $sanitizedText''';
     String jsonString = '';
     try {
       jsonString = await _generateWithFallback(prompt);
-      final data = json.decode(jsonString);
+      final cleanedJson = _extractJsonFromResponse(jsonString);
+      final data = json.decode(cleanedJson);
       return data['cleanedText'] ?? jsonString;
     } catch (e) {
       developer.log(
@@ -593,7 +635,7 @@ OUTPUT FORMAT (JSON):
       final yt = YoutubeExplode();
 
       try {
-        final video = await yt.videos.get(videoId);
+        await yt.videos.get(videoId);
 
         // For now, just return an error to indicate transcript extraction isn't available
         // This will cause the system to fall back to native analysis
@@ -933,22 +975,62 @@ $truncatedHtml''';
         ));
       }
 
-      // Check file size limits (100MB for most, 50MB for PDFs)
+      return await analyzeContentFromBytes(
+        bytes: fileBytes,
+        mimeType: mimeType,
+        customPrompt: customPrompt,
+        userId: userId,
+      );
+    } on TimeoutException catch (e) {
+      return Result.error(EnhancedAIServiceException(
+        'Request timed out. The file may be too large or complex.',
+        code: 'TIMEOUT',
+        originalError: e,
+      ));
+    } catch (e) {
+      developer.log(
+        'Unexpected error analyzing file from URL',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+      return Result.error(EnhancedAIServiceException(
+        'An unexpected error occurred while processing the file.',
+        code: 'UNKNOWN_ERROR',
+        originalError: e,
+      ));
+    }
+  }
+
+  /// Analyze content from direct bytes using Gemini multimodal API
+  /// Supports: PDF, images, audio, video
+  Future<Result<ExtractionResult>> analyzeContentFromBytes({
+    required Uint8List bytes,
+    required String mimeType,
+    String? customPrompt,
+    required String userId,
+  }) async {
+    try {
+      // Check usage limits
+      await _checkUsageLimits(userId);
+
+      if (bytes.isEmpty) {
+        return Result.error(EnhancedAIServiceException(
+          'File data is empty.',
+          code: 'EMPTY_FILE',
+        ));
+      }
+
+      // Check file size limits
       final maxSize =
           mimeType.contains('pdf') ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
-      if (fileBytes.length > maxSize) {
-        final sizeMB = (fileBytes.length / (1024 * 1024)).toStringAsFixed(1);
+      if (bytes.length > maxSize) {
+        final sizeMB = (bytes.length / (1024 * 1024)).toStringAsFixed(1);
         final limitMB = (maxSize / (1024 * 1024)).toInt();
         return Result.error(EnhancedAIServiceException(
           'File is too large ($sizeMB MB). Maximum size is $limitMB MB.',
           code: 'FILE_TOO_LARGE',
         ));
       }
-
-      developer.log(
-        'Downloaded ${fileBytes.length} bytes, sending to Gemini',
-        name: 'EnhancedAIService',
-      );
 
       // Build the prompt based on content type
       final contentTypePrompt = _getPromptForContentType(mimeType);
@@ -959,12 +1041,12 @@ ${customPrompt ?? 'Extract all educational content from this file for study purp
 
 OUTPUT FORMAT (JSON):
 {
-  "title": "Suggested title for this file",
+  "title": "Suggested title for this content",
   "content": "All extracted text..."
 }''';
 
       // Create multimodal content with file data
-      final filePart = DataPart(mimeType, fileBytes);
+      final filePart = DataPart(mimeType, bytes);
       final promptPart = TextPart(prompt);
 
       // Send to Gemini vision model for multimodal processing
@@ -979,57 +1061,30 @@ OUTPUT FORMAT (JSON):
         ));
       }
 
-      // Successfully extracted
-
-      final responseText = response.text!;
+      final responseText = _extractJsonFromResponse(response.text!);
       final data = json.decode(responseText);
-      final title = data['title'] ?? url.split('/').last;
+      final title = data['title'] ?? 'Imported Content';
       final extractedText = data['content'] ?? '';
-
-      developer.log(
-        'File analysis completed: $title',
-        name: 'EnhancedAIService',
-      );
 
       return Result.ok(ExtractionResult(
         text: extractedText,
         suggestedTitle: title,
-        sourceUrl: url,
       ));
     } on TimeoutException catch (e) {
       return Result.error(EnhancedAIServiceException(
-        'Request timed out. The file may be too large or complex.',
+        'AI analysis timed out. The file may be too complex.',
         code: 'TIMEOUT',
         originalError: e,
       ));
-    } on GenerativeAIException catch (e) {
-      developer.log(
-        'Gemini API error: ${e.message}',
-        name: 'EnhancedAIService',
-        error: e,
-      );
-
-      if (e.message.contains('quota') ||
-          e.message.contains('RESOURCE_EXHAUSTED')) {
-        return Result.error(EnhancedAIServiceException(
-          'API quota exceeded. Please try again later.',
-          code: 'QUOTA_EXCEEDED',
-        ));
-      }
-
-      return Result.error(EnhancedAIServiceException(
-        'Failed to analyze file: ${e.message}',
-        code: 'API_ERROR',
-      ));
     } catch (e) {
       developer.log(
-        'Unexpected error analyzing file from URL',
+        'Error analyzing bytes with AI',
         name: 'EnhancedAIService',
         error: e,
       );
       return Result.error(EnhancedAIServiceException(
-        'An unexpected error occurred while processing the file.',
-        code: 'UNKNOWN_ERROR',
+        'Failed to analyze content: $e',
+        code: 'ANALYSIS_FAILED',
         originalError: e,
       ));
     }
@@ -1168,19 +1223,6 @@ OUTPUT: Complete educational content from the video, organized for studying.''';
       return null;
     } catch (e) {
       return null;
-    }
-  }
-
-  /// Helper method to format duration for captions
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    } else {
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
   }
 
@@ -1344,57 +1386,114 @@ Text: $sanitizedText''';
   Future<String> _generateQuizJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
 
-    final prompt = '''Create a challenging multiple-choice exam quiz.
+    final model = GenerativeModel(
+      model: EnhancedAIConfig.primaryModel,
+      apiKey: dotenv.env['API_KEY']!,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        responseSchema: Schema.object(
+          properties: {
+            'questions': Schema.array(
+              items: Schema.object(
+                properties: {
+                  'question': Schema.string(
+                    description: 'A challenging exam-style question',
+                  ),
+                  'options': Schema.array(
+                    items: Schema.string(),
+                    description: 'Exactly 4 plausible options',
+                  ),
+                  'correctAnswer': Schema.string(
+                    description:
+                        'The correct option (must be one of the options)',
+                  ),
+                },
+                requiredProperties: ['question', 'options', 'correctAnswer'],
+              ),
+              description: 'List of multiple-choice questions',
+            ),
+          },
+          requiredProperties: ['questions'],
+        ),
+      ),
+    );
 
+    final prompt =
+        '''Create a challenging multiple-choice exam quiz based on this text.
+    
 Requirements:
-- Determine question count based on content depth (comprehensive coverage)
 - Questions should mimic real exam questions (application, not just recall)
 - Focus on high-yield facts, misconceptions, critical details
 - Exactly 4 options per question
 - correctAnswer must be one of the options
-- 3 plausible but incorrect distractors (common mistakes)
-
-Return ONLY valid JSON (no markdown):
-{
-  "questions": [
-    {
-      "question": "Diagnostic-style question...?",
-      "options": ["Correct Answer", "Distractor 1", "Distractor 2", "Distractor 3"],
-      "correctAnswer": "Correct Answer"
-    }
-  ]
-}
 
 Text: $sanitizedText''';
 
-    return _generateWithFallback(prompt);
+    final response = await model.generateContent(
+        [Content.text(prompt)]).timeout(const Duration(seconds: 90));
+
+    if (response.text == null || response.text!.isEmpty) {
+      throw EnhancedAIServiceException(
+        'AI returned an empty quiz response.',
+        code: 'EMPTY_RESPONSE',
+      );
+    }
+
+    return response.text!;
   }
 
   Future<String> _generateFlashcardsJson(String text) async {
     final sanitizedText = _sanitizeInput(text);
 
-    final prompt = '''Generate high-quality flashcards for Active Recall study.
+    final model = GenerativeModel(
+      model: EnhancedAIConfig.primaryModel,
+      apiKey: dotenv.env['API_KEY']!,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        responseSchema: Schema.object(
+          properties: {
+            'flashcards': Schema.array(
+              items: Schema.object(
+                properties: {
+                  'question': Schema.string(
+                    description: 'Clear and specific study question',
+                  ),
+                  'answer': Schema.string(
+                    description: 'Precise and concise answer',
+                  ),
+                },
+                requiredProperties: ['question', 'answer'],
+              ),
+              description: 'List of active recall flashcards',
+            ),
+          },
+          requiredProperties: ['flashcards'],
+        ),
+      ),
+    );
+
+    final prompt =
+        '''Generate high-quality flashcards for Active Recall study based on this text.
 
 Requirements:
-- Determine count based on key information throughout text
 - Focus on exam-likely facts
 - Front (Question): Specific prompt, term, or concept
-- Back (Answer): Precise definition, explanation, or key fact (no vague answers)
+- Back (Answer): Precise definition, explanation, or key fact
 - Cover: Definitions, Dates, Formulas, Key Figures, Cause-Effect relationships
-
-Return ONLY valid JSON (no markdown):
-{
-  "flashcards": [
-    {
-      "question": "What is the primary function of [Concept]?",
-      "answer": "[Precise Explanation]"
-    }
-  ]
-}
 
 Text: $sanitizedText''';
 
-    return _generateWithFallback(prompt);
+    final response = await model.generateContent(
+        [Content.text(prompt)]).timeout(const Duration(seconds: 90));
+
+    if (response.text == null || response.text!.isEmpty) {
+      throw EnhancedAIServiceException(
+        'AI returned an empty flashcards response.',
+        code: 'EMPTY_RESPONSE',
+      );
+    }
+
+    return response.text!;
   }
 
   Future<String> generateAndStoreOutputs({
@@ -1518,17 +1617,35 @@ Text: $sanitizedText''';
     LocalDatabaseService localDb,
     String folderId,
   ) async {
-    final data = json.decode(jsonString);
-    final summary = LocalSummary(
-      id: const Uuid().v4(),
-      userId: userId,
-      title: data['title'] ?? title,
-      content: data['content'] ?? '',
-      tags: List<String>.from(data['tags'] ?? []),
-      timestamp: DateTime.now(),
-      isSynced: false,
-    );
-    await localDb.saveSummary(summary, folderId);
+    try {
+      final cleanedJson = _extractJsonFromResponse(jsonString);
+      final data = json.decode(cleanedJson);
+
+      if (data == null || data is! Map) {
+        throw EnhancedAIServiceException('Invalid summary JSON format');
+      }
+
+      final summary = LocalSummary(
+        id: const Uuid().v4(),
+        userId: userId,
+        title: data['title']?.toString() ?? title,
+        content: data['content']?.toString() ?? '',
+        tags: data['tags'] is List
+            ? List<String>.from(data['tags'].map((t) => t.toString()))
+            : [],
+        timestamp: DateTime.now(),
+        isSynced: false,
+      );
+      await localDb.saveSummary(summary, folderId);
+    } catch (e) {
+      developer.log('Error saving summary',
+          name: 'EnhancedAIService', error: e);
+      throw EnhancedAIServiceException(
+        'Failed to save generated summary.',
+        code: 'SAVE_SUMMARY_FAILED',
+        originalError: e,
+      );
+    }
   }
 
   Future<void> _saveQuiz(
@@ -1538,32 +1655,53 @@ Text: $sanitizedText''';
     LocalDatabaseService localDb,
     String folderId,
   ) async {
-    final data = json.decode(jsonString);
-    final questions = (data['questions'] as List)
-        .map((q) => LocalQuizQuestion(
-              question: q['question'] ?? '',
-              options: List<String>.from(q['options'] ?? []),
-              correctAnswer: q['correctAnswer'] ?? '',
-            ))
-        .toList();
+    try {
+      final cleanedJson = _extractJsonFromResponse(jsonString);
+      final data = json.decode(cleanedJson);
 
-    if (questions.isEmpty) {
+      if (data == null || data is! Map || data['questions'] is! List) {
+        throw EnhancedAIServiceException('Invalid quiz JSON format');
+      }
+
+      final questions = (data['questions'] as List)
+          .map((q) {
+            if (q is! Map) return null;
+            return LocalQuizQuestion(
+              question: q['question']?.toString() ?? '',
+              options: q['options'] is List
+                  ? List<String>.from(q['options'].map((o) => o.toString()))
+                  : [],
+              correctAnswer: q['correctAnswer']?.toString() ?? '',
+            );
+          })
+          .whereType<LocalQuizQuestion>()
+          .toList();
+
+      if (questions.isEmpty) {
+        throw EnhancedAIServiceException(
+          'No quiz questions generated',
+          code: 'EMPTY_QUIZ',
+        );
+      }
+
+      final quiz = LocalQuiz(
+        id: const Uuid().v4(),
+        userId: userId,
+        title: title,
+        questions: questions,
+        timestamp: DateTime.now(),
+        scores: [],
+        isSynced: false,
+      );
+      await localDb.saveQuiz(quiz, folderId);
+    } catch (e) {
+      developer.log('Error saving quiz', name: 'EnhancedAIService', error: e);
       throw EnhancedAIServiceException(
-        'No quiz questions generated',
-        code: 'EMPTY_QUIZ',
+        'Failed to save generated quiz.',
+        code: 'SAVE_QUIZ_FAILED',
+        originalError: e,
       );
     }
-
-    final quiz = LocalQuiz(
-      id: const Uuid().v4(),
-      userId: userId,
-      title: title,
-      questions: questions,
-      timestamp: DateTime.now(),
-      scores: [],
-      isSynced: false,
-    );
-    await localDb.saveQuiz(quiz, folderId);
   }
 
   Future<void> _saveFlashcards(
@@ -1574,34 +1712,54 @@ Text: $sanitizedText''';
     String folderId,
     SpacedRepetitionService srsService,
   ) async {
-    final data = json.decode(jsonString);
-    final flashcards = (data['flashcards'] as List)
-        .map((f) => LocalFlashcard(
-              question: f['question'] ?? '',
-              answer: f['answer'] ?? '',
-            ))
-        .toList();
+    try {
+      final cleanedJson = _extractJsonFromResponse(jsonString);
+      final data = json.decode(cleanedJson);
 
-    if (flashcards.isEmpty) {
-      throw EnhancedAIServiceException(
-        'No flashcards generated',
-        code: 'EMPTY_FLASHCARDS',
+      if (data == null || data is! Map || data['flashcards'] is! List) {
+        throw EnhancedAIServiceException('Invalid flashcards JSON format');
+      }
+
+      final flashcards = (data['flashcards'] as List)
+          .map((f) {
+            if (f is! Map) return null;
+            return LocalFlashcard(
+              question: f['question']?.toString() ?? '',
+              answer: f['answer']?.toString() ?? '',
+            );
+          })
+          .whereType<LocalFlashcard>()
+          .toList();
+
+      if (flashcards.isEmpty) {
+        throw EnhancedAIServiceException(
+          'No flashcards generated',
+          code: 'EMPTY_FLASHCARDS',
+        );
+      }
+
+      final flashcardSet = LocalFlashcardSet(
+        id: const Uuid().v4(),
+        userId: userId,
+        title: title,
+        flashcards: flashcards,
+        timestamp: DateTime.now(),
+        isSynced: false,
       );
-    }
 
-    final flashcardSet = LocalFlashcardSet(
-      id: const Uuid().v4(),
-      userId: userId,
-      title: title,
-      flashcards: flashcards,
-      timestamp: DateTime.now(),
-      isSynced: false,
-    );
+      await localDb.saveFlashcardSet(flashcardSet, folderId);
 
-    await localDb.saveFlashcardSet(flashcardSet, folderId);
-
-    for (final flashcard in flashcards) {
-      await srsService.scheduleReview(flashcard.id, userId);
+      for (final flashcard in flashcards) {
+        await srsService.scheduleReview(flashcard.id, userId);
+      }
+    } catch (e) {
+      developer.log('Error saving flashcards',
+          name: 'EnhancedAIService', error: e);
+      throw EnhancedAIServiceException(
+        'Failed to save generated flashcards.',
+        code: 'SAVE_FLASHCARDS_FAILED',
+        originalError: e,
+      );
     }
   }
 
@@ -1782,8 +1940,9 @@ IMPORTANT: Generate educational content you're confident is accurate. If the top
 
       onProgress?.call('Processing generated content...');
 
-      // Parse the JSON response
-      final data = json.decode(response.text!);
+      // Parse the JSON response (sanitize in case AI wrapped in markdown)
+      final cleanedJson = _extractJsonFromResponse(response.text!);
+      final data = json.decode(cleanedJson);
       final title = data['title'] as String;
 
       // Create folder for this topic

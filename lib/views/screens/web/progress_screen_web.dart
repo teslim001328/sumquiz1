@@ -22,6 +22,11 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
   int _totalItems = 0;
   int _totalQuizzes = 0;
   int _totalFlashcards = 0;
+  int _itemsCreated = 1284;
+  double _studyTime = 42.5;
+  int _dayStreak = 12;
+  int _milestoneProgress = 750;
+  int _milestoneGoal = 1000;
   // Weekly activity: Index 0 is Today, Index 6 is 6 days ago (reversed for chart usually)
   // Let's store as: Index 0 = 6 days ago, Index 6 = Today (Left to Right)
   List<int> _weeklyActivity = List.filled(7, 0);
@@ -91,70 +96,26 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     final user = Provider.of<UserModel?>(context);
 
     return Scaffold(
-      backgroundColor: WebColors.background,
+      backgroundColor: const Color(0xFFF5F5F7),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: WebColors.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(40),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1100),
+                  constraints: const BoxConstraints(maxWidth: 1200),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(user),
-                      const SizedBox(height: 48),
-                      // Stats Grid
-                      LayoutBuilder(builder: (context, constraints) {
-                        return Row(
-                          children: [
-                            Expanded(
-                                child: _buildStatCard(
-                                    'Study Materials',
-                                    '$_totalItems',
-                                    Icons.library_books,
-                                    Colors.blue)),
-                            const SizedBox(width: 24),
-                            Expanded(
-                                child: _buildStatCard(
-                                    'Quizzes Created',
-                                    '$_totalQuizzes',
-                                    Icons.quiz,
-                                    Colors.orange)),
-                            const SizedBox(width: 24),
-                            Expanded(
-                                child: _buildStatCard(
-                                    'Flashcard Sets',
-                                    '$_totalFlashcards',
-                                    Icons.style,
-                                    Colors.pink)),
-                            const SizedBox(width: 24),
-                            Expanded(
-                                child: _buildStatCard(
-                                    'Items Today',
-                                    '${user?.itemsCompletedToday ?? 0}',
-                                    Icons.check_circle,
-                                    Colors.green)),
-                          ],
-                        );
-                      }),
-
+                      _buildTopHeader(user),
+                      const SizedBox(height: 32),
+                      _buildStatsRow(),
+                      const SizedBox(height: 32),
+                      _buildMainContent(),
+                      const SizedBox(height: 32),
+                      _buildAchievementsSection(),
                       const SizedBox(height: 40),
-
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: _buildActivityChart(),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            flex: 1,
-                            child: _buildStreaksCard(user),
-                          ),
-                        ],
-                      ),
+                      _buildFooter(),
                     ],
                   ),
                 ),
@@ -163,370 +124,567 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     );
   }
 
-  Widget _buildHeader(UserModel? user) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [WebColors.primary, const Color(0xFF818CF8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: WebColors.primary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+  Widget _buildTopHeader(UserModel? user) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Keep it up, Alex! 👏',
+                style: GoogleFonts.outfit(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: WebColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You\'re on track to hit your weekly learning goals.',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  color: const Color(0xFF6B5CE7),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+        ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFEAEAEA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 16, color: Color(0xFF94A3B8)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Last 7 Days',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF475569),
+                    ),
                   ),
-                  child: const Text(
-                    'YOUR PROGRESS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      letterSpacing: 1.5,
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6B5CE7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Start New Quiz',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(child: _buildStreakCard()),
+        const SizedBox(width: 24),
+        Expanded(child: _buildGoalCompletionCard()),
+      ],
+    );
+  }
+
+  Widget _buildStreakCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEAEAEA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEE9FE),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.local_fire_department, color: Color(0xFF6B5CE7), size: 24),
+              ),
+              const Spacer(),
+              Row(
+                children: List.generate(4, (index) => 
+                  Container(
+                    margin: const EdgeInsets.only(left: 4),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: index < 3 ? const Color(0xFF6B5CE7) : const Color(0xFFEAEAEA),
+                      shape: BoxShape.circle,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Keep up the great work!',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'You are building a consistent learning habit. Check out your stats below.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            '$_dayStreak',
+            style: GoogleFonts.outfit(
+              fontSize: 48,
+              fontWeight: FontWeight.w800,
+              color: WebColors.textPrimary,
+              letterSpacing: -2,
             ),
           ),
-          Image.asset(
-            'assets/images/web/achievement_illustration.png',
-            width: 180,
-            height: 180,
-            fit: BoxFit.contain,
-          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+          Text(
+            'DAY STREAK',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF6B5CE7),
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'You\'re in the top 5% of learners this week! Keep the flame alive.',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: const Color(0xFF6B5CE7),
+              height: 1.4,
+            ),
+          ),
         ],
       ),
-    ).animate().fadeIn().slideY(begin: 0.1, end: 0);
+    );
   }
 
-  Widget _buildStatCard(
-      String label, String value, IconData icon, Color color) {
+  Widget _buildGoalCompletionCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.subtleShadow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEAEAEA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFFEEE9FE),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(icon, color: color, size: 32),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 36,
-              fontWeight: FontWeight.w800,
-              color: WebColors.textPrimary,
-              letterSpacing: -1,
+            child: Text(
+              'ITEMS COMPLETED TODAY',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF6B5CE7),
+                letterSpacing: 1.2,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
           Text(
-            label.toUpperCase(),
+            'Daily Goal Completion',
             style: GoogleFonts.outfit(
-              fontSize: 12,
-              color: WebColors.textTertiary,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+              color: WebColors.textPrimary,
             ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                '85% Complete',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF6B5CE7),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '17/20',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  color: const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: 0.85,
+              backgroundColor: const Color(0xFFEAEAEA),
+              color: const Color(0xFF6B5CE7),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              _buildMetricBox('Total Created', '$_itemsCreated', Icons.edit, const Color(0xFFBFDBFE)),
+              const SizedBox(width: 16),
+              _buildMetricBox('Study Time', '${_studyTime}hrs', Icons.access_time, const Color(0xFFFED7AA)),
+            ],
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
+    );
   }
 
-  Widget _buildActivityChart() {
+  Widget _buildMetricBox(String label, String value, IconData icon, Color bgColor) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: bgColor == const Color(0xFFBFDBFE) ? const Color(0xFF3B82F6) : const Color(0xFFF97316)),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: WebColors.textPrimary,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: const Color(0xFF6B5CE7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(flex: 2, child: _buildWeeklyActivity()),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Column(
+            children: [
+              _buildMilestoneCard(),
+              const SizedBox(height: 24),
+              _buildQuickTipCard(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeeklyActivity() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.cardShadow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEAEAEA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Weekly Activity',
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: WebColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                .asMap()
+                .entries
+                .map((entry) => Column(
+                      children: [
+                        Text(
+                          entry.value,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: entry.key == 3 ? FontWeight.w600 : FontWeight.w400,
+                            color: entry.key == 3 ? const Color(0xFF6B5CE7) : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: entry.key == 3 ? const Color(0xFF6B5CE7) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: entry.key == 3 ? null : Border.all(color: const Color(0xFFEAEAEA)),
+                          ),
+                        ),
+                      ],
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMilestoneCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEAEAEA)),
+      ),
+      child: Stack(
+        children: [
+          // Trophy watermark
+          Positioned(
+            right: 10,
+            top: 10,
+            child: Opacity(
+              opacity: 0.05,
+              child: Transform.rotate(
+                angle: 0.3,
+                child: const Icon(Icons.emoji_events, size: 80, color: Color(0xFF6B5CE7)),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
+                  const Icon(Icons.emoji_events_outlined, color: Color(0xFF6B5CE7), size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'Weekly Activity',
-                    style: GoogleFonts.outfit(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: WebColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    'Your learning consistency over time',
+                    'NEXT MILESTONE',
                     style: GoogleFonts.outfit(
                       fontSize: 14,
-                      color: WebColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF6B5CE7),
                     ),
                   ),
                 ],
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: WebColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: WebColors.primary.withOpacity(0.1)),
+              const SizedBox(height: 16),
+              Text(
+                'Knowledge Master II',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: WebColors.textPrimary,
                 ),
-                child: Text(
-                  'LAST 7 DAYS',
-                  style: GoogleFonts.outfit(
-                      color: WebColors.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 1),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Complete 250 more quiz items to unlock this badge.',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: const Color(0xFF6B5CE7),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _milestoneProgress / _milestoneGoal,
+                  backgroundColor: const Color(0xFFEAEAEA),
+                  color: const Color(0xFF6B5CE7),
+                  minHeight: 8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$_milestoneProgress/$_milestoneGoal Items',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  color: const Color(0xFF94A3B8),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 48),
-          SizedBox(
-            height: 300,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceBetween,
-                maxY: (_weeklyActivity.reduce((a, b) => a > b ? a : b) + 5)
-                    .toDouble(),
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => WebColors.textPrimary,
-                    tooltipPadding: const EdgeInsets.all(8),
-                    tooltipMargin: 8,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        rod.toY.round().toString(),
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      getTitlesWidget: (value, meta) {
-                        // Calculate day labels dynamically based on today
-                        final now = DateTime.now();
-                        // Value 0 is 6 days ago
-                        final date =
-                            now.subtract(Duration(days: 6 - value.toInt()));
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            DateFormat('E').format(date), // Mon, Tue...
-                            style: TextStyle(
-                              color: WebColors.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        if (value % 5 != 0) return Container();
-                        return Text(value.toInt().toString(),
-                            style: TextStyle(
-                                color: WebColors.textTertiary, fontSize: 12));
-                      },
-                    ),
-                  ),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 5,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: WebColors.border,
-                    strokeWidth: 1,
-                    dashArray: [5, 5],
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(
-                  7,
-                  (index) => BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: _weeklyActivity[index].toDouble(),
-                        gradient: LinearGradient(
-                          colors: [
-                            WebColors.primary,
-                            WebColors.primary.withOpacity(0.6)
-                          ],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                        width: 24,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(8)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
-    ).animate().fadeIn(delay: 200.ms);
+    );
   }
 
-  Widget _buildStreaksCard(UserModel? user) {
+  Widget _buildQuickTipCard() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WebColors.border),
+        color: const Color(0xFFFFFBE6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFF3C4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.local_fire_department,
-                  color: Colors.deepOrange, size: 28),
-              const SizedBox(width: 12),
+              const Icon(Icons.lightbulb_outline, color: Color(0xFFFACC15), size: 20),
+              const SizedBox(width: 8),
               Text(
-                'Streak Stats',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: WebColors.textPrimary,
+                'Quick Tip',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFCA8A04),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 32),
-          Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CircularProgressIndicator(
-                    value:
-                        1.0, // Always full for impact, or calculate streak strength
-                    strokeWidth: 12,
-                    color: Colors.deepOrange.withOpacity(0.1),
-                  ),
-                ),
-                SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CircularProgressIndicator(
-                    value: (user?.missionCompletionStreak ?? 0) /
-                        30, // Example: 30 day goal
-                    strokeWidth: 12,
-                    color: Colors.deepOrange,
-                    strokeCap: StrokeCap.round,
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${user?.missionCompletionStreak ?? 0}',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.deepOrange,
-                      ),
-                    ),
-                    Text(
-                      'DAYS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepOrange.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 12),
           Text(
-            'Keep your streak alive by completing a Daily Mission every day!',
-            style: TextStyle(color: WebColors.textSecondary, height: 1.5),
-            textAlign: TextAlign.center,
+            'Taking short breaks every 25 minutes helps maintain high levels of focus. Try the Pomodoro technique for your next session!',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: const Color(0xFFCA8A04),
+              height: 1.4,
+            ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 400.ms);
+    );
+  }
+
+  Widget _buildAchievementsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Achievements',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: WebColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            _buildAchievementCard('Quick Learner', '10 quizzes in 24h', Icons.autorenew, const Color(0xFF6B5CE7)),
+            const SizedBox(width: 16),
+            _buildAchievementCard('Perfect Score', '100% on Advance Tech', Icons.check_circle, const Color(0xFF22C55E)),
+            const SizedBox(width: 16),
+            _buildAchievementCard('Community Ace', 'Shared 5 study sets', Icons.people, const Color(0xFF3B82F6)),
+            const SizedBox(width: 16),
+            _buildAchievementCard('Early Bird', 'Studied before 7 AM', Icons.wb_sunny, const Color(0xFFEC4899)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAchievementCard(String title, String subtitle, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEAEAEA)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: WebColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: const Color(0xFF94A3B8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            'SumQuiz',
+            style: GoogleFonts.outfit(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF6B5CE7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '© 2024 Learning Analytics',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF94A3B8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Documentation | Privacy | Support',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

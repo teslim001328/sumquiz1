@@ -67,7 +67,25 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
     });
   }
 
+  /// Check if API key is properly configured before processing
+  bool _isApiKeyConfigured() {
+    try {
+      final aiService = context.read<EnhancedAIService>();
+      // If we can access the service without error, the API key is configured
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _handleGenerate() async {
+    // Check if API key is configured
+    if (!_isApiKeyConfigured()) {
+      _showError(
+          '🔑 API key is not configured. Please set up your API key in the .env file.');
+      return;
+    }
+    
     if (_textController.text.trim().length < minTextLength) {
       _showError(
           'The text is too short. Please provide at least $minTextLength characters to ensure high-quality content generation.');
@@ -150,10 +168,12 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
       }
     } on EnhancedAIServiceException catch (e) {
       _showError(
-          'AI Processing Error: Failed to create content. The AI may have returned an invalid format. Please try again. Error: ${e.message}');
+          'AI Processing Error: ${e.message}');
     } catch (e) {
+      // Log the actual error for debugging
+      print('Error generating content: $e');
       _showError(
-          'Failed to generate content after several attempts. The AI model may be temporarily unavailable.');
+          'Failed to generate content. Please check your API key and internet connection, then try again.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

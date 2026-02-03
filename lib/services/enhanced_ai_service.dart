@@ -95,40 +95,65 @@ class EnhancedAIService {
   late final GenerativeModel _model;
   late final GenerativeModel _fallbackModel;
   late final GenerativeModel _visionModel;
+  
+  // Track if models have been initialized
+  bool _modelsInitialized = false;
 
   EnhancedAIService({required IAPService iapService})
       : _iapService = iapService {
-    final apiKey = dotenv.env['API_KEY']!;
+    // Validate API key before initializing models
+    final apiKey = dotenv.env['API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      throw EnhancedAIServiceException(
+        'API key is not configured. Please set API_KEY in your .env file.',
+        code: 'MISSING_API_KEY',
+      );
+    }
 
-    _model = GenerativeModel(
-      model: EnhancedAIConfig.primaryModel,
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: EnhancedAIConfig.defaultTemperature,
-        maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
-        responseMimeType: 'application/json',
-      ),
-    );
+    // Initialize models with proper error handling
+    _initializeModels(apiKey);
+  }
 
-    _fallbackModel = GenerativeModel(
-      model: EnhancedAIConfig.fallbackModel,
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: EnhancedAIConfig.fallbackTemperature,
-        maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
-        responseMimeType: 'application/json',
-      ),
-    );
+  void _initializeModels(String apiKey) {
+    try {
+      _model = GenerativeModel(
+        model: EnhancedAIConfig.primaryModel,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          temperature: EnhancedAIConfig.defaultTemperature,
+          maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
+          responseMimeType: 'application/json',
+        ),
+      );
 
-    _visionModel = GenerativeModel(
-      model: EnhancedAIConfig.visionModel,
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.2,
-        maxOutputTokens: 4096,
-        responseMimeType: 'application/json',
-      ),
-    );
+      _fallbackModel = GenerativeModel(
+        model: EnhancedAIConfig.fallbackModel,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          temperature: EnhancedAIConfig.fallbackTemperature,
+          maxOutputTokens: EnhancedAIConfig.maxOutputTokens,
+          responseMimeType: 'application/json',
+        ),
+      );
+
+      _visionModel = GenerativeModel(
+        model: EnhancedAIConfig.visionModel,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          temperature: 0.2,
+          maxOutputTokens: 4096,
+          responseMimeType: 'application/json',
+        ),
+      );
+      
+      _modelsInitialized = true;
+    } catch (e) {
+      throw EnhancedAIServiceException(
+        'Failed to initialize AI models. Check your API key and internet connection.',
+        code: 'MODEL_INITIALIZATION_FAILED',
+        originalError: e,
+      );
+    }
   }
 
   Future<void> _checkUsageLimits(String userId) async {
@@ -279,42 +304,60 @@ class EnhancedAIService {
   /// Extracts JSON from potentially markdown-wrapped responses.
   /// Handles cases where AI wraps JSON in ```json ... ``` or ``` ... ``` blocks.
   String _extractJsonFromResponse(String response) {
-    String cleaned = response.trim();
+    try {
+      String cleaned = response.trim();
 
-    // Handle ```json ... ``` or ```JSON ... ``` blocks
-    final jsonBlockRegex =
-        RegExp(r'```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```', multiLine: true);
-    final match = jsonBlockRegex.firstMatch(cleaned);
-    if (match != null && match.group(1) != null) {
-      cleaned = match.group(1)!.trim();
-    }
-
-    // If no markdown block found, try to find JSON object/array directly
-    if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) {
-      // Try to find the first { or [ and last } or ]
-      final firstBrace = cleaned.indexOf('{');
-      final firstBracket = cleaned.indexOf('[');
-      int start = -1;
-
-      if (firstBrace >= 0 && firstBracket >= 0) {
-        start = firstBrace < firstBracket ? firstBrace : firstBracket;
-      } else if (firstBrace >= 0) {
-        start = firstBrace;
-      } else if (firstBracket >= 0) {
-        start = firstBracket;
+      // Handle ```json ... ``` or ```JSON ... ``` blocks
+      final jsonBlockRegex =
+          RegExp(r'```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```', multiLine: true);
+      final match = jsonBlockRegex.firstMatch(cleaned);
+      if (match != null && match.group(1) != null) {
+        cleaned = match.group(1)!.trim();
       }
 
-      if (start >= 0) {
-        final isObject = cleaned[start] == '{';
-        final lastIndex =
-            isObject ? cleaned.lastIndexOf('}') : cleaned.lastIndexOf(']');
-        if (lastIndex > start) {
-          cleaned = cleaned.substring(start, lastIndex + 1);
+      // If no markdown block found, try to find JSON object/array directly
+      if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+        // Try to find the first { or [ and last } or ]
+        final firstBrace = cleaned.indexOf('{');
+        final firstBracket = cleaned.indexOf('[');
+        int start = -1;
+
+        if (firstBrace >= 0 && firstBracket >= 0) {
+          start = firstBrace < firstBracket ? firstBrace : firstBracket;
+        } else if (firstBrace >= 0) {
+          start = firstBrace;
+        } else if (firstBracket >= 0) {
+          start = firstBracket;
+        }
+
+        if (start >= 0) {
+          final isObject = cleaned[start] == '{';
+          final lastIndex =
+              isObject ? cleaned.lastIndexOf('}') : cleaned.lastIndexOf(']');
+          if (lastIndex > start) {
+            cleaned = cleaned.substring(start, lastIndex + 1);
+          }
         }
       }
-    }
 
-    return cleaned;
+      // Final validation - return original if still not valid JSON
+      if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+        developer.log(
+          'Could not extract valid JSON from response, returning original',
+          name: 'EnhancedAIService',
+        );
+        return response; // Return original response if no valid JSON found
+      }
+
+      return cleaned;
+    } catch (e) {
+      developer.log(
+        'Error extracting JSON from response: $e',
+        name: 'EnhancedAIService',
+        error: e,
+      );
+      return response; // Return original response on error
+    }
   }
 
   String _sanitizeInput(String input) {
@@ -1358,7 +1401,14 @@ Text: $sanitizedText''';
         );
       }
 
-      final data = json.decode(response.text!);
+      final cleanedResponse = _extractJsonFromResponse(response.text!);
+      final data = json.decode(cleanedResponse);
+      if (data is! Map) {
+        throw EnhancedAIServiceException(
+          'Invalid response format: expected JSON object',
+          code: 'INVALID_JSON_FORMAT',
+        );
+      }
       if (!data.containsKey('title') || !data.containsKey('content')) {
         throw EnhancedAIServiceException(
           'Invalid response structure',
@@ -1619,6 +1669,9 @@ Text: $sanitizedText''';
   ) async {
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
+      if (cleanedJson.isEmpty || cleanedJson == jsonString) {
+        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+      }
       final data = json.decode(cleanedJson);
 
       if (data == null || data is! Map) {
@@ -1657,6 +1710,9 @@ Text: $sanitizedText''';
   ) async {
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
+      if (cleanedJson.isEmpty || cleanedJson == jsonString) {
+        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+      }
       final data = json.decode(cleanedJson);
 
       if (data == null || data is! Map || data['questions'] is! List) {
@@ -1714,6 +1770,9 @@ Text: $sanitizedText''';
   ) async {
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
+      if (cleanedJson.isEmpty || cleanedJson == jsonString) {
+        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+      }
       final data = json.decode(cleanedJson);
 
       if (data == null || data is! Map || data['flashcards'] is! List) {
@@ -1942,6 +2001,9 @@ IMPORTANT: Generate educational content you're confident is accurate. If the top
 
       // Parse the JSON response (sanitize in case AI wrapped in markdown)
       final cleanedJson = _extractJsonFromResponse(response.text!);
+      if (cleanedJson.isEmpty || cleanedJson == response.text) {
+        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+      }
       final data = json.decode(cleanedJson);
       final title = data['title'] as String;
 
@@ -2054,6 +2116,21 @@ IMPORTANT: Generate educational content you're confident is accurate. If the top
         'Failed to generate study materials. Please try again.',
         code: 'GENERATION_FAILED',
         originalError: e,
+      );
+    }
+  }
+  
+  /// Properly dispose of all model instances to free resources
+  void dispose() {
+    try {
+      // Note: The google_generative_ai package doesn't expose a direct dispose method
+      // Models will be garbage collected when the service is disposed
+      // In future versions of the SDK, if dispose methods become available, they should be called here
+    } catch (e) {
+      developer.log(
+        'Error disposing EnhancedAIService',
+        name: 'EnhancedAIService',
+        error: e,
       );
     }
   }

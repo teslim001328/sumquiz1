@@ -17,6 +17,7 @@ import 'package:firebase_messaging_web/firebase_messaging_web.dart';
 import 'package:flutter_inappwebview_web/web/main.dart';
 import 'package:flutter_keyboard_visibility_temp_fork/flutter_keyboard_visibility_web.dart';
 import 'package:flutter_native_splash/flutter_native_splash_web.dart';
+import 'package:flutter_timezone/flutter_timezone_web.dart';
 import 'package:fluttertoast/fluttertoast_web.dart';
 import 'package:google_sign_in_web/google_sign_in_web.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
@@ -40,6 +41,7 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   InAppWebViewFlutterPlugin.registerWith(registrar);
   FlutterKeyboardVisibilityTempForkWeb.registerWith(registrar);
   FlutterNativeSplashWeb.registerWith(registrar);
+  FlutterTimezonePlugin.registerWith(registrar);
   FluttertoastWebPlugin.registerWith(registrar);
   GoogleSignInPlugin.registerWith(registrar);
   ImagePickerPlugin.registerWith(registrar);

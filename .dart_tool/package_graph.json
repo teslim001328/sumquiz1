@@ -32,6 +32,7 @@
         "flutter_staggered_animations",
         "flutter_staggered_grid_view",
         "flutter_svg",
+        "flutter_timezone",
         "flutterwave_standard",
         "go_router",
         "google_fonts",
@@ -196,6 +197,16 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "flutter_timezone",
+      "version": "5.0.1",
+      "dependencies": [
+        "equatable",
+        "flutter",
+        "flutter_web_plugins",
+        "meta"
       ]
     },
     {
@@ -1205,6 +1216,14 @@
       ]
     },
     {
+      "name": "equatable",
+      "version": "2.0.7",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
       "name": "markdown",
       "version": "7.3.0",
       "dependencies": [
@@ -1788,14 +1807,6 @@
       "version": "3.1.2",
       "dependencies": [
         "typed_data"
-      ]
-    },
-    {
-      "name": "equatable",
-      "version": "2.0.7",
-      "dependencies": [
-        "collection",
-        "meta"
       ]
     },
     {

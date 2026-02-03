@@ -145,10 +145,11 @@ class _LandingPageWebState extends State<LandingPageWeb>
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white,
-                        size: 24,
+                      child: Image.asset(
+                        'assets/images/sumquiz_logo.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -319,17 +320,15 @@ class _LandingPageWebState extends State<LandingPageWeb>
                       ),
                     ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.2),
                     const SizedBox(height: 24),
-                    ShaderMask(
-                      shaderCallback: (bounds) =>
-                          WebColors.HeroGradient.createShader(bounds),
-                      child: Text(
-                        'Master Anything with AI-Powered Learning',
-                        style: TextStyle(
-                          fontSize: 60,
-                          fontWeight: FontWeight.w800,
-                          height: 1.1,
-                          letterSpacing: -1,
-                          color: Colors.white,
+                    Text(
+                      'Master Anything with AI-Powered Learning',
+                      style: TextStyle(
+                        fontSize: 60,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                        letterSpacing: -1,
+                        foreground: Paint()..shader = WebColors.HeroGradient.createShader(
+                          Rect.fromLTWH(0, 0, 1200, 100),
                         ),
                       ),
                     )
@@ -868,19 +867,19 @@ class _LandingPageWebState extends State<LandingPageWeb>
                     'SumQuiz helped me ace my medical boards! The spaced repetition system is a game-changer.',
                     'Dr. Sarah Chen',
                     'Medical Student, Stanford',
-                    'assets/images/avatars/sarah.jpg',
+                    'assets/images/web/avatar_1.png',
                   ),
                   _buildTestimonialCard(
                     'I went from struggling with chemistry to getting straight A\'s. The AI-generated quizzes are perfect for my learning style.',
                     'Mike Rodriguez',
                     'Chemistry Major, MIT',
-                    'assets/images/avatars/mike.jpg',
+                    'assets/images/web/avatar_2.png',
                   ),
                   _buildTestimonialCard(
                     'As a teacher, I love how SumQuiz makes complex topics digestible. My students\' test scores improved by 25%.',
                     'Prof. Jennifer Lee',
                     'University of Oxford',
-                    'assets/images/avatars/jennifer.jpg',
+                    'assets/images/web/avatar_3.png',
                   ),
                 ],
               ),
@@ -1146,10 +1145,11 @@ class _LandingPageWebState extends State<LandingPageWeb>
                               gradient: WebColors.HeroGradient,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(
-                              Icons.auto_awesome_rounded,
-                              color: Colors.white,
-                              size: 20,
+                            child: Image.asset(
+                              'assets/images/sumquiz_logo.png',
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1209,7 +1209,7 @@ class _LandingPageWebState extends State<LandingPageWeb>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '© 2024 SumQuiz. All rights reserved.',
+                    '© 2026 SumQuiz. All rights reserved.',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 14,

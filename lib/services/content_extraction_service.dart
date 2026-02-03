@@ -21,6 +21,61 @@ class ContentExtractionService {
 
   ContentExtractionService(this._enhancedAiService);
 
+  /// Validates input based on type to prevent crashes from invalid inputs
+  void _validateInput(String type, dynamic input) {
+    switch (type) {
+      case 'text':
+        if (input == null || input.toString().isEmpty) {
+          throw Exception('Text input cannot be empty');
+        }
+        if (input.toString().length > 50000) {
+          throw Exception('Text input too large. Maximum 50,000 characters allowed.');
+        }
+        break;
+      case 'link':
+        if (input == null || input.toString().isEmpty) {
+          throw Exception('URL cannot be empty');
+        }
+        final url = input.toString();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          throw Exception('Invalid URL format. Must start with http:// or https://');
+        }
+        break;
+      case 'pdf':
+        if (input == null) {
+          throw Exception('PDF input cannot be null');
+        }
+        if (input is Uint8List) {
+          if (input.isEmpty) {
+            throw Exception('PDF file is empty');
+          }
+          if (input.length > 50 * 1024 * 1024) { // 50MB limit
+            throw Exception('PDF file too large. Maximum 50MB allowed.');
+          }
+        } else {
+          throw Exception('PDF input must be Uint8List');
+        }
+        break;
+      case 'image':
+        if (input == null) {
+          throw Exception('Image input cannot be null');
+        }
+        if (input is Uint8List) {
+          if (input.isEmpty) {
+            throw Exception('Image file is empty');
+          }
+          if (input.length > 10 * 1024 * 1024) { // 10MB limit
+            throw Exception('Image file too large. Maximum 10MB allowed.');
+          }
+        } else {
+          throw Exception('Image input must be Uint8List');
+        }
+        break;
+      default:
+        throw Exception('Unknown content type: $type');
+    }
+  }
+
   Future<ExtractionResult> extractContent({
     required String type, // 'text', 'link', 'pdf', 'image'
     dynamic input,
@@ -28,6 +83,9 @@ class ContentExtractionService {
     bool refineWithAI = false,
     void Function(String)? onProgress,
   }) async {
+    // Validate input before processing to prevent crashes
+    _validateInput(type, input);
+    
     String rawText = '';
     String suggestedTitle = 'Imported Content';
 

@@ -14,7 +14,18 @@ service cloud.firestore {
 
     // Users Collection
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) 
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isPro', 'isPremium', 'subscriptionExpiry', 'currentProduct']);
+    }
+
+    // Payments Collection
+    match /payments/{txRef} {
+      allow read: if isAuthenticated() && (
+        !resource.data.uid || resource.data.uid == request.auth.uid
+      );
     }
 
     // Content Collections (Summaries, Quizzes, Flashcard Sets)

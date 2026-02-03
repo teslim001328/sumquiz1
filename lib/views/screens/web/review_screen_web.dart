@@ -1,19 +1,29 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sumquiz/theme/web_theme.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/local_database_service.dart';
 import '../../../services/spaced_repetition_service.dart';
+import '../../../services/progress_service.dart';
 import '../../../models/flashcard.dart';
 import '../../../models/user_model.dart';
 import '../../../models/daily_mission.dart';
 import '../../../services/mission_service.dart';
 import '../../../services/user_service.dart';
+import '../../widgets/web/active_mission_card.dart';
+import '../../widgets/web/streak_card.dart';
+import '../../widgets/web/accuracy_card.dart';
+import '../../widgets/web/review_list_card.dart';
+import '../../widgets/web/focus_timer_card.dart';
+import '../../widgets/web/daily_goal_card.dart';
+import '../../widgets/web/interactive_preview_card.dart';
 
 class ReviewScreenWeb extends StatefulWidget {
   const ReviewScreenWeb({super.key});
@@ -28,6 +38,10 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
   String? _error;
   DateTime? _nextReviewDate;
   int _dueCount = 0;
+  double _accuracy = 0.0;
+  int _dailyGoalMinutes = 60;
+  int _timeSpentMinutes = 0;
+  String _previewQuestion = "What is the 'event loop' in JavaScript?";
 
   // Study Session State
   bool _isStudying = false;
@@ -68,11 +82,12 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     }
 
     try {
+      // Load mission
       final missionService =
           Provider.of<MissionService>(context, listen: false);
       final mission = await missionService.generateDailyMission(userId);
 
-      // Also load SRS stats for the banner
+      // Load SRS stats
       final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
       await localDb.init();
       final srsService =
@@ -80,11 +95,34 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       final stats = await srsService.getStatistics(userId);
       final nextDate = srsService.getNextReviewDate(userId);
 
+      // Load user progress stats
+      final progressService = ProgressService();
+      final avgAccuracy = await progressService.getAverageAccuracy(userId);
+      final totalTimeSpent = await progressService.getTotalTimeSpent(userId);
+      
+      // Load user data for daily goal
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      int dailyGoal = 60; // Default
+      int timeSpentToday = 0;
+      
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        dailyGoal = userData?['dailyGoal'] as int? ?? 60;
+        timeSpentToday = (totalTimeSpent / 60).round(); // Convert seconds to minutes
+      }
+
       if (mounted) {
         setState(() {
           _dailyMission = mission;
           _dueCount = stats['dueForReviewCount'] as int? ?? 0;
           _nextReviewDate = nextDate;
+          _accuracy = avgAccuracy;
+          _dailyGoalMinutes = dailyGoal;
+          _timeSpentMinutes = timeSpentToday;
           _isLoading = false;
           _error = null;
         });
@@ -93,7 +131,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _error = "Error loading mission: $e";
+          _error = "Error loading dashboard: $e";
         });
       }
     }
@@ -232,6 +270,82 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     );
   }
 
+  void _showMissionDetails(BuildContext context) {
+    if (_dailyMission == null) return;
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Mission Details',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: WebColors.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Finish Foundation Module',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: WebColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Complete ${_dailyMission!.flashcardIds.length} quiz sets today to hit your XP target.',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                color: WebColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Progress: ${_dailyMission!.isCompleted ? _dailyMission!.flashcardIds.length : 0}/${_dailyMission!.flashcardIds.length} sets',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: WebColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _fetchAndStartMission();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: WebColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Start Mission'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _nextCard(bool known) {
     if (known) _correctCount++;
 
@@ -263,27 +377,135 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                       style: TextStyle(
                           color: WebColors.textPrimary, fontSize: 18)))
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(40),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
+                      constraints: const BoxConstraints(maxWidth: 1200),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildWelcomeHeader(user),
-                          const SizedBox(height: 48),
-                          _buildDailyMissionCard(context),
+                          // Header
+                          _buildHeader(user),
                           const SizedBox(height: 32),
-                          if (_dueCount > 0 || _nextReviewDate != null) ...[
-                            _buildSrsBanner(context),
-                            const SizedBox(height: 32),
-                          ],
-                          _buildStatsOverview(user),
+
+                          // Top Row: Active Mission (2/3) + Stats (1/3)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: ActiveMissionCard(
+                                  mission: _dailyMission,
+                                  onStart: _fetchAndStartMission,
+                                  onDetails: () {
+                                    // Show mission details
+                                    _showMissionDetails(context);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 1,
+                                child: Column(
+                                  children: [
+                                    StreakCard(
+                                        streakDays:
+                                            user?.missionCompletionStreak ?? 0),
+                                    const SizedBox(height: 24),
+                                    AccuracyCard(
+                                        accuracy: _accuracy),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Middle Row: Due for Review + Daily Goal
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: ReviewListCard(
+                                  dueCount: _dueCount,
+                                  onReviewAll: () {
+                                    // Navigate to spaced repetition screen
+                                    context.push('/spaced-repetition');
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 1,
+                                child: DailyGoalCard(
+                                  goalMinutes: _dailyGoalMinutes,
+                                  timeSpentMinutes: _timeSpentMinutes,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Bottom Row: Focus Timer + Interactive Preview
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: FocusTimerCard(),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 2,
+                                child: InteractivePreviewCard(
+                                  question: _previewQuestion,
+                                  onClipPressed: () {
+                                    // Copy question to clipboard
+                                    Clipboard.setData(ClipboardData(text: _previewQuestion));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Question copied to clipboard!'),
+                                        backgroundColor: WebColors.success,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildHeader(UserModel? user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Good morning, ${user?.displayName.split(' ').first ?? 'Alex'}!',
+          style: GoogleFonts.outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: WebColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'You\'re on a ${user?.missionCompletionStreak ?? 0}-day learning streak. Keep it up!',
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            color: WebColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 
@@ -561,305 +783,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     );
   }
 
-  // --- Dashboard UI ---
-
-  Widget _buildWelcomeHeader(UserModel? user) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(48),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.cardShadow,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: WebColors.primaryLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'DASHBOARD',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: WebColors.primary,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Welcome back,\n${user?.displayName.split(' ').first ?? 'Friend'}! 👋',
-                  style: GoogleFonts.outfit(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w800,
-                    color: WebColors.textPrimary,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Your learning journey continues here.\nYou have ${_dueCount > 0 ? "$_dueCount items" : "no items"} due for review today.',
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
-                    color: WebColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 48),
-          Column(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: WebColors.HeroGradient,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: WebColors.primary.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.local_fire_department_rounded,
-                        color: Colors.white, size: 28),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${user?.missionCompletionStreak ?? 0} DAY STREAK',
-                      style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white),
-                    ),
-                  ],
-                ),
-              )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .shimmer(duration: 2.seconds),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => context.push('/settings'),
-                icon: const Icon(Icons.settings_outlined),
-                label: const Text('Account Settings'),
-                style: OutlinedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0);
-  }
-
-  Widget _buildDailyMissionCard(BuildContext context) {
-    if (_dailyMission == null) {
-      return Container(
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: WebColors.border, width: 2),
-          boxShadow: WebColors.cardShadow,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: WebColors.accentOrange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'READY FOR BLASTOFF 🚀',
-                      style: TextStyle(
-                        color: WebColors.accentOrange,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Your mission is waiting...',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Summarize a document or link to generate your first study mission for today. Turn content into knowledge instantly.',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/create'),
-                    icon: const Icon(Icons.add_rounded,
-                        color: Colors.white, size: 24),
-                    label: const Text('Create New Topic'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 24),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 60),
-            Hero(
-              tag: 'empty_illu',
-              child: Image.asset(
-                'assets/images/web/empty_library_illustration.png',
-                width: 320,
-                height: 320,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.cardShadow,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: WebColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '🎯 DAILY MISSION',
-                    style: TextStyle(
-                      color: WebColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  _dailyMission!.isCompleted
-                      ? 'Mission Accomplished! 🎉'
-                      : 'Review 5 Flashcards',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: WebColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _dailyMission!.isCompleted
-                      ? "You've crushed today's goals! Ready to master something new?"
-                      : 'Complete today\'s mission to maintain your streak',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: WebColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                _dailyMission!.isCompleted
-                    ? ElevatedButton.icon(
-                        onPressed: () => context.push('/create'),
-                        icon:
-                            const Icon(Icons.auto_awesome, color: Colors.white),
-                        label: const Text(
-                          'Master a New Topic',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: WebColors.secondary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 22,
-                          ),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                        ),
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: _fetchAndStartMission,
-                        icon: const Icon(Icons.play_arrow, color: Colors.white),
-                        label: const Text(
-                          'Start Mission',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 16),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: WebColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 22,
-                          ),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                        ),
-                      )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .shimmer(duration: 2.seconds, delay: 1.seconds),
-              ],
-            ),
-          ),
-          const SizedBox(width: 40),
-          Image.asset(
-            _dailyMission!.isCompleted
-                ? 'assets/images/web/success_illustration.png'
-                : 'assets/images/web/study_illustration.png',
-            width: 250,
-            height: 250,
-            fit: BoxFit.contain,
-          ).animate().scale(duration: 400.ms, curve: Curves.easeInOutBack),
-        ],
-      ),
-    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0);
-  }
+  // --- Dashboard UI Helpers Removed ---
 
   Widget _buildSrsBanner(BuildContext context) {
     bool isDue = _dueCount > 0;

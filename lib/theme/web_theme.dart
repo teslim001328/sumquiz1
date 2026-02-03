@@ -2,40 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Professional color palette for web UI
-/// Inspired by modern SaaS products like Notion, Linear, and Stripe
+/// Matches mobile app theme provider
 class WebColors {
-  // Backgrounds
-  static const background = Color(0xFFFDFDFF); // Off-white with tint
-  static const backgroundAlt = Color(0xFFF3F4F6); // Light slate gray
+  // Backgrounds - Match mobile theme
+  static const background = Color(0xFFF8FAFC); // backgroundOffWhite
+  static const backgroundAlt = Color(0xFFF1F5F9); // cardsLightGray
   static const surface = Color(0xFFFFFFFF); // White cards
 
-  // Primary colors - More vibrant premium indigo
-  static const primary = Color(0xFF6366F1);
-  static const primaryHover = Color(0xFF4F46E5);
+  // Primary colors - Match mobile theme
+  static const primary = Color(0xFF1E3A8A); // primaryDeepBlue
+  static const primaryHover = Color(0xFF60A5FA); // darkPrimary
   static const primaryLight = Color(0xFFEEF2FF);
 
-  // Secondary - Tropical teal
-  static const secondary = Color(0xFF0D9488);
+  // Secondary - Match mobile theme
+  static const secondary = Color(0xFF0D9488); // secondaryTeal
   static const secondaryLight = Color(0xFFF0FDFA);
 
-  // Text
-  static const Color textPrimary = Color(0xFF0F172A); // Slate 900
-  static const Color textSecondary = Color(0xFF475569); // Slate 600
+  // Text - Match mobile theme
+  static const Color textPrimary = Color(0xFF1E293B); // textDarkGray
+  static const Color textSecondary = Color(0xFF64748B); // textLightGray
   static const Color textTertiary = Color(0xFF94A3B8); // Slate 400
 
   // Borders
-  static const border = Color(0xFFE5E7EB); // Slate 200 - slightly softer
+  static const border = Color(0xFFE5E7EB); // Slate 200
   static const borderDark = Color(0xFFD1D5DB); // Slate 300
 
-  // Accents
-  static const Color accent = Color(0xFF8B5CF6); // Violet
+  // Accents - Keep existing accents
+  static const Color accent = Color(0xFFF59E0B); // Amber (matches mobile)
   static const Color accentOrange = Color(0xFFF59E0B); // Amber
   static const Color accentPink = Color(0xFFEC4899); // Pink
   static const Color success = Color(0xFF10B981); // Emerald 500
 
-  // Premium Gradients
+  // New colors for redesigned UI
+  static const Color purplePrimary = Color(0xFF6B5CE7);
+  static const Color purpleLight = Color(0xFFA280FF);
+  static const Color purpleUltraLight = Color(0xFFEEE9FE);
+  static const Color greenSuccess = Color(0xFF22C55E);
+  static const Color orangeWarning = Color(0xFFF97316);
+  static const Color pinkAccent = Color(0xFFEC4899);
+  static const Color blueInfo = Color(0xFF3B82F6);
+  static const Color yellowTip = Color(0xFFFACC15);
+  static const Color yellowTipBg = Color(0xFFFFFBE6);
+  static const Color yellowTipBorder = Color(0xFFFFF3C4);
+  static const Color yellowTipText = Color(0xFFCA8A04);
+
+  // Premium Gradients - Updated to match mobile theme
   static const LinearGradient HeroGradient = LinearGradient(
-    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    colors: [Color(0xFF1E3A8A), Color(0xFF60A5FA)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -62,7 +75,7 @@ class WebColors {
 
   static List<BoxShadow> get hoverShadow => [
         BoxShadow(
-          color: const Color(0xFF6366F1).withOpacity(0.12),
+          color: const Color(0xFF1E3A8A).withOpacity(0.12),
           blurRadius: 32,
           offset: const Offset(0, 12),
         ),

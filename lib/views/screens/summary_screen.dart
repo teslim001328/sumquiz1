@@ -347,19 +347,28 @@ class SummaryScreenState extends State<SummaryScreen> {
     setState(() => _isGeneratingQuiz = true);
     try {
       final user = context.read<UserModel?>();
-      if (user == null || _summaryContent.isEmpty) return;
+      if (user == null || _summaryContent.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No summary content available to generate quiz.')));
+        }
+        return;
+      }
 
       if (!mounted) return;
-      context.push('/quiz', extra: {
+      
+      // Navigate to quiz creation with summary content
+      context.push('/create', extra: {
         'initialText': _summaryContent,
-        'initialTitle': _summaryTitle
+        'initialTitle': _summaryTitle,
+        'mode': 'quiz'
       });
     } catch (e, s) {
       developer.log('Error navigating to quiz generation',
           name: 'summary.screen', error: e, stackTrace: s);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not start quiz generation.')));
+          SnackBar(content: Text('Could not start quiz generation: $e')));
     } finally {
       if (mounted) setState(() => _isGeneratingQuiz = false);
     }

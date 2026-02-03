@@ -47,21 +47,21 @@ class BetaAccessDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.1),
+                color: WebColors.accentOrange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                border: Border.all(color: WebColors.accentOrange.withOpacity(0.5)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline, color: Colors.amber[800], size: 16),
+                  Icon(Icons.info_outline, color: WebColors.accentOrange, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'Use the same Google Account for both steps',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.brown[700],
+                      color: WebColors.textSecondary,
                     ),
                   ),
                 ],

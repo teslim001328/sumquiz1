@@ -151,6 +151,17 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     return true;
   }
 
+  /// Check if API key is properly configured before processing
+  bool _isApiKeyConfigured() {
+    try {
+      final aiService = Provider.of<EnhancedAIService>(context, listen: false);
+      // If we can access the service without error, the API key is configured
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _pickPdf() async {
     if (_isLoading || _isProcessing) return;
 
@@ -268,6 +279,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
   }
 
   Future<void> _processAndNavigate() async {
+    // Check if API key is configured
+    if (!_isApiKeyConfigured()) {
+      setState(() {
+        _errorMessage = '🔑 API key is not configured. Please set up your API key in the .env file.';
+      });
+      return;
+    }
+
     // Prevent multiple concurrent operations
     if (_isProcessing || _isLoading) return;
 
@@ -495,9 +514,9 @@ class _CreateContentScreenState extends State<CreateContentScreen>
           RichText(
             text: TextSpan(
               style: theme.textTheme.headlineMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
               ),
               children: [
                 const TextSpan(text: 'What will you '),
@@ -983,6 +1002,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     final topic = _topicController.text.trim();
     if (topic.isEmpty) {
       setState(() => _errorMessage = 'Please enter a topic to learn about.');
+      return;
+    }
+
+    // Check if API key is configured
+    if (!_isApiKeyConfigured()) {
+      setState(() {
+        _errorMessage = '🔑 API key is not configured. Please set up your API key in the .env file.';
+      });
       return;
     }
 

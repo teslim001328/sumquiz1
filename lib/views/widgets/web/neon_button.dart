@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sumquiz/theme/web_theme.dart';
 
 class NeonButton extends StatefulWidget {
   final String text;
@@ -50,8 +51,8 @@ class _NeonButtonState extends State<NeonButton>
 
   @override
   Widget build(BuildContext context) {
-    final defaultGradient = const LinearGradient(
-      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    final defaultGradient = LinearGradient(
+      colors: [WebColors.primary, WebColors.accent],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -74,7 +75,7 @@ class _NeonButtonState extends State<NeonButton>
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: (widget.glowColor ?? const Color(0xFF6366F1))
+                      color: (widget.glowColor ?? WebColors.primary)
                           .withOpacity(0.5),
                       blurRadius: 30,
                       spreadRadius: 2,

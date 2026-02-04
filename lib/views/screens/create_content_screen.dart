@@ -461,14 +461,6 @@ class _CreateContentScreenState extends State<CreateContentScreen>
             style: TextStyle(
                 color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(
-            icon: CircleAvatar(
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.person,
-                  color: colorScheme.onSurfaceVariant, size: 20),
-            ),
-            onPressed: () => context.push('/account'),
-          ),
         ],
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1668,7 +1660,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                               ? (_currentOperation.isEmpty
                                   ? 'PROCESSING...'
                                   : _currentOperation.toUpperCase())
-                              : 'GENERATE NOW',
+                              : 'EXTRACT CONTENT',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,

@@ -59,6 +59,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             rawPrice: 3.99,
           ),
           _FallbackProductDetails(
+            id: 'unlimited_upload_pass',
+            title: 'Unlimited Uploads',
+            description: 'Unlimited sources upload',
+            price: 'US\$2.99',
+            rawPrice: 2.99,
+          ),
+          _FallbackProductDetails(
             id: 'monthly_subscription',
             title: 'Monthly Pro',
             description: 'Standard monthly plan',

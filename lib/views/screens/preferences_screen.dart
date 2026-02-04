@@ -153,34 +153,7 @@ class PreferencesScreen extends StatelessWidget {
                     _buildGlassSection(
                       theme: theme,
                       children: [
-                        ListTile(
-                          title: Text('Test Notification',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: theme.colorScheme.onSurface)),
-                          subtitle: Text(
-                              'Send a test notification to verify functionality',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6))),
-                          trailing: Icon(Icons.send,
-                              color: theme.colorScheme.primary),
-                          onTap: () async {
-                            final notificationService =
-                                context.read<NotificationService>();
-                            await notificationService.showTestNotification();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    'Test notification sent! Check your notification tray.'),
-                                backgroundColor: theme.colorScheme.primary,
-                                duration: Duration(seconds: 3),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildDivider(theme),
+
                         ListTile(
                           title: Text('Request Permissions',
                               style: theme.textTheme.bodyLarge?.copyWith(

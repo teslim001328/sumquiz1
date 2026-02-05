@@ -1,6 +1,15 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // ✅ HARD PIN ANDROID GRADLE PLUGIN (Flutter-safe)
+        classpath("com.android.tools.build:gradle:8.2.2")
 
-plugins {
-    id("com.google.gms.google-services") version "4.3.15" apply false
+        // Google services
+        classpath("com.google.gms:google-services:4.3.15")
+    }
 }
 
 allprojects {
@@ -10,14 +19,13 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+// Keep Flutter build dir layout
+val newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
     project.evaluationDependsOn(":app")
 }
 

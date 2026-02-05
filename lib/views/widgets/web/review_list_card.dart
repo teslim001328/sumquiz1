@@ -7,25 +7,6 @@ class ReviewListCard extends StatelessWidget {
   final int dueCount;
   final VoidCallback onReviewAll;
 
-  // Ideally, we would pass a list of items here.
-  // For now, mocking visual items to match the "Due for Review" design.
-  final List<Map<String, dynamic>> _mockItems = const [
-    {
-      'title': 'JavaScript Closures',
-      'subtitle': 'Overdue by 2 days',
-      'icon': Icons.priority_high_rounded,
-      'color': WebColors.success.withOpacity(0.1), // Success color instead of hardcoded red
-      'accent': WebColors.success,
-    },
-    {
-      'title': 'CSS Flexbox Advanced',
-      'subtitle': 'Review now',
-      'icon': Icons.alarm_rounded,
-      'color': WebColors.accentOrange.withOpacity(0.1), // Orange color instead of hardcoded amber
-      'accent': WebColors.accentOrange,
-    },
-  ];
-
   const ReviewListCard({
     super.key,
     required this.dueCount,
@@ -35,6 +16,24 @@ class ReviewListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (dueCount == 0) return const SizedBox();
+
+    final List<Map<String, dynamic>> _mockItems = [
+      {
+        'title': 'JavaScript Closures',
+        'subtitle': 'Overdue by 2 days',
+        'icon': Icons.priority_high_rounded,
+        'color': WebColors.success.withOpacity(0.1), // Success color instead of hardcoded red
+        'accent': WebColors.success,
+      },
+      {
+        'title': 'CSS Flexbox Advanced',
+        'subtitle': 'Review now',
+        'icon': Icons.alarm_rounded,
+        // ignore: deprecated_member_use
+        'color': WebColors.accentOrange.withOpacity(0.1), // Orange color instead of hardcoded amber
+        'accent': WebColors.accentOrange,
+      },
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

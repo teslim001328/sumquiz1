@@ -44,8 +44,8 @@ android {
             if (keystorePropertiesFile.exists()) {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = rootProject.file("../${keystoreProperties.getProperty("storeFile")}")
-                storePassword = keystoreProperties.getProperty("storePassword")
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+              storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
     }

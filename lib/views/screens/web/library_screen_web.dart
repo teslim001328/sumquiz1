@@ -12,7 +12,7 @@ import 'package:sumquiz/services/firestore_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/view_models/quiz_view_model.dart';
 import 'package:sumquiz/views/screens/summary_screen.dart';
-import 'package:sumquiz/models/folder.dart';
+
 import 'package:intl/intl.dart';
 
 class LibraryScreenWeb extends StatefulWidget {
@@ -133,7 +133,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
           children: [
             _buildSidebar(),
             Expanded(
-              child: user == null ? _buildLoginPrompt() : _buildMainContent(user),
+              child:
+                  user == null ? _buildLoginPrompt() : _buildMainContent(user),
             ),
           ],
         ),
@@ -191,7 +192,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                   color: const Color(0xFF6B5CE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.menu_book, color: Colors.white, size: 20),
+                child:
+                    const Icon(Icons.menu_book, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -214,7 +216,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             ],
           ),
           const SizedBox(height: 40),
-          
+
           // Main Sections
           _buildSidebarSection([
             _buildSidebarItem('All Content', Icons.grid_view_rounded, true),
@@ -222,17 +224,17 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             _buildSubItem('Favorites', Icons.star_border),
             _buildSubItem('Collections', Icons.folder_outlined),
           ]),
-          
+
           const SizedBox(height: 24),
-          
+
           // Workspace Section
           _buildWorkspaceSection([
             _buildWorkspaceItem('University 2024', Icons.school_outlined),
             _buildWorkspaceItem('Personal Research', Icons.psychology_outlined),
           ]),
-          
+
           const Spacer(),
-          
+
           // Create New Button
           Container(
             width: double.infinity,
@@ -262,117 +264,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildSidebarLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: WebColors.textTertiary,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildPremiumCTA() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: WebColors.HeroGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: WebColors.primary.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Go Pro',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Unlock all features',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.push('/subscription'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: WebColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Upgrade Now'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStorageUsed() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: WebColors.backgroundAlt,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.cloud_queue, size: 20, color: WebColors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Storage Used',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: WebColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: 0.4, // Mock value
-            backgroundColor: Colors.grey[200],
-            color: WebColors.primary,
-            borderRadius: BorderRadius.circular(4),
-            minHeight: 6,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '45% of 1GB used',
-            style: TextStyle(
-              fontSize: 12,
-              color: WebColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSidebarSection(List<Widget> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +283,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         children: [
           Icon(
             icon,
-            color: isSelected ? const Color(0xFF6B5CE7) : const Color(0xFFA280FF),
+            color:
+                isSelected ? const Color(0xFF6B5CE7) : const Color(0xFFA280FF),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -401,7 +293,9 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             style: GoogleFonts.outfit(
               fontSize: 15,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF6B5CE7) : const Color(0xFF475569),
+              color: isSelected
+                  ? const Color(0xFF6B5CE7)
+                  : const Color(0xFF475569),
             ),
           ),
         ],
@@ -534,7 +428,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.grid_view, size: 18, color: Color(0xFF6B5CE7)),
+                  const Icon(Icons.grid_view,
+                      size: 18, color: Color(0xFF6B5CE7)),
                   const SizedBox(width: 8),
                   Text(
                     'Grid',
@@ -577,33 +472,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   }
 
   // --- Grid Builders ---
-
-  Widget _buildFolderGrid(String userId) {
-    return FutureBuilder<List<Folder>>(
-      future: _localDb.getAllFolders(userId),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return _buildLoading();
-        final folders = snapshot.data ?? [];
-        if (folders.isEmpty) {
-          return _buildEmptyState(
-              'No folders yet', 'Organize your study materials into folders');
-        }
-
-        return _buildMasonryGrid(
-          folders
-              .map((f) => _LibraryCardData(
-                    title: f.name,
-                    subtitle: 'View items',
-                    icon: Icons.folder_rounded,
-                    color: WebColors.accentOrange,
-                    onTap: () => context.push('/library/results-view/${f.id}'),
-                    isFolder: true,
-                  ))
-              .toList(),
-        );
-      },
-    );
-  }
 
   Widget _buildCombinedGrid(String userId) {
     return StreamBuilder<List<LibraryItem>>(
@@ -725,7 +593,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildTabItem(String title, IconData icon, int index, bool isSelected) {
+  Widget _buildTabItem(
+      String title, IconData icon, int index, bool isSelected) {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _tabController.animateTo(index)),
@@ -766,7 +635,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       Color textColor;
       String typeName;
       String badge;
-      
+
       switch (item.type) {
         case LibraryItemType.summary:
           icon = Icons.description_outlined;
@@ -836,8 +705,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         return '25 questions covering stereochemistry and reaction mechanisms.';
       case LibraryItemType.flashcards:
         return 'Practice deck containing 50 common irregular verbs and conjugations.';
-      default:
-        return 'Learning material';
     }
   }
 
@@ -896,10 +763,11 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: card.textColor.withOpacity(0.1),
+                                color: card.textColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(card.icon, color: card.textColor, size: 24),
+                              child: Icon(card.icon,
+                                  color: card.textColor, size: 24),
                             )
                           else
                             Container(
@@ -910,16 +778,18 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: const Color(0xFFD1D5DB),
-                                  style: BorderStyle.dashed,
+                                  style: BorderStyle.solid,
                                 ),
                               ),
-                              child: const Icon(Icons.add, color: Color(0xFF94A3B8), size: 24),
+                              child: const Icon(Icons.add,
+                                  color: Color(0xFF94A3B8), size: 24),
                             ),
                           if (card.typeName.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: card.textColor.withOpacity(0.1),
+                                color: card.textColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -940,7 +810,9 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: card.isAddCard ? const Color(0xFF475569) : WebColors.textPrimary,
+                          color: card.isAddCard
+                              ? const Color(0xFF475569)
+                              : WebColors.textPrimary,
                           height: 1.3,
                         ),
                         maxLines: 2,
@@ -975,10 +847,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                               Row(
                                 children: [
                                   Icon(
-                                    card.typeName == 'QUIZ' 
-                                        ? Icons.emoji_events_outlined 
-                                        : (card.typeName == 'FLASHCARDS' 
-                                            ? Icons.layers_outlined 
+                                    card.typeName == 'QUIZ'
+                                        ? Icons.emoji_events_outlined
+                                        : (card.typeName == 'FLASHCARDS'
+                                            ? Icons.layers_outlined
                                             : Icons.visibility_outlined),
                                     size: 14,
                                     color: const Color(0xFF94A3B8),
@@ -1050,3 +922,4 @@ class _LibraryCardData {
     this.isAddCard = false,
   });
 }
+

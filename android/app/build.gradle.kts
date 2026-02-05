@@ -10,7 +10,6 @@ plugins {
 
 // Load signing properties
 val keystoreProperties = Properties()
-// The key.properties file is in the root of the Flutter project, not the android project
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
@@ -45,8 +44,6 @@ android {
             if (keystorePropertiesFile.exists()) {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                // The storeFile path in key.properties is relative to the Flutter project root.
-                // We need to resolve it from the rootProject (the 'android' folder).
                 storeFile = rootProject.file("../${keystoreProperties.getProperty("storeFile")}")
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
@@ -54,8 +51,12 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("release")
+
+            // 🚫 Disable R8 / shrinking to fix ML Kit missing classes
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

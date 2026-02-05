@@ -11,7 +11,7 @@ plugins {
 // Load signing properties
 val keystoreProperties = Properties()
 // The key.properties file is in the root of the Flutter project, not the android project
-val keystorePropertiesFile = rootProject.file("../key.properties") 
+val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }

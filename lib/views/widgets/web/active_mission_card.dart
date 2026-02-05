@@ -43,9 +43,10 @@ class ActiveMissionCard extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
+                      // ignore: deprecated_member_use
                       WebColors.accent.withOpacity(0.9),
                       WebColors.primary
                     ],

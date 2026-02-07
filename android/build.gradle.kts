@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         // ✅ HARD PIN ANDROID GRADLE PLUGIN (Flutter-safe)
-      classpath("com.android.tools.build:gradle:8.3.2")
+     classpath("com.android.tools.build:gradle:8.2.2")
 
 
         // Google services

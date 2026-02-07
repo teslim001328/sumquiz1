@@ -4,9 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // ✅ HARD PIN ANDROID GRADLE PLUGIN (Flutter-safe)
-    
-
+        
         // Google services
         classpath("com.google.gms:google-services:4.3.15")
     }

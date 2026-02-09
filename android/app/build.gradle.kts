@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.sumquiz.app"
-    compileSdk = 33
+    compileSdk = 36          // ← Change from 33 to 36 (highest safe value)
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -26,18 +26,17 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     defaultConfig {
         applicationId = "com.sumquiz.app"
         minSdk = 26
-        targetSdk = 33
-        versionCode = 5 // update with your versionCode
-        versionName = "1.1.5" // update with your versionName
+        targetSdk = 35       // ← Optional: raise from 33 to 35 (safe, recommended)
+        versionCode = 5
+        versionName = "1.1.5"
         multiDexEnabled = true
     }
+
+    // ... rest of the file stays exactly the same
+}
 
     signingConfigs {
         create("release") {

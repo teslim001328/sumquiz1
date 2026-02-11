@@ -105,8 +105,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   void _setDefaultSelection() {
     if (_products.isNotEmpty) {
-      _selectedProduct = _products.firstWhere((p) => p.id.contains('yearly'),
-          orElse: () => _products.length > 1 ? _products[1] : _products.first);
+      // First try to find a yearly product
+      _selectedProduct = _products.firstWhere(
+        (p) => p.id.contains('yearly'),
+        orElse: () {
+          // Then try to find a monthly product
+          return _products.firstWhere(
+            (p) => p.id.contains('monthly'),
+            orElse: () {
+              // Then try to find a lifetime product
+              return _products.firstWhere(
+                (p) => p.id.contains('lifetime'),
+                orElse: () {
+                  // Finally, just pick the first available product
+                  return _products.first;
+                },
+              );
+            },
+          );
+        },
+      );
     }
   }
 

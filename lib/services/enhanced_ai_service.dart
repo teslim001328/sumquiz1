@@ -69,9 +69,9 @@ class EnhancedAIServiceException implements Exception {
 // --- CONFIG ---
 class EnhancedAIConfig {
   // Updated models as of January 2026
-  static const String primaryModel = 'gemini-2.5-flash';
-  static const String fallbackModel = 'gemini-2.5-flash';
-  static const String visionModel = 'gemini-2.5-flash';
+  static const String primaryModel = 'gemini-2.0-pro';
+  static const String fallbackModel = 'gemini-2.0-flash';
+  static const String visionModel = 'gemini-2.0-pro-vision';
 
   // Retry configuration with exponential backoff
   static const int maxRetries = 5;
@@ -92,26 +92,37 @@ class EnhancedAIConfig {
 // --- SERVICE ---
 class EnhancedAIService {
   final IAPService _iapService;
-  late final GenerativeModel _model;
-  late final GenerativeModel _fallbackModel;
-  late final GenerativeModel _visionModel;
-  
+  GenerativeModel? _model;
+  GenerativeModel? _fallbackModel;
+  GenerativeModel? _visionModel;
+
   // Track if models have been initialized
   bool _modelsInitialized = false;
+  String? _initializationError;
 
   EnhancedAIService({required IAPService iapService})
       : _iapService = iapService {
-    // Validate API key before initializing models
-    final apiKey = dotenv.env['API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
-      throw EnhancedAIServiceException(
-        'API key is not configured. Please set API_KEY in your .env file.',
-        code: 'MISSING_API_KEY',
-      );
-    }
+    // Initialize models asynchronously to prevent blocking constructor
+    _initializeModelsAsync();
+  }
 
-    // Initialize models with proper error handling
-    _initializeModels(apiKey);
+  Future<void> _initializeModelsAsync() async {
+    try {
+      final apiKey = dotenv.env['API_KEY'];
+      if (apiKey == null || apiKey.isEmpty) {
+        _initializationError =
+            'API key is not configured. Please set API_KEY in your .env file.';
+        developer.log(_initializationError!,
+            name: 'EnhancedAIService', error: 'MISSING_API_KEY');
+        return;
+      }
+      _initializeModels(apiKey);
+      _modelsInitialized = true;
+    } catch (e, stack) {
+      _initializationError = 'Failed to initialize AI models: ${e.toString()}';
+      developer.log(_initializationError!,
+          name: 'EnhancedAIService', error: e, stackTrace: stack);
+    }
   }
 
   void _initializeModels(String apiKey) {
@@ -145,14 +156,13 @@ class EnhancedAIService {
           responseMimeType: 'application/json',
         ),
       );
-      
+
       _modelsInitialized = true;
-    } catch (e) {
-      throw EnhancedAIServiceException(
-        'Failed to initialize AI models. Check your API key and internet connection.',
-        code: 'MODEL_INITIALIZATION_FAILED',
-        originalError: e,
-      );
+    } catch (e, stack) {
+      _initializationError = 'Failed to initialize AI models: ${e.toString()}';
+      developer.log(_initializationError!,
+          name: 'EnhancedAIService', error: e, stackTrace: stack);
+      _modelsInitialized = false;
     }
   }
 
@@ -182,9 +192,25 @@ class EnhancedAIService {
 
   /// Enhanced retry mechanism with exponential backoff and jitter
   Future<String> _generateWithFallback(String prompt) async {
+    // Check if models are initialized
+    if (!_modelsInitialized || _initializationError != null) {
+      throw EnhancedAIServiceException(
+        'AI service not initialized: ${_initializationError ?? "Unknown error"}',
+        code: 'SERVICE_NOT_INITIALIZED',
+      );
+    }
+
+    // Check if models are not null
+    if (_model == null) {
+      throw EnhancedAIServiceException(
+        'Primary model not available',
+        code: 'PRIMARY_MODEL_UNAVAILABLE',
+      );
+    }
+
     try {
       return await _generateWithModel(
-        _model,
+        _model!,
         prompt,
         EnhancedAIConfig.primaryModel,
       );
@@ -195,9 +221,17 @@ class EnhancedAIService {
         error: e,
       );
 
+      // Check if fallback model is available
+      if (_fallbackModel == null) {
+        throw EnhancedAIServiceException(
+          'Fallback model not available',
+          code: 'FALLBACK_MODEL_UNAVAILABLE',
+        );
+      }
+
       try {
         return await _generateWithModel(
-          _fallbackModel,
+          _fallbackModel!,
           prompt,
           EnhancedAIConfig.fallbackModel,
         );
@@ -219,11 +253,19 @@ class EnhancedAIService {
 
   /// Generate with exponential backoff and jitter for rate limiting
   Future<String> _generateWithModel(
-    GenerativeModel model,
+    GenerativeModel? model,
     String prompt,
     String modelName,
   ) async {
     int attempt = 0;
+
+    // Check if model is available
+    if (model == null) {
+      throw EnhancedAIServiceException(
+        'Model not available for generation',
+        code: 'MODEL_NOT_AVAILABLE',
+      );
+    }
 
     while (attempt < EnhancedAIConfig.maxRetries) {
       try {
@@ -504,7 +546,29 @@ OUTPUT FORMAT (JSON):
         name: 'EnhancedAIService',
       );
 
-      final response = await _visionModel
+      // Check if vision model is available
+      if (!_modelsInitialized || _visionModel == null) {
+        developer.log(
+          'Vision model not available, trying transcript fallback',
+          name: 'EnhancedAIService',
+        );
+        // Fallback to transcript extraction
+        try {
+          final transcriptResult =
+              await extractYouTubeTranscript(videoUrl, userId: userId);
+          return transcriptResult;
+        } catch (e) {
+          return Result.error(
+            EnhancedAIServiceException(
+              'AI service unavailable and transcript extraction failed.',
+              code: 'SERVICE_UNAVAILABLE',
+              originalError: e,
+            ),
+          );
+        }
+      }
+
+      final response = await _visionModel!
           .generateContent([Content.text(prompt)]).timeout(
               Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
@@ -775,6 +839,20 @@ OUTPUT FORMAT (JSON):
         name: 'EnhancedAIService',
       );
 
+      // Check if vision model is available
+      if (!_modelsInitialized || _visionModel == null) {
+        developer.log(
+          'Vision model not available for webpage extraction',
+          name: 'EnhancedAIService',
+        );
+        return Result.error(
+          EnhancedAIServiceException(
+            'AI service unavailable for webpage extraction.',
+            code: 'SERVICE_UNAVAILABLE',
+          ),
+        );
+      }
+
       // Use Gemini to extract educational content from the URL
       // Gemini models (1.5 Flash+) have native URL reasoning/extraction capabilities
       final prompt =
@@ -797,7 +875,7 @@ OUTPUT FORMAT (JSON):
 
 If you cannot access the URL, return JSON with: {"error": "Unable to access URL"}''';
 
-      final response = await _visionModel
+      final response = await _visionModel!
           .generateContent([Content.text(prompt)]).timeout(
               Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
@@ -911,6 +989,16 @@ If you cannot access the URL, return JSON with: {"error": "Unable to access URL"
           ? '${htmlContent.substring(0, 50000)}\n\n[Content truncated...]'
           : htmlContent;
 
+      // Check if primary model is available
+      if (!_modelsInitialized || _model == null) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'AI service unavailable for webpage content extraction.',
+            code: 'SERVICE_UNAVAILABLE',
+          ),
+        );
+      }
+
       // Ask Gemini to extract educational content from the HTML
       final prompt =
           '''You are an expert content extractor for educational purposes.
@@ -930,7 +1018,7 @@ OUTPUT FORMAT (JSON):
 HTML CONTENT:
 $truncatedHtml''';
 
-      final aiResponse = await _model
+      final aiResponse = await _model!
           .generateContent([Content.text(prompt)]).timeout(
               Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
@@ -1092,8 +1180,18 @@ OUTPUT FORMAT (JSON):
       final filePart = DataPart(mimeType, bytes);
       final promptPart = TextPart(prompt);
 
+      // Check if vision model is available
+      if (!_modelsInitialized || _visionModel == null) {
+        return Result.error(
+          EnhancedAIServiceException(
+            'AI service unavailable for content analysis.',
+            code: 'SERVICE_UNAVAILABLE',
+          ),
+        );
+      }
+
       // Send to Gemini vision model for multimodal processing
-      final response = await _visionModel.generateContent([
+      final response = await _visionModel!.generateContent([
         Content.multi([promptPart, filePart])
       ]).timeout(Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
@@ -1313,7 +1411,15 @@ OUTPUT: Complete educational content from the video, organized for studying.''';
         'Ignore non-text visual elements.',
       );
 
-      final response = await _visionModel.generateContent([
+      // Check if vision model is available
+      if (!_modelsInitialized || _visionModel == null) {
+        throw EnhancedAIServiceException(
+          'AI service unavailable for image text extraction.',
+          code: 'SERVICE_UNAVAILABLE',
+        );
+      }
+
+      final response = await _visionModel!.generateContent([
         Content.multi([promptPart, imagePart])
       ]).timeout(Duration(seconds: EnhancedAIConfig.requestTimeoutSeconds));
 
@@ -1670,7 +1776,8 @@ Text: $sanitizedText''';
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
       if (cleanedJson.isEmpty || cleanedJson == jsonString) {
-        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+        throw EnhancedAIServiceException(
+            'Failed to extract valid JSON from response');
       }
       final data = json.decode(cleanedJson);
 
@@ -1711,7 +1818,8 @@ Text: $sanitizedText''';
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
       if (cleanedJson.isEmpty || cleanedJson == jsonString) {
-        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+        throw EnhancedAIServiceException(
+            'Failed to extract valid JSON from response');
       }
       final data = json.decode(cleanedJson);
 
@@ -1771,7 +1879,8 @@ Text: $sanitizedText''';
     try {
       final cleanedJson = _extractJsonFromResponse(jsonString);
       if (cleanedJson.isEmpty || cleanedJson == jsonString) {
-        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+        throw EnhancedAIServiceException(
+            'Failed to extract valid JSON from response');
       }
       final data = json.decode(cleanedJson);
 
@@ -2002,7 +2111,8 @@ IMPORTANT: Generate educational content you're confident is accurate. If the top
       // Parse the JSON response (sanitize in case AI wrapped in markdown)
       final cleanedJson = _extractJsonFromResponse(response.text!);
       if (cleanedJson.isEmpty || cleanedJson == response.text) {
-        throw EnhancedAIServiceException('Failed to extract valid JSON from response');
+        throw EnhancedAIServiceException(
+            'Failed to extract valid JSON from response');
       }
       final data = json.decode(cleanedJson);
       final title = data['title'] as String;
@@ -2119,7 +2229,7 @@ IMPORTANT: Generate educational content you're confident is accurate. If the top
       );
     }
   }
-  
+
   /// Properly dispose of all model instances to free resources
   void dispose() {
     try {

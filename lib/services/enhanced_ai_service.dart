@@ -125,8 +125,31 @@ class EnhancedAIService {
     }
   }
 
+  /// Wait for models to be initialized with a timeout
+  Future<bool> _waitForInitialization([int timeoutSeconds = 30]) async {
+    final stopwatch = Stopwatch()..start();
+
+    while (
+        !_modelsInitialized && stopwatch.elapsed.inSeconds < timeoutSeconds) {
+      if (_initializationError != null) {
+        // If there's an initialization error, return immediately
+        return false;
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    stopwatch.stop();
+    return _modelsInitialized;
+  }
+
   void _initializeModels(String apiKey) {
     try {
+      // Validate API key format before attempting to initialize models
+      if (!_isValidApiKeyFormat(apiKey)) {
+        throw Exception(
+            'Invalid API key format. Must follow Google API key format.');
+      }
+
       _model = GenerativeModel(
         model: EnhancedAIConfig.primaryModel,
         apiKey: apiKey,
@@ -166,6 +189,68 @@ class EnhancedAIService {
     }
   }
 
+  /// Validates if the API key has the correct format for Google APIs
+  bool _isValidApiKeyFormat(String apiKey) {
+    // Google API keys typically start with 'AIza' and have a specific format
+    // Format: AIza + [32-39 alphanumeric characters]
+    final RegExp googleApiKeyRegex = RegExp(r'^AIza[\w-]{30,}$');
+    return googleApiKeyRegex.hasMatch(apiKey);
+  }
+
+  /// Health check method to test if the API key is valid and working
+  Future<bool> _testApiKeyHealth() async {
+    try {
+      // Wait for models to be initialized
+      final isReady = await _waitForInitialization();
+      if (!isReady || _initializationError != null) {
+        return false;
+      }
+
+      // Test with a simple, quick request to see if the API is accessible
+      if (_model != null) {
+        try {
+          final chat = _model!.startChat();
+          // Use a very simple test that should complete quickly
+          final response =
+              await chat.sendMessage(Content.text('Hello')).timeout(
+                    const Duration(seconds: 10),
+                  );
+          return response.text != null && response.text!.isNotEmpty;
+        } catch (e) {
+          developer.log('API key health check failed',
+              name: 'EnhancedAIService', error: e);
+          return false;
+        }
+      }
+      return false;
+    } catch (e) {
+      developer.log('API key health check error',
+          name: 'EnhancedAIService', error: e);
+      return false;
+    }
+  }
+
+  /// Public method to check if the AI service is healthy and working
+  Future<bool> isServiceHealthy() async {
+    try {
+      // First check if models are initialized
+      if (!_modelsInitialized || _initializationError != null) {
+        // Try to wait for initialization
+        final isReady = await _waitForInitialization();
+        if (!isReady || _initializationError != null) {
+          return false;
+        }
+      }
+
+      // Perform a health check by testing the API key
+      return await _testApiKeyHealth();
+    } catch (e) {
+      developer.log('Service health check error',
+          name: 'EnhancedAIService', error: e);
+      return false;
+    }
+  }
+
   Future<void> _checkUsageLimits(String userId) async {
     final isPro = await _iapService.hasProAccess();
 
@@ -192,11 +277,13 @@ class EnhancedAIService {
 
   /// Enhanced retry mechanism with exponential backoff and jitter
   Future<String> _generateWithFallback(String prompt) async {
-    // Check if models are initialized
-    if (!_modelsInitialized || _initializationError != null) {
+    // Wait for models to initialize (with timeout)
+    final isReady = await _waitForInitialization();
+
+    if (!isReady || _initializationError != null) {
       throw EnhancedAIServiceException(
-        'AI service not initialized: ${_initializationError ?? "Unknown error"}',
-        code: 'SERVICE_NOT_INITIALIZED',
+        'AI service not ready: ${_initializationError ?? "Unknown initialization error"}',
+        code: 'SERVICE_NOT_READY',
       );
     }
 

@@ -1,0 +1,4 @@
+org.gradle.jvmargs=-Xmx1024m -Xms512m -XX:MaxMetaspaceSize=128m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+org.gradle.daemon=true
+org.gradle.parallel=false   # Disable parallel to reduce memory spikes
+org.gradle.caching=true

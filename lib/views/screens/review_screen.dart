@@ -24,6 +24,7 @@ import '../../models/local_flashcard_set.dart';
 import 'package:sumquiz/views/screens/spaced_repetition_screen.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'package:rxdart/rxdart.dart';
+import 'exam_creation_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
@@ -258,6 +259,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
         spaceBetweenChildren: 8,
         tooltip: 'Create New Content',
         children: [
+          SpeedDialChild(
+            child: const Icon(Icons.school),
+            label: 'Create Exam',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
+            ),
+          ),
           SpeedDialChild(
             child: const Icon(Icons.style),
             label: 'New Flashcards',

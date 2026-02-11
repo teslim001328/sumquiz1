@@ -115,10 +115,11 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
     });
 
     try {
+      // Safely get the services with error handling
       final aiService = context.read<EnhancedAIService>();
       final localDb = context.read<LocalDatabaseService>();
 
-      // Fix: Get userId directly from AuthService to avoid 'unknown_user' if UserModel stream is lagging
+      // Get userId directly from AuthService to avoid 'unknown_user' if UserModel stream is lagging
       final authService = context.read<AuthService>();
       final currentUser = authService.currentUser;
 
@@ -130,6 +131,11 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
 
       final requestedOutputs = _selectedOutputs.map((e) => e.name).toList();
 
+      // Add validation for requested outputs
+      if (requestedOutputs.isEmpty) {
+        throw Exception('No output types selected');
+      }
+
       final folderId = await aiService.generateAndStoreOutputs(
         text: _textController.text,
         title: _titleController.text.isNotEmpty
@@ -138,7 +144,11 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
         requestedOutputs: requestedOutputs,
         userId: userId,
         localDb: localDb,
-        onProgress: (message) => setState(() => _loadingMessage = message),
+        onProgress: (message) {
+          if (mounted) {
+            setState(() => _loadingMessage = message);
+          }
+        },
       );
 
       // Record usage (Deck Generation)
@@ -167,13 +177,18 @@ class _ExtractionViewScreenState extends State<ExtractionViewScreen> {
         context.go('/library/results-view/$folderId');
       }
     } on EnhancedAIServiceException catch (e) {
-      _showError(
-          'AI Processing Error: ${e.message}');
-    } catch (e) {
-      // Log the actual error for debugging
+      if (mounted) {
+        _showError('AI Processing Error: ${e.message}');
+      }
+    } catch (e, stackTrace) {
+      // Log the actual error and stack trace for debugging
       print('Error generating content: $e');
-      _showError(
-          'Failed to generate content. Please check your API key and internet connection, then try again.');
+      print('Stack trace: $stackTrace');
+      
+      if (mounted) {
+        _showError(
+            'Failed to generate content. Please check your API key and internet connection, then try again. Error: ${e.toString()}');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

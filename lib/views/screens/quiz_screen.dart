@@ -18,6 +18,7 @@ import '../widgets/upgrade_dialog.dart';
 import '../widgets/quiz_view.dart';
 import '../../services/firestore_service.dart';
 import '../../services/export_service.dart';
+import 'exam_creation_screen.dart';
 
 enum QuizState { creation, loading, inProgress, finished, error }
 
@@ -296,6 +297,16 @@ class _QuizScreenState extends State<QuizScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
+          );
+        },
+        child: const Icon(Icons.school),
+        tooltip: 'Create Exam',
+      ),
       appBar: AppBar(
         title: Text(
           widget.quiz == null ? 'Create Quiz' : 'Quiz',

@@ -176,10 +176,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       String fileTypeDescription;
       int maxSizeMb;
 
-      if (_selectedImportMethod == 'slides') {
-        allowedTypes = ['pdf', 'ppt', 'pptx', 'odp'];
-        fileTypeDescription = 'slides';
+      if (_selectedImportMethod == 'pdf' || _selectedImportMethod == 'slides') {
+        allowedTypes = ['pdf', 'ppt', 'pptx', 'odp', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
+        fileTypeDescription = 'document';
         maxSizeMb = 15;
+      } else if (_selectedImportMethod == 'audio') {
+        allowedTypes = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'];
+        fileTypeDescription = 'audio';
+        maxSizeMb = 50; // Audio files might be larger
       } else {
         allowedTypes = ['pdf'];
         fileTypeDescription = 'PDF';
@@ -327,12 +331,22 @@ class _CreateContentScreenState extends State<CreateContentScreen>
           input = _linkController.text;
           break;
         case 'pdf':
+case 'slides':
           if (_pdfBytes == null) {
-            validationError = 'Please upload a PDF file';
+            validationError = 'Please upload a document';
           } else if (_pdfBytes!.length > 15 * 1024 * 1024) {
-            validationError = 'PDF file is too large. Maximum size is 15MB';
+            validationError = 'Document file is too large. Maximum size is 15MB';
           }
           type = 'pdf';
+          input = _pdfBytes;
+          break;
+        case 'audio':
+          if (_pdfBytes == null) {
+            validationError = 'Please upload an audio file';
+          } else if (_pdfBytes!.length > 50 * 1024 * 1024) {
+            validationError = 'Audio file is too large. Maximum size is 50MB';
+          }
+          type = 'image'; // Using image type to send to AI service for analysis
           input = _pdfBytes;
           break;
         case 'image':
@@ -344,15 +358,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
           type = 'image';
           input = _imageBytes;
           break;
-        case 'slides':
-          if (_pdfBytes == null) {
-            validationError = 'Please upload a slides file';
-          } else if (_pdfBytes!.length > 15 * 1024 * 1024) {
-            validationError = 'Slides file is too large. Maximum size is 15MB';
-          }
-          type = 'slides';
-          input = _pdfBytes;
-          break;
+        
         default:
           validationError = 'Please select an import method';
           type = '';
@@ -543,14 +549,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       children: [
         _buildQuickTopicCard(theme, colorScheme),
         _buildImportCard(
-            'Scan PDF', Icons.picture_as_pdf_rounded, 'pdf', colorScheme),
+            'Upload Doc', Icons.insert_drive_file_rounded, 'pdf', colorScheme),
         _buildImportCard('Link/Video', Icons.link_rounded, 'link', colorScheme),
         _buildImportCard(
             'Paste Text', Icons.text_fields_rounded, 'text', colorScheme),
         _buildImportCard(
             'Scan Image', Icons.camera_alt_rounded, 'image', colorScheme),
         _buildImportCard(
-            'Upload Slides', Icons.slideshow_rounded, 'slides', colorScheme),
+            'Upload Audio', Icons.music_note_rounded, 'audio', colorScheme),
       ],
     );
   }
@@ -739,11 +745,12 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       case 'link':
         return _buildImportWebpageSection(theme);
       case 'pdf':
+      case 'slides':
         return _buildUploadPdfSection(theme);
       case 'image':
         return _buildScanImageSection(theme);
-      case 'slides':
-        return _buildUploadSlidesSection(theme);
+      case 'audio':
+        return _buildUploadAudioSection(theme);
       default:
         return const SizedBox.shrink();
     }
@@ -759,12 +766,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.05),
+            color: theme.brightness == Brightness.dark 
+                ? colorScheme.primary.withValues(alpha: 0.15)
+                : colorScheme.primary.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1005,64 +1014,64 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       return;
     }
 
-    final aiService = Provider.of<EnhancedAIService>(context, listen: false);
-    final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
-    final navigator = Navigator.of(context);
-
-    // Show progress dialog with cancellation support
-    final progressNotifier =
-        ValueNotifier<String>('Preparing to generate study materials...');
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return WillPopScope(
-            onWillPop: () async {
-              _isCancelled = true;
-              return true;
-            },
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 16),
-                  CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Learning about "$topic"',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  ValueListenableBuilder<String>(
-                    valueListenable: progressNotifier,
-                    builder: (context, value, _) {
-                      return Text(
-                        value,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
     try {
+      final aiService = Provider.of<EnhancedAIService>(context, listen: false);
+      final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
+      final navigator = Navigator.of(context);
+
+      // Show progress dialog with cancellation support
+      final progressNotifier =
+          ValueNotifier<String>('Preparing to generate study materials...');
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return WillPopScope(
+              onWillPop: () async {
+                _isCancelled = true;
+                return true;
+              },
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 16),
+                    CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Learning about "$topic"',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<String>(
+                      valueListenable: progressNotifier,
+                      builder: (context, value, _) {
+                        return Text(
+                          value,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+
       final folderId = await aiService.generateFromTopic(
         topic: topic,
         userId: user.uid,
@@ -1087,14 +1096,23 @@ class _CreateContentScreenState extends State<CreateContentScreen>
         // Clear inputs
         _resetInputs();
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
+      // Log the actual error and stack trace for debugging
+      print('Error generating content from topic: $e');
+      print('Stack trace: $stackTrace');
+      
       if (!_isCancelled && mounted) {
         try {
-          navigator.pop(); // Close progress dialog
+          Navigator.of(context).pop(); // Close progress dialog
         } catch (_) {}
 
         setState(() {
           _errorMessage = _getUserFriendlyError(e);
+          // Provide more specific error message if it's an API key issue
+          if (e.toString().toLowerCase().contains('api') || 
+              e.toString().toLowerCase().contains('key')) {
+            _errorMessage = 'API configuration error. Please check your API key in the .env file.';
+          }
         });
       }
     }
@@ -1104,13 +1122,15 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border:
             Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: theme.brightness == Brightness.dark 
+                ? Colors.black.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1190,19 +1210,25 @@ class _CreateContentScreenState extends State<CreateContentScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _linkController.text.isEmpty
                   ? colorScheme.outline.withValues(alpha: 0.1)
                   : isValid
-                      ? Colors.green.withValues(alpha: 0.5)
-                      : Colors.red.withValues(alpha: 0.5),
+                      ? theme.brightness == Brightness.dark 
+                          ? theme.colorScheme.secondary
+                          : Colors.green.withValues(alpha: 0.5)
+                      : theme.brightness == Brightness.dark 
+                          ? theme.colorScheme.error
+                          : Colors.red.withValues(alpha: 0.5),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: theme.brightness == Brightness.dark 
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : Colors.black.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1216,8 +1242,12 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                   color: _linkController.text.isEmpty
                       ? colorScheme.surfaceContainerHighest
                       : isValid
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : Colors.red.withValues(alpha: 0.1),
+                          ? theme.brightness == Brightness.dark
+                              ? colorScheme.secondary.withValues(alpha: 0.2)
+                              : Colors.green.withValues(alpha: 0.1)
+                          : theme.brightness == Brightness.dark
+                              ? colorScheme.error.withValues(alpha: 0.2)
+                              : Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1225,8 +1255,12 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                   color: _linkController.text.isEmpty
                       ? colorScheme.primary
                       : isValid
-                          ? Colors.green
-                          : Colors.red,
+                          ? theme.brightness == Brightness.dark
+                              ? colorScheme.secondary
+                              : Colors.green
+                          : theme.brightness == Brightness.dark
+                              ? colorScheme.error
+                              : Colors.red,
                   size: 20,
                 ),
               ),
@@ -1265,7 +1299,9 @@ class _CreateContentScreenState extends State<CreateContentScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.05),
+            color: theme.brightness == Brightness.dark
+                ? colorScheme.primary.withValues(alpha: 0.15)
+                : colorScheme.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1307,7 +1343,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
             decoration: BoxDecoration(
               color: isSelected
                   ? colorScheme.primary.withValues(alpha: 0.05)
-                  : Colors.white,
+                  : theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isSelected
@@ -1318,7 +1354,9 @@ class _CreateContentScreenState extends State<CreateContentScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: theme.brightness == Brightness.dark 
+                      ? Colors.black.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1357,8 +1395,8 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                 const SizedBox(height: 16),
                 Text(
                   isSelected
-                      ? (_pdfName ?? 'PDF Selected')
-                      : 'Upload PDF Document',
+                      ? (_pdfName ?? 'Document Selected')
+                      : 'Upload Document',
                   style: GoogleFonts.outfit(
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
@@ -1372,7 +1410,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                       ? 'Processing...'
                       : isSelected
                           ? 'Tap to change file'
-                          : 'Maximum size 15MB',
+                          : 'PDF, DOC, PPT, Images - Max 15MB',
                   style: GoogleFonts.outfit(
                       color:
                           colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
@@ -1387,7 +1425,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     );
   }
 
-  Widget _buildUploadSlidesSection(ThemeData theme) {
+  Widget _buildUploadAudioSection(ThemeData theme) {
     final bool isSelected = _pdfBytes != null;
     final colorScheme = theme.colorScheme;
     final isDisabled = _isLoading || _isProcessing;
@@ -1397,14 +1435,14 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       child: Opacity(
         opacity: isDisabled ? 0.6 : 1.0,
         child: GestureDetector(
-          onTap: isDisabled ? null : _pickPdf, // Reuse the same pick method
+          onTap: isDisabled ? null : _pickPdf,
           child: Container(
             height: 160,
             width: double.infinity,
             decoration: BoxDecoration(
               color: isSelected
                   ? colorScheme.primary.withValues(alpha: 0.05)
-                  : Colors.white,
+                  : theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isSelected
@@ -1415,7 +1453,9 @@ class _CreateContentScreenState extends State<CreateContentScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: theme.brightness == Brightness.dark 
+                      ? Colors.black.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1445,8 +1485,8 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                         )
                       : Icon(
                           isSelected
-                              ? Icons.slideshow_rounded
-                              : Icons.upload_file_rounded,
+                              ? Icons.audiotrack_rounded
+                              : Icons.music_note_rounded,
                           color: colorScheme.primary,
                           size: 32,
                         ),
@@ -1454,8 +1494,8 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                 const SizedBox(height: 16),
                 Text(
                   isSelected
-                      ? (_pdfName ?? 'Slides Selected')
-                      : 'Upload Slides',
+                      ? (_pdfName ?? 'Audio Selected')
+                      : 'Upload Audio',
                   style: GoogleFonts.outfit(
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
@@ -1469,7 +1509,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
                       ? 'Processing...'
                       : isSelected
                           ? 'Tap to change file'
-                          : 'Maximum size 15MB',
+                          : 'MP3, WAV, M4A - Max 50MB',
                   style: GoogleFonts.outfit(
                       color:
                           colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
@@ -1530,7 +1570,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
         decoration: BoxDecoration(
           color: isSelected
               ? colorScheme.primary.withValues(alpha: 0.05)
-              : Colors.white,
+              : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected
@@ -1540,7 +1580,9 @@ class _CreateContentScreenState extends State<CreateContentScreen>
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: theme.brightness == Brightness.dark 
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

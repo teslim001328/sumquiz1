@@ -6,6 +6,7 @@ import 'package:sumquiz/models/editable_content.dart';
 import 'package:sumquiz/models/quiz_question.dart';
 import 'package:sumquiz/services/auth_service.dart';
 import 'package:sumquiz/services/firestore_service.dart';
+import 'exam_creation_screen.dart';
 
 class EditQuizScreen extends StatefulWidget {
   final EditableContent content;
@@ -81,6 +82,16 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
+          );
+        },
+        child: const Icon(Icons.school),
+        tooltip: 'Create Exam',
+      ),
       appBar: AppBar(
         title: Text(
           'Edit Quiz',

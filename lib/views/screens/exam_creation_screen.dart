@@ -120,7 +120,14 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                             border: OutlineInputBorder(),
                           ),
                           items: [
-                            'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3', '100 Level', 'Custom'
+                            'JSS1',
+                            'JSS2',
+                            'JSS3',
+                            'SS1',
+                            'SS2',
+                            'SS3',
+                            '100 Level',
+                            'Custom'
                           ].map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
@@ -146,7 +153,8 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: TextEditingController(text: _duration),
+                                controller:
+                                    TextEditingController(text: _duration),
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
                                   labelText: 'Duration',
@@ -210,11 +218,13 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.check_circle, color: Colors.green),
+                                    const Icon(Icons.check_circle,
+                                        color: Colors.green),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Extracted content preview',
-                                      style: theme.textTheme.titleSmall?.copyWith(
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -225,11 +235,11 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                                   _showFullPreview
                                       ? _sourceMaterial
                                       : _sourceMaterial.substring(
-                                          0,
-                                          _sourceMaterial.length > 100
-                                              ? 100
-                                              : _sourceMaterial.length,
-                                        ) +
+                                            0,
+                                            _sourceMaterial.length > 100
+                                                ? 100
+                                                : _sourceMaterial.length,
+                                          ) +
                                           '...',
                                   maxLines: _showFullPreview ? null : 3,
                                   style: theme.textTheme.bodySmall,
@@ -242,7 +252,9 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                                         _showFullPreview = !_showFullPreview;
                                       });
                                     },
-                                    child: Text(_showFullPreview ? 'Show Less' : 'View Full'),
+                                    child: Text(_showFullPreview
+                                        ? 'Show Less'
+                                        : 'View Full'),
                                   ),
                                 ],
                               ],
@@ -378,7 +390,10 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                                 value: _difficultyValue,
                                 min: 0.0,
                                 max: 1.0,
-                                label: (_difficultyValue * 100).round().toString() + '%',
+                                label: (_difficultyValue * 100)
+                                        .round()
+                                        .toString() +
+                                    '%',
                                 onChanged: (double value) {
                                   setState(() {
                                     _difficultyValue = value;
@@ -407,7 +422,8 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                             Text(
                               'Medium ${((_difficultyValue * 100) - 50).abs().round()}%',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: (_difficultyValue >= 0.4 && _difficultyValue <= 0.6)
+                                color: (_difficultyValue >= 0.4 &&
+                                        _difficultyValue <= 0.6)
                                     ? theme.colorScheme.primary
                                     : theme.disabledColor,
                               ),
@@ -463,7 +479,8 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                             },
                           ),
                           CheckboxListTile(
-                            title: const Text('Focus on weak / highlighted areas'),
+                            title:
+                                const Text('Focus on weak / highlighted areas'),
                             value: _focusWeakAreas,
                             onChanged: (bool? value) {
                               setState(() {
@@ -483,11 +500,14 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: _sourceMaterial.isNotEmpty ? _generateDraftExam : null,
+                      onPressed: _sourceMaterial.isNotEmpty
+                          ? _generateDraftExam
+                          : null,
                       icon: const Icon(Icons.auto_awesome),
                       label: const Text(
                         'Generate Draft Exam',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
@@ -597,7 +617,8 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
 
     // For demo purposes, we'll set a sample text
     setState(() {
-      _sourceMaterial = 'This is a sample extracted content from your uploaded material. '
+      _sourceMaterial =
+          'This is a sample extracted content from your uploaded material. '
           'It contains important information that will be used to generate exam questions. '
           'The AI will analyze this content to create relevant questions based on the parameters you specified.';
       _isProcessing = false;
@@ -646,7 +667,8 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
 
       // Generate the exam using AI service
       // This is a simplified version - in a real implementation, this would call the actual AI service
-      await Future.delayed(const Duration(seconds: 2)); // Simulate processing time
+      await Future.delayed(
+          const Duration(seconds: 2)); // Simulate processing time
 
       // Create mock questions based on the parameters
       final questions = _generateMockQuestions();
@@ -677,7 +699,7 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
       // Log the actual error and stack trace for debugging
       print('Error generating exam: $e');
       print('Stack trace: $stackTrace');
-      
+
       if (mounted) {
         setState(() {
           _isProcessing = false;
@@ -716,25 +738,27 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
           question: 'Sample MCQ $i: What is the capital of Nigeria?',
           options: ['Lagos', 'Abuja', 'Kano', 'Ibadan'],
           correctAnswer: 'Abuja',
-          explanation: 'Abuja became the capital of Nigeria in 1991.',
-          questionType: 'Multiple Choice',
         ));
       } else if (type == 'True/False') {
         questions.add(LocalQuizQuestion(
           question: 'Sample T/F $i: Nigeria gained independence in 1960.',
           options: ['True', 'False'],
           correctAnswer: 'True',
-          explanation: 'Nigeria gained independence from British colonial rule on October 1, 1960.',
+          explanation:
+              'Nigeria gained independence from British colonial rule on October 1, 1960.',
           questionType: 'True/False',
         ));
       } else {
         // For simplicity, default to MCQ for other types in this mock
         questions.add(LocalQuizQuestion(
           question: 'Sample question $i: What is the main purpose of an exam?',
-          options: ['To evaluate knowledge', 'To waste time', 'To confuse students', 'None of the above'],
+          options: [
+            'To evaluate knowledge',
+            'To waste time',
+            'To confuse students',
+            'None of the above'
+          ],
           correctAnswer: 'To evaluate knowledge',
-          explanation: 'Exams are designed to assess a student\'s understanding of a subject.',
-          questionType: type,
         ));
       }
     }
@@ -780,7 +804,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   void initState() {
     super.initState();
     _questions = widget.initialQuestions ?? [];
-    
+
     // If no initial questions were provided, generate mock questions
     if (_questions.isEmpty) {
       _generateMockQuestions();
@@ -793,7 +817,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       (index) {
         final typeIndex = index % widget.questionTypes.length;
         final type = widget.questionTypes[typeIndex];
-        
+
         if (type == 'Multiple Choice') {
           return LocalQuizQuestion(
             question: 'Sample MCQ $index: What is the capital of Nigeria?',
@@ -807,16 +831,21 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
             question: 'Sample T/F $index: Nigeria gained independence in 1960.',
             options: ['True', 'False'],
             correctAnswer: 'True',
-            explanation: 'Nigeria gained independence from British colonial rule on October 1, 1960.',
-            questionType: 'True/False',
           );
         } else {
           // For other question types
           return LocalQuizQuestion(
-            question: 'Sample question $index: What is the main purpose of an exam?',
-            options: ['To evaluate knowledge', 'To waste time', 'To confuse students', 'None of the above'],
+            question:
+                'Sample question $index: What is the main purpose of an exam?',
+            options: [
+              'To evaluate knowledge',
+              'To waste time',
+              'To confuse students',
+              'None of the above'
+            ],
             correctAnswer: 'To evaluate knowledge',
-            explanation: 'Exams are designed to assess a student\'s understanding of a subject.',
+            explanation:
+                'Exams are designed to assess a student\'s understanding of a subject.',
             questionType: type,
           );
         }
@@ -930,7 +959,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
             Row(
               children: [
                 Text(
-                  'Q${index + 1}. (${question.questionType ?? 'MCQ'})',
+                  'Q${index + 1}. (MCQ)',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -969,8 +998,6 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     question: value,
                     options: question.options,
                     correctAnswer: question.correctAnswer,
-                    explanation: question.explanation,
-                    questionType: question.questionType,
                   );
                 });
               },
@@ -991,8 +1018,6 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                             question: question.question,
                             options: question.options,
                             correctAnswer: value!,
-                            explanation: question.explanation,
-                            questionType: question.questionType,
                           );
                         });
                       },
@@ -1001,22 +1026,27 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                       child: TextFormField(
                         initialValue: question.options[optionIndex],
                         decoration: InputDecoration(
-                          labelText: 'Option ${String.fromCharCode(65 + optionIndex)}',
+                          labelText:
+                              'Option ${String.fromCharCode(65 + optionIndex)}',
                           border: const OutlineInputBorder(),
-                          suffixIcon: question.correctAnswer == question.options[optionIndex]
-                              ? const Icon(Icons.check_circle, color: Colors.green)
+                          suffixIcon: question.correctAnswer ==
+                                  question.options[optionIndex]
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
                               : null,
                         ),
                         onChanged: (value) {
-                          final newOptions = List<String>.from(question.options);
+                          final newOptions =
+                              List<String>.from(question.options);
                           newOptions[optionIndex] = value;
-                          
+
                           // Update correct answer if it was this option
                           String newCorrectAnswer = question.correctAnswer;
-                          if (question.correctAnswer == question.options[optionIndex]) {
+                          if (question.correctAnswer ==
+                              question.options[optionIndex]) {
                             newCorrectAnswer = value;
                           }
-                          
+
                           setState(() {
                             _questions[index] = LocalQuizQuestion(
                               question: question.question,
@@ -1102,11 +1132,11 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       // Log the actual error and stack trace for debugging
       print('Error regenerating question: $e');
       print('Stack trace: $stackTrace');
-      
+
       setState(() {
         _isProcessing = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1237,7 +1267,8 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
                   CheckboxListTile(
                     title: const Text('PDF (Printable)'),
                     value: true,
-                    onChanged: null, // Always checked since it's the main export option
+                    onChanged:
+                        null, // Always checked since it's the main export option
                     secondary: const Icon(Icons.picture_as_pdf),
                   ),
                   const SizedBox(height: 16),
@@ -1296,7 +1327,8 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
                       icon: const Icon(Icons.download),
                       label: const Text(
                         'Download PDF',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
@@ -1325,16 +1357,18 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
 
       // Process questions based on selected options
       var processedQuestions = List<LocalQuizQuestion>.from(widget.questions);
-      
+
       if (_randomizeQuestionOrder) {
         processedQuestions.shuffle();
       }
-      
+
       if (_randomizeOptions) {
         processedQuestions = processedQuestions.map((question) {
-          final shuffledOptions = List<String>.from(question.options)..shuffle();
+          final shuffledOptions = List<String>.from(question.options)
+            ..shuffle();
           // Need to update correct answer to match new option positions
-          final newCorrectAnswer = shuffledOptions[question.options.indexOf(question.correctAnswer)];
+          final newCorrectAnswer =
+              shuffledOptions[question.options.indexOf(question.correctAnswer)];
           return LocalQuizQuestion(
             question: question.question,
             options: shuffledOptions,
@@ -1347,7 +1381,7 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
 
       // In a real implementation, this would use a PDF generation library like pdf package
       // For now, we'll simulate the process
-      
+
       setState(() {
         _isProcessing = false;
       });
@@ -1372,22 +1406,22 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
           ),
         );
       }
-
     } catch (e, stackTrace) {
       // Log the actual error and stack trace for debugging
       print('Error exporting PDF: $e');
       print('Stack trace: $stackTrace');
-      
+
       setState(() {
         _isProcessing = false;
       });
-      
+
       if (mounted) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Export Failed'),
-            content: Text('There was an error exporting your exam: ${e.toString()}'),
+            content:
+                Text('There was an error exporting your exam: ${e.toString()}'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

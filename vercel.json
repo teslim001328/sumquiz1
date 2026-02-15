@@ -1,5 +1,21 @@
 {
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
+  "version": 2,
+  "builds": [
+    {
+      "src": "pubspec.yaml",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build/web"
+      }
+    }
+  ],
+  "installCommand": "echo 'Installing Flutter...' && git clone https://github.com/flutter/flutter.git -b stable --depth 1 /vercel/flutter && export PATH=\"/vercel/flutter/bin:$PATH\" && flutter doctor --android-licenses && flutter --version && flutter pub get",
+  "buildCommand": "flutter build web --release --web-renderer canvaskit",
+  "outputDirectory": "build/web",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

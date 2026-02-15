@@ -1,7 +1,1 @@
-.env
-.env.*
-!.env.example
-
-cmdline-tools.zip
-
-android/gradle/wrapper/gradle-8.7-bin.zip
+.dart_tool

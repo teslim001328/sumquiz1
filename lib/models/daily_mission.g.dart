@@ -26,13 +26,14 @@ class DailyMissionAdapter extends TypeAdapter<DailyMission> {
       momentumReward: fields[6] as int,
       difficultyLevel: fields[7] as int,
       completionScore: fields[8] as double,
+      title: fields[9] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, DailyMission obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class DailyMissionAdapter extends TypeAdapter<DailyMission> {
       ..writeByte(7)
       ..write(obj.difficultyLevel)
       ..writeByte(8)
-      ..write(obj.completionScore);
+      ..write(obj.completionScore)
+      ..writeByte(9)
+      ..write(obj.title);
   }
 
   @override

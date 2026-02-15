@@ -10,6 +10,7 @@ import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/content_extraction_service.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
+import 'package:sumquiz/views/screens/exam_creation_screen.dart';
 import 'package:sumquiz/views/widgets/extraction_progress_dialog.dart';
 import 'package:sumquiz/views/widgets/upgrade_dialog.dart';
 
@@ -156,7 +157,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
   /// Check if API key is properly configured before processing
   bool _isApiKeyConfigured() {
     try {
-      final aiService = Provider.of<EnhancedAIService>(context, listen: false);
+      Provider.of<EnhancedAIService>(context, listen: false);
       // If we can access the service without error, the API key is configured
       return true;
     } catch (e) {
@@ -408,11 +409,13 @@ case 'slides':
         context: context,
         barrierDismissible: false,
         builder: (context) {
-          return WillPopScope(
-            onWillPop: () async {
-              // Allow cancellation
-              _isCancelled = true;
-              return true;
+          return PopScope(
+            canPop: false,
+            onPopInvoked: (didPop) {
+                if (didPop) {
+                    return;
+                }
+                 _isCancelled = true;
             },
             child: ExtractionProgressDialog(messageNotifier: progressNotifier),
           );
@@ -596,12 +599,12 @@ case 'slides':
             decoration: BoxDecoration(
               color: isSelected
                   ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  : colorScheme.surfaceContainerHighest.withAlpha(77),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected
                     ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.2),
+                    : colorScheme.outline.withAlpha(51),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -630,7 +633,7 @@ case 'slides':
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: isSelected
-                        ? colorScheme.onPrimary.withValues(alpha: 0.8)
+                        ? colorScheme.onPrimary.withAlpha(204)
                         : colorScheme.onSurfaceVariant,
                     fontSize: 11,
                   ),
@@ -699,12 +702,12 @@ case 'slides':
             decoration: BoxDecoration(
               color: isSelected
                   ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  : colorScheme.surfaceContainerHighest.withAlpha(77),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected
                     ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.2),
+                    : colorScheme.outline.withAlpha(51),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -786,12 +789,12 @@ case 'slides':
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        border: Border.all(color: colorScheme.outline.withAlpha(26)),
         boxShadow: [
           BoxShadow(
             color: theme.brightness == Brightness.dark 
-                ? colorScheme.primary.withValues(alpha: 0.15)
-                : colorScheme.primary.withValues(alpha: 0.05),
+                ? colorScheme.primary.withAlpha(38)
+                : colorScheme.primary.withAlpha(13),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -824,13 +827,13 @@ case 'slides':
                 decoration: InputDecoration(
                   hintText: 'e.g., "History of Rome" or "Python Basics"',
                   hintStyle: GoogleFonts.outfit(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: colorScheme.onSurfaceVariant.withAlpha(128),
                   ),
                   prefixIcon: Icon(Icons.auto_awesome,
                       color: colorScheme.primary, size: 20),
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
+                      .withAlpha(77),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -892,7 +895,7 @@ case 'slides':
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  color: colorScheme.primary.withAlpha(26),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -916,9 +919,9 @@ case 'slides':
                   trackHeight: 6,
                   activeTrackColor: colorScheme.primary,
                   inactiveTrackColor:
-                      colorScheme.primary.withValues(alpha: 0.1),
+                      colorScheme.primary.withAlpha(26),
                   thumbColor: colorScheme.primary,
-                  overlayColor: colorScheme.primary.withValues(alpha: 0.1),
+                  overlayColor: colorScheme.primary.withAlpha(26),
                   thumbShape:
                       const RoundSliderThumbShape(enabledThumbRadius: 10),
                 ),
@@ -954,9 +957,9 @@ case 'slides':
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.05),
+              color: Colors.amber.withAlpha(13),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+              border: Border.all(color: Colors.amber.withAlpha(51)),
             ),
             child: Row(
               children: [
@@ -1001,7 +1004,7 @@ case 'slides':
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.3),
+                : colorScheme.outline.withAlpha(77),
           ),
         ),
         child: Text(
@@ -1046,11 +1049,14 @@ case 'slides':
           context: context,
           barrierDismissible: false,
           builder: (context) {
-            return WillPopScope(
-              onWillPop: () async {
-                _isCancelled = true;
-                return true;
-              },
+            return PopScope(
+                canPop: false,
+                onPopInvoked: (didPop) {
+                    if (didPop) {
+                        return;
+                    }
+                    _isCancelled = true;
+                },
               child: AlertDialog(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -1116,8 +1122,8 @@ case 'slides':
       }
     } on Exception catch (e, stackTrace) {
       // Log the actual error and stack trace for debugging
-      print('Error generating content from topic: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error generating content from topic: $e');
+      debugPrint('Stack trace: $stackTrace');
       
       if (!_isCancelled && mounted) {
         try {
@@ -1143,12 +1149,12 @@ case 'slides':
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border:
-            Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+            Border.all(color: theme.colorScheme.outline.withAlpha(26)),
         boxShadow: [
           BoxShadow(
             color: theme.brightness == Brightness.dark 
-                ? Colors.black.withValues(alpha: 0.25)
-                : Colors.black.withValues(alpha: 0.05),
+                ? Colors.black.withAlpha(64)
+                : Colors.black.withAlpha(13),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1171,7 +1177,7 @@ case 'slides':
                   hintText: 'Type or paste your notes here...',
                   hintStyle: GoogleFonts.outfit(
                       color: theme.colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.5)),
+                          .withAlpha(128)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(24),
                 ),
@@ -1232,21 +1238,21 @@ case 'slides':
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _linkController.text.isEmpty
-                  ? colorScheme.outline.withValues(alpha: 0.1)
+                  ? colorScheme.outline.withAlpha(26)
                   : isValid
                       ? theme.brightness == Brightness.dark 
                           ? theme.colorScheme.secondary
-                          : Colors.green.withValues(alpha: 0.5)
+                          : Colors.green.withAlpha(128)
                       : theme.brightness == Brightness.dark 
                           ? theme.colorScheme.error
-                          : Colors.red.withValues(alpha: 0.5),
+                          : Colors.red.withAlpha(128),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: theme.brightness == Brightness.dark 
-                    ? Colors.black.withValues(alpha: 0.25)
-                    : Colors.black.withValues(alpha: 0.03),
+                    ? Colors.black.withAlpha(64)
+                    : Colors.black.withAlpha(8),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1261,11 +1267,11 @@ case 'slides':
                       ? colorScheme.surfaceContainerHighest
                       : isValid
                           ? theme.brightness == Brightness.dark
-                              ? colorScheme.secondary.withValues(alpha: 0.2)
-                              : Colors.green.withValues(alpha: 0.1)
+                              ? colorScheme.secondary.withAlpha(51)
+                              : Colors.green.withAlpha(26)
                           : theme.brightness == Brightness.dark
-                              ? colorScheme.error.withValues(alpha: 0.2)
-                              : Colors.red.withValues(alpha: 0.1),
+                              ? colorScheme.error.withAlpha(51)
+                              : Colors.red.withAlpha(26),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1302,7 +1308,7 @@ case 'slides':
                         hintText: 'Paste any URL here...',
                         hintStyle: GoogleFonts.outfit(
                           color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.4),
+                              .withAlpha(102),
                         ),
                         border: InputBorder.none,
                       ),
@@ -1318,8 +1324,8 @@ case 'slides':
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: theme.brightness == Brightness.dark
-                ? colorScheme.primary.withValues(alpha: 0.15)
-                : colorScheme.primary.withValues(alpha: 0.05),
+                ? colorScheme.primary.withAlpha(38)
+                : colorScheme.primary.withAlpha(13),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1360,21 +1366,21 @@ case 'slides':
             width: double.infinity,
             decoration: BoxDecoration(
               color: isSelected
-                  ? colorScheme.primary.withValues(alpha: 0.05)
+                  ? colorScheme.primary.withAlpha(13)
                   : theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isSelected
                     ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.1),
+                    : colorScheme.outline.withAlpha(26),
                 width: isSelected ? 2 : 1,
                 style: BorderStyle.solid,
               ),
               boxShadow: [
                 BoxShadow(
                   color: theme.brightness == Brightness.dark 
-                      ? Colors.black.withValues(alpha: 0.25)
-                      : Colors.black.withValues(alpha: 0.03),
+                      ? Colors.black.withAlpha(64)
+                      : Colors.black.withAlpha(8),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1387,9 +1393,9 @@ case 'slides':
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.1)
+                        ? colorScheme.primary.withAlpha(26)
                         : colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
+                            .withAlpha(128),
                     shape: BoxShape.circle,
                   ),
                   child: isDisabled
@@ -1431,7 +1437,7 @@ case 'slides':
                           : 'PDF, DOC, PPT, Images - Max 15MB',
                   style: GoogleFonts.outfit(
                       color:
-                          colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          colorScheme.onSurfaceVariant.withAlpha(153),
                       fontSize: 13,
                       fontWeight: FontWeight.w500),
                 ),
@@ -1459,21 +1465,21 @@ case 'slides':
             width: double.infinity,
             decoration: BoxDecoration(
               color: isSelected
-                  ? colorScheme.primary.withValues(alpha: 0.05)
+                  ? colorScheme.primary.withAlpha(13)
                   : theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isSelected
                     ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.1),
+                    : colorScheme.outline.withAlpha(26),
                 width: isSelected ? 2 : 1,
                 style: BorderStyle.solid,
               ),
               boxShadow: [
                 BoxShadow(
                   color: theme.brightness == Brightness.dark 
-                      ? Colors.black.withValues(alpha: 0.25)
-                      : Colors.black.withValues(alpha: 0.03),
+                      ? Colors.black.withAlpha(64)
+                      : Colors.black.withAlpha(8),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1486,9 +1492,9 @@ case 'slides':
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.1)
+                        ? colorScheme.primary.withAlpha(26)
                         : colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
+                            .withAlpha(128),
                     shape: BoxShape.circle,
                   ),
                   child: isDisabled
@@ -1530,7 +1536,7 @@ case 'slides':
                           : 'MP3, WAV, M4A - Max 50MB',
                   style: GoogleFonts.outfit(
                       color:
-                          colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          colorScheme.onSurfaceVariant.withAlpha(153),
                       fontSize: 13,
                       fontWeight: FontWeight.w500),
                 ),
@@ -1587,20 +1593,20 @@ case 'slides':
         height: 140,
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primary.withValues(alpha: 0.05)
+              ? colorScheme.primary.withAlpha(13)
               : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.1),
+                : colorScheme.outline.withAlpha(26),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: theme.brightness == Brightness.dark 
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? Colors.black.withAlpha(64)
+                  : Colors.black.withAlpha(8),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1613,9 +1619,9 @@ case 'slides':
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? colorScheme.primary.withValues(alpha: 0.1)
+                    ? colorScheme.primary.withAlpha(26)
                     : colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
+                        .withAlpha(128),
                 shape: BoxShape.circle,
               ),
               child: isDisabled
@@ -1683,7 +1689,7 @@ case 'slides':
                 boxShadow: isEnabled
                     ? [
                         BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
+                          color: colorScheme.primary.withAlpha(77),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),

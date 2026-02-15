@@ -31,6 +31,10 @@ class DailyMission extends HiveObject {
   @HiveField(8)
   double completionScore; // 0.0 to 1.0
 
+  @HiveField(9)
+  String title;
+
+
   DailyMission({
     required this.id,
     required this.date,
@@ -41,5 +45,6 @@ class DailyMission extends HiveObject {
     required this.momentumReward,
     required this.difficultyLevel,
     required this.completionScore,
+    required this.title,
   });
 }

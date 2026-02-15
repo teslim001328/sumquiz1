@@ -25,7 +25,6 @@ class LibraryScreenWeb extends StatefulWidget {
 class LibraryScreenWebState extends State<LibraryScreenWeb>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final FirestoreService _firestoreService = FirestoreService();
   final LocalDatabaseService _localDb = LocalDatabaseService();
   final TextEditingController _searchController = TextEditingController();
 
@@ -197,14 +196,14 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
-                          color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+                          color: isSelected ? Theme.of(context).colorScheme.primary.withAlpha(26) : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.folder_open,
                                 size: 18,
-                                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
+                                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withAlpha(128)),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -273,7 +272,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+        color: isSelected ? Theme.of(context).colorScheme.primary.withAlpha(26) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -281,7 +280,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
           Icon(
             icon,
             color:
-                isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withAlpha(128),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -306,7 +305,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 36),
       child: Row(
         children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary.withOpacity(0.6), size: 18),
+          Icon(icon, color: Theme.of(context).colorScheme.primary.withAlpha(153), size: 18),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -316,46 +315,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                 fontWeight: FontWeight.w400,
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkspaceSection(List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-          Text(
-            'WORKSPACE',
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.primary,
-              letterSpacing: 1.2,
-            ),
-          ),
-        const SizedBox(height: 16),
-        ...items,
-      ],
-    );
-  }
-
-  Widget _buildWorkspaceItem(String title, IconData icon) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFA280FF), size: 20),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -608,41 +567,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildTabItem(
-      String title, IconData icon, int index, bool isSelected) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _tabController.animateTo(index)),
-        child: Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? Theme.of(context).cardColor : Theme.of(context).textTheme.bodySmall?.color,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? Theme.of(context).cardColor : Theme.of(context).textTheme.bodyMedium?.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildContentGrid(List<LibraryItem> items, String userId, LibraryViewModel viewModel) {
     final cardData = items.map((item) {
       IconData icon;
@@ -654,21 +578,21 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       switch (item.type) {
         case LibraryItemType.summary:
           icon = Icons.article_outlined;
-          bgColor = Theme.of(context).colorScheme.primary.withOpacity(0.1);
+          bgColor = Theme.of(context).colorScheme.primary.withAlpha(26);
           textColor = Theme.of(context).colorScheme.primary;
           typeName = 'SUMMARY';
           badge = item.description != null ? 'Details available' : 'No description';
           break;
         case LibraryItemType.quiz:
           icon = Icons.quiz_outlined;
-          bgColor = Colors.green.withOpacity(0.1);
+          bgColor = Colors.green.withAlpha(26);
           textColor = Colors.green;
           typeName = 'QUIZ';
           badge = item.score != null ? 'Score: ${(item.score! * 100).round()}%' : '${item.itemCount ?? 0} Questions';
           break;
         case LibraryItemType.flashcards:
           icon = Icons.style_outlined;
-          bgColor = Colors.orange.withOpacity(0.1);
+          bgColor = Colors.orange.withAlpha(26);
           textColor = Colors.orange;
           typeName = 'FLASHCARDS';
           badge = '${item.itemCount ?? 0} Cards';
@@ -782,7 +706,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: card.textColor.withOpacity(0.1),
+                                color: card.textColor.withAlpha(26),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(card.icon,
@@ -800,7 +724,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                                   style: BorderStyle.solid,
                                 ),
                               ),
-                              child: const Icon(Icons.add,
+                              child: Icon(Icons.add,
                                   color: Theme.of(context).textTheme.bodySmall?.color, size: 24),
                             ),
                           if (card.typeName.isNotEmpty)
@@ -808,7 +732,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: card.textColor.withOpacity(0.1),
+                                color: card.textColor.withAlpha(26),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -839,7 +763,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                         card.subtitle,
                         style: GoogleFonts.outfit(
                           fontSize: 13,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                           height: 1.4,
                         ),
                         maxLines: 2,

@@ -82,12 +82,10 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     }
 
     try {
-      // Load mission
       final missionService =
           Provider.of<MissionService>(context, listen: false);
       final mission = await missionService.generateDailyMission(userId);
 
-      // Load SRS stats
       final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
       await localDb.init();
       final srsService =
@@ -95,18 +93,16 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       final stats = await srsService.getStatistics(userId);
       final nextDate = srsService.getNextReviewDate(userId);
 
-      // Load user progress stats
       final progressService = ProgressService();
       final avgAccuracy = await progressService.getAverageAccuracy(userId);
       final totalTimeSpent = await progressService.getTotalTimeSpent(userId);
       
-      // Load user data for daily goal
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
       
-      int dailyGoal = 60; // Default
+      int dailyGoal = 60;
       int timeSpentToday = 0;
       String lastQuestion = "What is the 'event loop' in JavaScript?";
 
@@ -115,9 +111,8 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         dailyGoal = userData?['dailyGoal'] as int? ?? 60;
       }
       
-      timeSpentToday = (totalTimeSpent / 60).round(); // Convert seconds to minutes
+      timeSpentToday = (totalTimeSpent / 60).round();
 
-      // Fetch last flashcard for preview
       final sets = await localDb.getAllFlashcardSets(userId);
       if (sets.isNotEmpty && sets.first.flashcards.isNotEmpty) {
         lastQuestion = sets.first.flashcards.first.question;
@@ -149,7 +144,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
   Future<void> _fetchAndStartMission() async {
     if (_dailyMission == null) return;
 
-    // If completed, just show nice message
     if (_dailyMission!.isCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content:
@@ -166,7 +160,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
 
       if (userId == null) throw Exception("User ID null");
 
-      // Fetch cards logic
       final sets = await localDb.getAllFlashcardSets(userId);
       final allCards = sets.expand((s) => s.flashcards).map((localCard) {
         return Flashcard(
@@ -185,7 +178,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                   'Could not find mission cards. Using random cards instead.')));
-          // Fallback to random cards if mission cards deleted
           _studyCards = allCards.take(5).toList();
         }
       } else {
@@ -196,7 +188,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         throw Exception("No flashcards found to study.");
       }
 
-      // Start Session
       _startStudySession();
     } catch (e) {
       if (mounted) {
@@ -218,7 +209,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     _stopwatch.reset();
     _stopwatch.start();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) setState(() {}); // Update timer UI
+      if (mounted) setState(() {});
     });
   }
 
@@ -227,13 +218,11 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     _timer?.cancel();
 
     if (_dailyMission != null && !_dailyMission!.isCompleted) {
-      // Complete mission logic
       final userId =
           Provider.of<AuthService>(context, listen: false).currentUser?.uid;
       if (userId != null) {
         final missionService =
             Provider.of<MissionService>(context, listen: false);
-        // Calculate score
         double score =
             _studyCards.isEmpty ? 0 : _correctCount / _studyCards.length;
         await missionService.completeMission(userId, _dailyMission!, score);
@@ -241,13 +230,13 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         final userService = UserService();
         await userService.incrementItemsCompleted(userId);
 
-        await _loadMission(); // Reload to update UI
+        await _loadMission();
       }
     }
 
     setState(() {
       _isStudying =
-          false; // Return to dashboard, but ideally show completion dialog first
+          false;
     });
 
     _showCompletionDialog();
@@ -309,7 +298,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
             ),
             const SizedBox(height: 16),
             Text(
-              _dailyMission?.title ?? 'Daily Mission',
+              _dailyMission!.title,
               style: GoogleFonts.outfit(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -334,6 +323,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
               ),
             ),
             const SizedBox(height: 24),
+            ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _fetchAndStartMission();
@@ -393,11 +383,12 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header
                           _buildHeader(user),
                           const SizedBox(height: 32),
-
-                          // Top Row: Active Mission (2/3) + Stats (1/3)
+                          _buildSrsBanner(context),
+                          const SizedBox(height: 24),
+                          _buildStatsOverview(user),
+                          const SizedBox(height: 24),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -407,7 +398,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                                   mission: _dailyMission,
                                   onStart: _fetchAndStartMission,
                                   onDetails: () {
-                                    // Show mission details
                                     _showMissionDetails(context);
                                   },
                                 ),
@@ -431,7 +421,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
 
                           const SizedBox(height: 24),
 
-                          // Middle Row: Due for Review + Daily Goal
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -440,7 +429,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                                 child: ReviewListCard(
                                   dueCount: _dueCount,
                                   onReviewAll: () {
-                                    // Navigate to spaced repetition screen
                                     context.push('/spaced-repetition');
                                   },
                                 ),
@@ -458,7 +446,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
 
                           const SizedBox(height: 24),
 
-                          // Bottom Row: Focus Timer + Interactive Preview
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -472,7 +459,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                                 child: InteractivePreviewCard(
                                   question: _previewQuestion,
                                   onClipPressed: () {
-                                    // Copy question to clipboard
                                     Clipboard.setData(ClipboardData(text: _previewQuestion));
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -524,14 +510,11 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     );
   }
 
-  // --- Study Session UI ---
-
   Widget _buildStudySession() {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -544,7 +527,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
 
           Column(
             children: [
-              // Top Bar
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
@@ -606,12 +588,11 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
                       ),
                     ),
                     const SizedBox(width: 40),
-                    // Glassmorphism Timer
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha(204),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: WebColors.border),
                         boxShadow: WebColors.subtleShadow,
@@ -639,14 +620,12 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
 
               const Spacer(),
 
-              // Flashcard
               Center(
                 child: _build3DFlashcard(),
               ),
 
               const Spacer(),
 
-              // Controls
               Container(
                 padding: const EdgeInsets.all(32),
                 child: _isFlipped
@@ -708,11 +687,11 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: WebColors.border.withOpacity(0.5)),
+                border: Border.all(color: WebColors.border.withAlpha(128)),
                 boxShadow: isBack
                     ? [
                         BoxShadow(
-                          color: WebColors.success.withOpacity(0.1),
+                          color: WebColors.success.withAlpha(26),
                           blurRadius: 40,
                           offset: const Offset(0, 20),
                         ),
@@ -798,8 +777,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     );
   }
 
-  // --- Dashboard UI Helpers Removed ---
-
   Widget _buildSrsBanner(BuildContext context) {
     bool isDue = _dueCount > 0;
     String timeText = "";
@@ -824,8 +801,8 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
             color: isDue
-                ? Colors.amber.withOpacity(0.3)
-                : Colors.blue.withOpacity(0.3)),
+                ? Colors.amber.withAlpha(77)
+                : Colors.blue.withAlpha(77)),
       ),
       child: Row(
         children: [
@@ -859,7 +836,6 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
           if (isDue)
             ElevatedButton(
               onPressed: () {
-                // Navigate to SRS (not yet implemented for web specifically, but could use generic)
                 ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("SRS for web coming soon!")));
               },
@@ -894,7 +870,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         Expanded(
           child: _buildStatCard(
             icon: Icons.timeline_rounded,
-            value: 'Top 10%', // Placeholder
+            value: 'Top 10%',
             label: 'Activity Ranking',
             color: const Color(0xFF6366F1),
           ),
@@ -903,7 +879,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         Expanded(
           child: _buildStatCard(
             icon: Icons.schedule_rounded,
-            value: '25m', // Placeholder
+            value: '25m',
             label: 'Study Time Today',
             color: const Color(0xFFEC4899),
           ),
@@ -926,7 +902,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
         border: Border.all(color: WebColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withAlpha(5),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -937,7 +913,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha(26),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: color, size: 32),

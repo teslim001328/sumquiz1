@@ -119,7 +119,7 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _selectedLevel,
+                          initialValue: _selectedLevel,
                           decoration: const InputDecoration(
                             labelText: 'Class / Level',
                             border: OutlineInputBorder(),

@@ -1,16 +1,13 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sumquiz/theme/web_theme.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/local_summary.dart';
 import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:sumquiz/services/progress_service.dart';
-import 'package:intl/intl.dart';
 
 class ProgressScreenWeb extends StatefulWidget {
   const ProgressScreenWeb({super.key});
@@ -21,15 +18,11 @@ class ProgressScreenWeb extends StatefulWidget {
 
 class _ProgressScreenWebState extends State<ProgressScreenWeb> {
   int _totalItems = 0;
-  int _totalQuizzes = 0;
-  int _totalFlashcards = 0;
   int _itemsCreated = 0;
   double _studyTime = 0;
   int _dayStreak = 0;
   int _milestoneProgress = 0;
   int _milestoneGoal = 100;
-  // Weekly activity: Index 0 is Today, Index 6 is 6 days ago (reversed for chart usually)
-  // Let's store as: Index 0 = 6 days ago, Index 6 = Today (Left to Right)
   List<int> _weeklyActivity = List.filled(7, 0);
   bool _isLoading = true;
 
@@ -44,29 +37,22 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     if (user == null) return;
 
     final db = context.read<LocalDatabaseService>();
-
     final progressService = ProgressService();
 
     try {
       final summariesCount = await progressService.getSummariesCount(user.uid);
       final quizzesCount = await progressService.getQuizzesCount(user.uid);
       final flashcardsCount = await progressService.getFlashcardsCount(user.uid);
-      
-      final accuracy = await progressService.getAverageAccuracy(user.uid);
       final totalSeconds = await progressService.getTotalTimeSpent(user.uid);
-      
-      // Fetch local items as well
       final summaries = await db.getAllSummaries(user.uid);
       final quizzes = await db.getAllQuizzes(user.uid);
       final flashcards = await db.getAllFlashcardSets(user.uid);
 
       setState(() {
         _totalItems = summaries.length + summariesCount;
-        _totalQuizzes = quizzes.length + quizzesCount;
-        _totalFlashcards = flashcards.length + flashcardsCount;
-        _itemsCreated = _totalItems + _totalQuizzes + _totalFlashcards;
+        _itemsCreated = _totalItems + quizzes.length + quizzesCount + flashcards.length + flashcardsCount;
         _studyTime = totalSeconds / 3600; // to hours
-        _dayStreak = user.missionCompletionStreak ?? 0;
+        _dayStreak = user.missionCompletionStreak;
         _milestoneProgress = _itemsCreated % 100;
         _milestoneGoal = 100;
         _weeklyActivity =
@@ -78,23 +64,18 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     }
   }
 
-  // Returns list where Index 0 is 6 days ago, Index 6 is Today
   List<int> _calculateWeeklyActivity(List<LocalSummary> summaries,
       List<LocalQuiz> quizzes, List<LocalFlashcardSet> flashcards) {
     final activity = List.filled(7, 0);
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day); // Strip time
+    final today = DateTime(now.year, now.month, now.day);
 
     void processItems(List<dynamic> items) {
       for (var item in items) {
         final itemDate = item.timestamp;
         final date = DateTime(itemDate.year, itemDate.month, itemDate.day);
-
         final daysDiff = today.difference(date).inDays;
-
         if (daysDiff >= 0 && daysDiff < 7) {
-          // Index 6 is Today (diff 0), Index 0 is 6 days ago (diff 6)
-          // i = 6 - diff
           activity[6 - daysDiff]++;
         }
       }
@@ -160,7 +141,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                 'You\'re on track to hit your weekly learning goals.',
                 style: GoogleFonts.outfit(
                   fontSize: 16,
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.primary.withAlpha(179),
                 ),
               ),
             ],
@@ -238,7 +219,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.primary.withAlpha(26),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.local_fire_department, color: Theme.of(context).colorScheme.primary, size: 24),
@@ -283,7 +264,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             'You\'re in the top 5% of learners this week! Keep the flame alive.',
             style: GoogleFonts.outfit(
               fontSize: 14,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+              color: Theme.of(context).colorScheme.primary.withAlpha(204),
               height: 1.4,
             ),
           ),
@@ -306,7 +287,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.primary.withAlpha(26),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -364,7 +345,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             children: [
               _buildMetricBox('Total Created', '$_itemsCreated', Icons.edit, Colors.blue),
               const SizedBox(width: 16),
-              _buildMetricBox('Study Time', '${_studyTime}hrs', Icons.access_time, Colors.orange),
+              _buildMetricBox('Study Time', '${_studyTime.toStringAsFixed(1)}hrs', Icons.access_time, Colors.orange),
             ],
           ),
         ],
@@ -377,9 +358,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withAlpha(26),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+          border: Border.all(color: color.withAlpha(51)),
         ),
         child: Column(
           children: [
@@ -433,6 +414,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
             'Weekly Activity',
             style: GoogleFonts.outfit(
@@ -457,8 +441,6 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                       getTitlesWidget: (value, meta) {
                         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                         final now = DateTime.now();
-                        // Weekday: 1 is Mon, 7 is Sun
-                        // index 6 is today, index 0 is 6 days ago
                         final date = now.subtract(Duration(days: 6 - value.toInt()));
                         return Padding(
                           padding: const EdgeInsets.only(top: 8.0),
@@ -486,7 +468,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                     barRods: [
                       BarChartRodData(
                         toY: _weeklyActivity[i].toDouble(),
-                        color: i == 6 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        color: i == 6 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withAlpha(77),
                         width: 16,
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                       ),
@@ -498,7 +480,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           ),
         ],
       ),
-    )
+    );
   }
 
   Widget _buildMilestoneCard() {
@@ -511,7 +493,6 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
       ),
       child: Stack(
         children: [
-          // Trophy watermark
           Positioned(
             right: 10,
             top: 10,
@@ -643,7 +624,6 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
   Widget _buildRecentAchievements() {
     final user = Provider.of<UserModel?>(context);
     final totalItems = user?.totalDecksGenerated ?? 0;
-    final studyTime = user?.totalStudyTime ?? 0;
     final streak = user?.missionCompletionStreak ?? 0;
 
     return Row(
@@ -656,10 +636,10 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
         ),
         const SizedBox(width: 16),
         _buildAchievementCard(
-          studyTime >= 600 ? 'Deep Learner' : 'Consistent Learner',
-          '${(studyTime / 60).toStringAsFixed(1)} hours study',
+          _studyTime >= 10 ? 'Deep Learner' : 'Consistent Learner',
+          '${_studyTime.toStringAsFixed(1)} hours study',
           Icons.timer_outlined,
-          studyTime >= 600 ? Colors.orange : Colors.blue,
+          _studyTime >= 10 ? Colors.orange : Colors.blue,
         ),
         const SizedBox(width: 16),
         _buildAchievementCard(
@@ -686,7 +666,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withAlpha(26),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),

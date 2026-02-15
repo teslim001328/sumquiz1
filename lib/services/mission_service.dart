@@ -85,7 +85,7 @@ class MissionService {
       momentumReward: momentumReward,
       difficultyLevel: difficulty,
       completionScore: 0.0,
-      miniQuizTopic: null, // MVP: No quiz yet
+      miniQuizTopic: null, title: '', // MVP: No quiz yet
     );
 
     // 4. Save

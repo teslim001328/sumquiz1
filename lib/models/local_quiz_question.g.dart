@@ -20,19 +20,25 @@ class LocalQuizQuestionAdapter extends TypeAdapter<LocalQuizQuestion> {
       question: fields[0] as String,
       options: (fields[1] as List).cast<String>(),
       correctAnswer: fields[2] as String,
+      explanation: fields[3] as String?,
+      questionType: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalQuizQuestion obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.question)
       ..writeByte(1)
       ..write(obj.options)
       ..writeByte(2)
-      ..write(obj.correctAnswer);
+      ..write(obj.correctAnswer)
+      ..writeByte(3)
+      ..write(obj.explanation)
+      ..writeByte(4)
+      ..write(obj.questionType);
   }
 
   @override

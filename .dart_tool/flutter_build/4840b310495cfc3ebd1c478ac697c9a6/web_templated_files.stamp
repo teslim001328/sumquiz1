@@ -1,0 +1,1 @@
+{"inputs":["/home/user/SumQuiz/web/*/index.html","/home/user/SumQuiz/web/flutter_bootstrap.js","/home/user/flutter/bin/cache/engine.stamp"],"outputs":["/home/user/SumQuiz/build/web/*/index.html","/home/user/SumQuiz/build/web/flutter_bootstrap.js"],"buildKey":"[{\"compileTarget\":\"dart2js\",\"renderer\":\"canvaskit\",\"mainJsPath\":\"main.dart.js\"},{}]"}

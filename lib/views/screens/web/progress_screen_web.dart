@@ -9,6 +9,7 @@ import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/local_summary.dart';
 import 'package:sumquiz/models/local_quiz.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
+import 'package:sumquiz/services/progress_service.dart';
 import 'package:intl/intl.dart';
 
 class ProgressScreenWeb extends StatefulWidget {
@@ -22,11 +23,11 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
   int _totalItems = 0;
   int _totalQuizzes = 0;
   int _totalFlashcards = 0;
-  int _itemsCreated = 1284;
-  double _studyTime = 42.5;
-  int _dayStreak = 12;
-  int _milestoneProgress = 750;
-  int _milestoneGoal = 1000;
+  int _itemsCreated = 0;
+  double _studyTime = 0;
+  int _dayStreak = 0;
+  int _milestoneProgress = 0;
+  int _milestoneGoal = 100;
   // Weekly activity: Index 0 is Today, Index 6 is 6 days ago (reversed for chart usually)
   // Let's store as: Index 0 = 6 days ago, Index 6 = Today (Left to Right)
   List<int> _weeklyActivity = List.filled(7, 0);
@@ -44,15 +45,30 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
 
     final db = context.read<LocalDatabaseService>();
 
+    final progressService = ProgressService();
+
     try {
+      final summariesCount = await progressService.getSummariesCount(user.uid);
+      final quizzesCount = await progressService.getQuizzesCount(user.uid);
+      final flashcardsCount = await progressService.getFlashcardsCount(user.uid);
+      
+      final accuracy = await progressService.getAverageAccuracy(user.uid);
+      final totalSeconds = await progressService.getTotalTimeSpent(user.uid);
+      
+      // Fetch local items as well
       final summaries = await db.getAllSummaries(user.uid);
       final quizzes = await db.getAllQuizzes(user.uid);
       final flashcards = await db.getAllFlashcardSets(user.uid);
 
       setState(() {
-        _totalItems = summaries.length;
-        _totalQuizzes = quizzes.length;
-        _totalFlashcards = flashcards.length;
+        _totalItems = summaries.length + summariesCount;
+        _totalQuizzes = quizzes.length + quizzesCount;
+        _totalFlashcards = flashcards.length + flashcardsCount;
+        _itemsCreated = _totalItems + _totalQuizzes + _totalFlashcards;
+        _studyTime = totalSeconds / 3600; // to hours
+        _dayStreak = user.missionCompletionStreak ?? 0;
+        _milestoneProgress = _itemsCreated % 100;
+        _milestoneGoal = 100;
         _weeklyActivity =
             _calculateWeeklyActivity(summaries, quizzes, flashcards);
         _isLoading = false;
@@ -96,9 +112,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     final user = Provider.of<UserModel?>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: WebColors.primary))
+          ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(40),
               child: Center(
@@ -132,11 +148,11 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Keep it up, Alex! 👏',
+                'Keep it up, ${user?.displayName?.split(' ').first ?? 'Student'}! 👏',
                 style: GoogleFonts.outfit(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: WebColors.textPrimary,
+                  color: Theme.of(context).textTheme.headlineMedium?.color,
                 ),
               ),
               const SizedBox(height: 8),
@@ -144,7 +160,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                 'You\'re on track to hit your weekly learning goals.',
                 style: GoogleFonts.outfit(
                   fontSize: 16,
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -155,9 +171,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEAEAEA)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Row(
                 children: [
@@ -178,7 +194,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF6B5CE7),
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -210,9 +226,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,10 +238,10 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEE9FE),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.local_fire_department, color: Color(0xFF6B5CE7), size: 24),
+                child: Icon(Icons.local_fire_department, color: Theme.of(context).colorScheme.primary, size: 24),
               ),
               const Spacer(),
               Row(
@@ -235,7 +251,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: index < 3 ? const Color(0xFF6B5CE7) : const Color(0xFFEAEAEA),
+                      color: index < 3 ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -249,7 +265,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             style: GoogleFonts.outfit(
               fontSize: 48,
               fontWeight: FontWeight.w800,
-              color: WebColors.textPrimary,
+              color: Theme.of(context).textTheme.headlineMedium?.color,
               letterSpacing: -2,
             ),
           ),
@@ -258,7 +274,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             style: GoogleFonts.outfit(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF6B5CE7),
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.2,
             ),
           ),
@@ -267,7 +283,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             'You\'re in the top 5% of learners this week! Keep the flame alive.',
             style: GoogleFonts.outfit(
               fontSize: 14,
-              color: const Color(0xFF6B5CE7),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
               height: 1.4,
             ),
           ),
@@ -280,9 +296,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +306,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFEEE9FE),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -298,7 +314,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
               style: GoogleFonts.outfit(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF6B5CE7),
+                color: Theme.of(context).colorScheme.primary,
                 letterSpacing: 1.2,
               ),
             ),
@@ -309,23 +325,23 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             style: GoogleFonts.outfit(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: WebColors.textPrimary,
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Text(
-                '85% Complete',
+                '${((_totalItems % 20) / 20.0 * 100).round()}% Complete',
                 style: GoogleFonts.outfit(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                '17/20',
+                '${_totalItems % 20}/20',
                 style: GoogleFonts.outfit(
                   fontSize: 16,
                   color: const Color(0xFF94A3B8),
@@ -337,18 +353,18 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: 0.85,
-              backgroundColor: const Color(0xFFEAEAEA),
-              color: const Color(0xFF6B5CE7),
+              value: (_totalItems % 20) / 20.0,
+              backgroundColor: Theme.of(context).dividerColor,
+              color: Theme.of(context).colorScheme.primary,
               minHeight: 8,
             ),
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildMetricBox('Total Created', '$_itemsCreated', Icons.edit, const Color(0xFFBFDBFE)),
+              _buildMetricBox('Total Created', '$_itemsCreated', Icons.edit, Colors.blue),
               const SizedBox(width: 16),
-              _buildMetricBox('Study Time', '${_studyTime}hrs', Icons.access_time, const Color(0xFFFED7AA)),
+              _buildMetricBox('Study Time', '${_studyTime}hrs', Icons.access_time, Colors.orange),
             ],
           ),
         ],
@@ -356,31 +372,32 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     );
   }
 
-  Widget _buildMetricBox(String label, String value, IconData icon, Color bgColor) {
+  Widget _buildMetricBox(String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 20, color: bgColor == const Color(0xFFBFDBFE) ? const Color(0xFF3B82F6) : const Color(0xFFF97316)),
+            Icon(icon, size: 20, color: color),
             const SizedBox(height: 8),
             Text(
               value,
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: WebColors.textPrimary,
+                color: Theme.of(context).textTheme.titleLarge?.color,
               ),
             ),
             Text(
               label,
               style: GoogleFonts.outfit(
                 fontSize: 12,
-                color: const Color(0xFF6B5CE7),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -412,50 +429,72 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
           Text(
             'Weekly Activity',
             style: GoogleFonts.outfit(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: WebColors.textPrimary,
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                .asMap()
-                .entries
-                .map((entry) => Column(
-                      children: [
-                        Text(
-                          entry.value,
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            fontWeight: entry.key == 3 ? FontWeight.w600 : FontWeight.w400,
-                            color: entry.key == 3 ? const Color(0xFF6B5CE7) : const Color(0xFF94A3B8),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 200,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: (_weeklyActivity.reduce((a, b) => a > b ? a : b) + 1).toDouble(),
+                barTouchData: BarTouchData(enabled: true),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                        final now = DateTime.now();
+                        // Weekday: 1 is Mon, 7 is Sun
+                        // index 6 is today, index 0 is 6 days ago
+                        final date = now.subtract(Duration(days: 6 - value.toInt()));
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            days[date.weekday - 1],
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: value.toInt() == 6 ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodySmall?.color,
+                                fontWeight: value.toInt() == 6 ? FontWeight.w700 : FontWeight.w400,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: entry.key == 3 ? const Color(0xFF6B5CE7) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: entry.key == 3 ? null : Border.all(color: const Color(0xFFEAEAEA)),
-                          ),
-                        ),
-                      ],
-                    ))
-                .toList(),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: const FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                barGroups: List.generate(7, (i) {
+                  return BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: _weeklyActivity[i].toDouble(),
+                        color: i == 6 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        width: 16,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ),
           ),
         ],
       ),
@@ -466,9 +505,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Stack(
         children: [
@@ -480,7 +519,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
               opacity: 0.05,
               child: Transform.rotate(
                 angle: 0.3,
-                child: const Icon(Icons.emoji_events, size: 80, color: Color(0xFF6B5CE7)),
+                child: Icon(Icons.emoji_events, size: 80, color: Theme.of(context).colorScheme.primary),
               ),
             ),
           ),
@@ -489,14 +528,14 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.emoji_events_outlined, color: Color(0xFF6B5CE7), size: 20),
+                  Icon(Icons.emoji_events_outlined, color: Theme.of(context).colorScheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'NEXT MILESTONE',
                     style: GoogleFonts.outfit(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF6B5CE7),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -507,15 +546,15 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: WebColors.textPrimary,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Complete 250 more quiz items to unlock this badge.',
+                'Complete ${(_milestoneGoal - _milestoneProgress).toInt()} more items to unlock this badge.',
                 style: GoogleFonts.outfit(
                   fontSize: 14,
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).colorScheme.primary,
                   height: 1.4,
                 ),
               ),
@@ -524,8 +563,8 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: _milestoneProgress / _milestoneGoal,
-                  backgroundColor: const Color(0xFFEAEAEA),
-                  color: const Color(0xFF6B5CE7),
+                  backgroundColor: Theme.of(context).dividerColor,
+                  color: Theme.of(context).colorScheme.primary,
                   minHeight: 8,
                 ),
               ),
@@ -534,7 +573,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
                 '$_milestoneProgress/$_milestoneGoal Items',
                 style: GoogleFonts.outfit(
                   fontSize: 12,
-                  color: const Color(0xFF94A3B8),
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
             ],
@@ -592,20 +631,42 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: WebColors.textPrimary,
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         const SizedBox(height: 20),
-        Row(
-          children: [
-            _buildAchievementCard('Quick Learner', '10 quizzes in 24h', Icons.autorenew, const Color(0xFF6B5CE7)),
-            const SizedBox(width: 16),
-            _buildAchievementCard('Perfect Score', '100% on Advance Tech', Icons.check_circle, const Color(0xFF22C55E)),
-            const SizedBox(width: 16),
-            _buildAchievementCard('Community Ace', 'Shared 5 study sets', Icons.people, const Color(0xFF3B82F6)),
-            const SizedBox(width: 16),
-            _buildAchievementCard('Early Bird', 'Studied before 7 AM', Icons.wb_sunny, const Color(0xFFEC4899)),
-          ],
+        _buildRecentAchievements(),
+      ],
+    );
+  }
+
+  Widget _buildRecentAchievements() {
+    final user = Provider.of<UserModel?>(context);
+    final totalItems = user?.totalDecksGenerated ?? 0;
+    final studyTime = user?.totalStudyTime ?? 0;
+    final streak = user?.missionCompletionStreak ?? 0;
+
+    return Row(
+      children: [
+        _buildAchievementCard(
+          totalItems >= 50 ? 'Knowledge Master' : 'Scholar in Training',
+          '$totalItems items curated',
+          Icons.school,
+          totalItems >= 50 ? Colors.amber : Colors.blueGrey,
+        ),
+        const SizedBox(width: 16),
+        _buildAchievementCard(
+          studyTime >= 600 ? 'Deep Learner' : 'Consistent Learner',
+          '${(studyTime / 60).toStringAsFixed(1)} hours study',
+          Icons.timer_outlined,
+          studyTime >= 600 ? Colors.orange : Colors.blue,
+        ),
+        const SizedBox(width: 16),
+        _buildAchievementCard(
+          streak >= 7 ? 'Legendary Streak' : 'Rising Star',
+          '$streak day streak',
+          Icons.bolt,
+          streak >= 7 ? Colors.purple : Colors.teal,
         ),
       ],
     );
@@ -616,9 +677,9 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEAEAEA)),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Column(
           children: [
@@ -636,7 +697,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: WebColors.textPrimary,
+                color: Theme.of(context).textTheme.titleSmall?.color,
               ),
               textAlign: TextAlign.center,
             ),
@@ -664,7 +725,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             style: GoogleFonts.outfit(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF6B5CE7),
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),

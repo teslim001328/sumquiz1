@@ -94,7 +94,7 @@ class SummaryScreenState extends State<SummaryScreen> {
     }
 
     if (!userModel.isPro &&
-        !(await usageService.canPerformAction('summaries'))) {
+        !(await usageService.canPerformAction(userModel.uid, 'summaries'))) {
       if (mounted) {
         showDialog(
             context: context,
@@ -129,7 +129,7 @@ class SummaryScreenState extends State<SummaryScreen> {
       final summary = await _localDbService.getSummary(summaryId);
 
       if (summary != null) {
-        if (!userModel.isPro) await usageService.recordAction('summaries');
+        if (!userModel.isPro) await usageService.recordAction(userModel.uid, 'summaries');
         setState(() {
           _summaryTitle = summary.title;
           _summaryContent = summary.content;

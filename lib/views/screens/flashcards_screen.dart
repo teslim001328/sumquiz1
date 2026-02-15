@@ -102,7 +102,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
     }
 
     if (!userModel.isPro) {
-      final canGenerate = await usageService.canPerformAction('flashcards');
+      final canGenerate = await usageService.canPerformAction(userModel.uid, 'flashcards');
       if (!canGenerate) {
         if (mounted) {
           showDialog(
@@ -145,7 +145,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       }
 
       if (!userModel.isPro) {
-        await usageService.recordAction('flashcards');
+        await usageService.recordAction(userModel.uid, 'flashcards');
       }
 
       final content = await _localDbService.getFolderContents(folderId);

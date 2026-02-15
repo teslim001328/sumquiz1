@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:sumquiz/models/user_model.dart';
@@ -13,6 +12,16 @@ class WebPaymentResult {
 
   WebPaymentResult(
       {required this.success, this.errorMessage, this.checkoutUrl});
+}
+
+class WebPaymentConstants {
+  static const Map<String, String> paymentLinks = {
+    'sumquiz_daily_pass': 'https://flutterwave.com/pay/w8eb6w1jnsox',
+    'sumquiz_weekly_pass': 'https://flutterwave.com/pay/zaaqcr9zpodx',
+    'sumquiz_pro_monthly': 'https://flutterwave.com/pay/gidkziu2moty',
+    'sumquiz_pro_yearly': 'https://flutterwave.com/pay/qmbmwzf3wgin',
+    'sumquiz_pro_lifetime': 'https://flutterwave.com/pay/zw38gkrfab5e',
+  };
 }
 
 class WebPaymentService {
@@ -44,6 +53,7 @@ class WebPaymentService {
     }
   }
 
+  /*
   /// Validate that FlutterWave is ready for payments
   static void validateConfiguration() {
     if (!isConfigured) {
@@ -54,6 +64,7 @@ class WebPaymentService {
           '3. Restart the app');
     }
   }
+  */
 
   /// Centralized Product Definitions for Web
   static final List<ProductDetails> webProducts = [
@@ -107,12 +118,29 @@ class WebPaymentService {
     return webProducts;
   }
 
-  /// Process the entire Web Purchase flow: Redirect to Cloud Function generated link
   Future<WebPaymentResult> processWebPurchase({
     required BuildContext context,
     required ProductDetails product,
     required UserModel user,
   }) async {
+    // Automated payments are temporarily disabled.
+    // Use manual payment links generated based on the following plan details:
+    // Amount: ${product.rawPrice}, Currency: $currency, Email: ${user.email}
+
+    final paymentLink = WebPaymentConstants.paymentLinks[product.id];
+    if (paymentLink != null) {
+      final uri = Uri.parse(paymentLink);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return WebPaymentResult(success: true, checkoutUrl: paymentLink);
+      }
+    }
+
+    return WebPaymentResult(
+      success: false,
+      errorMessage: 'Could not launch payment link. Please contact support.',
+    );
+    /*
     try {
       final HttpsCallable callable =
           FirebaseFunctions.instance.httpsCallable('createPayment');
@@ -151,6 +179,7 @@ class WebPaymentService {
         errorMessage: 'Payment Error: $e',
       );
     }
+    */
   }
 
   /// Listen for premium status change (used for the "Processing payment..." screen)

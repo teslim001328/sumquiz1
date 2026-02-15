@@ -50,6 +50,7 @@ class PublicDeck {
 
   Map<String, dynamic> toFirestore() {
     return {
+      'creatorId': creatorId,
       'creatorName': creatorName,
       'title': title,
       'description': description,

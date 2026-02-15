@@ -1,7 +1,7 @@
 name: sumquiz
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.1.7+16
+version: 1.1.8+17
 
 environment:
   sdk: '>=3.5.0-18.0.dev <4.0.0'
@@ -68,6 +68,8 @@ dependencies:
   flutter_markdown: ^0.7.7+1
   flutter_speed_dial: ^7.0.0
   flutter_timezone: ^5.0.1
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 dev_dependencies:
   flutter_test:

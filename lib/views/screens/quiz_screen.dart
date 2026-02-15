@@ -94,7 +94,7 @@ class _QuizScreenState extends State<QuizScreen> {
     if (userModel == null || usageService == null) return;
 
     if (!userModel.isPro) {
-      final canGenerate = await usageService.canPerformAction('quizzes');
+      final canGenerate = await usageService.canPerformAction(userModel.uid, 'quizzes');
       if (!canGenerate) {
         if (mounted) {
           showDialog(
@@ -127,7 +127,7 @@ class _QuizScreenState extends State<QuizScreen> {
       );
 
       if (!userModel.isPro) {
-        await usageService.recordAction('quizzes');
+        await usageService.recordAction(userModel.uid, 'quizzes');
       }
 
       final content = await _localDbService.getFolderContents(folderId);

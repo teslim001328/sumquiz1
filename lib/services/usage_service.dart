@@ -136,13 +136,13 @@ class UsageService {
     }
   }
 
-  /// Record a general action (legacy, for other limits)
-  Future<void> recordAction(String action) async {
-    // Default implementation for other actions
+  /// Record a general action (linked to same daily limit for now)
+  Future<void> recordAction(String uid, String action) async {
+    await recordDeckGeneration(uid);
   }
 
-  Future<bool> canPerformAction(String action) async {
-    // Default implementation
-    return true;
+  /// Check if user can perform an action (checks daily deck limit)
+  Future<bool> canPerformAction(String uid, String action) async {
+    return await canGenerateDeck(uid);
   }
 }

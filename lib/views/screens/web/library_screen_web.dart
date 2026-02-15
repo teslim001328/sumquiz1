@@ -10,8 +10,14 @@ import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/models/library_item.dart';
 import 'package:sumquiz/services/firestore_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
-import 'package:sumquiz/view_models/quiz_view_model.dart';
+import 'package:sumquiz/view_models/library_view_model.dart';
+import 'package:sumquiz/services/sync_service.dart';
+import 'package:sumquiz/models/folder.dart';
 import 'package:sumquiz/views/screens/summary_screen.dart';
+import 'package:sumquiz/views/screens/quiz_screen.dart';
+import 'package:sumquiz/views/screens/flashcards_screen.dart';
+import 'package:sumquiz/views/screens/results_view_screen.dart';
+import 'package:sumquiz/views/screens/web/results_view_screen_web.dart';
 
 import 'package:intl/intl.dart';
 
@@ -30,10 +36,6 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';
-  Stream<List<LibraryItem>>? _allItemsStream;
-  Stream<List<LibraryItem>>? _summariesStream;
-  Stream<List<LibraryItem>>? _flashcardsStream;
-  String? _userIdForStreams;
 
   @override
   void initState() {
@@ -47,9 +49,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final user = Provider.of<UserModel?>(context);
-    if (user != null && user.uid != _userIdForStreams) {
-      _userIdForStreams = user.uid;
-      _initializeStreams(user.uid);
+    if (user != null) {
       if (mounted) {
         Provider.of<QuizViewModel>(context, listen: false)
             .initializeForUser(user.uid);
@@ -57,87 +57,41 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     }
   }
 
-  void _initializeStreams(String userId) {
-    final localSummaries = _localDb.watchAllSummaries(userId).map((list) => list
-        .map((s) => LibraryItem(
-            id: s.id,
-            title: s.title,
-            type: LibraryItemType.summary,
-            timestamp: Timestamp.fromDate(s.timestamp)))
-        .toList());
-
-    final firestoreSummaries =
-        _firestoreService.streamItems(userId, 'summaries');
-
-    _summariesStream = Rx.combineLatest2<List<LibraryItem>, List<LibraryItem>,
-        List<LibraryItem>>(
-      localSummaries,
-      firestoreSummaries.handleError((_) => <LibraryItem>[]),
-      (local, cloud) {
-        final ids = local.map((e) => e.id).toSet();
-        return [...local, ...cloud.where((c) => !ids.contains(c.id))];
-      },
-    ).asBroadcastStream();
-
-    final localFlashcards = _localDb.watchAllFlashcardSets(userId).map((list) =>
-        list
-            .map((f) => LibraryItem(
-                id: f.id,
-                title: f.title,
-                type: LibraryItemType.flashcards,
-                timestamp: Timestamp.fromDate(f.timestamp)))
-            .toList());
-
-    final firestoreFlashcards =
-        _firestoreService.streamItems(userId, 'flashcards');
-
-    _flashcardsStream = Rx.combineLatest2<List<LibraryItem>, List<LibraryItem>,
-        List<LibraryItem>>(
-      localFlashcards,
-      firestoreFlashcards.handleError((_) => <LibraryItem>[]),
-      (local, cloud) {
-        final ids = local.map((e) => e.id).toSet();
-        return [...local, ...cloud.where((c) => !ids.contains(c.id))];
-      },
-    ).asBroadcastStream();
-
-    final localQuizzes = _localDb.watchAllQuizzes(userId).map((list) => list
-        .map((q) => LibraryItem(
-            id: q.id,
-            title: q.title,
-            type: LibraryItemType.quiz,
-            timestamp: Timestamp.fromDate(q.timestamp)))
-        .toList());
-
-    _allItemsStream = Rx.combineLatest3<List<LibraryItem>, List<LibraryItem>,
-            List<LibraryItem>, List<LibraryItem>>(
-        _summariesStream!, _flashcardsStream!, localQuizzes,
-        (summaries, flashcards, quizzes) {
-      final all = [...summaries, ...flashcards, ...quizzes];
-      all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return all;
-    }).asBroadcastStream();
-  }
-
   void _onSearchChanged() =>
       setState(() => _searchQuery = _searchController.text.toLowerCase());
+
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserModel?>(context);
 
-    return Scaffold(
-      body: Container(
-        color: const Color(0xFFF5F5F7),
-        child: Row(
-          children: [
-            _buildSidebar(),
-            Expanded(
-              child:
-                  user == null ? _buildLoginPrompt() : _buildMainContent(user),
+    if (user == null) {
+      return Scaffold(body: _buildLoginPrompt());
+    }
+
+    return ChangeNotifierProvider(
+      create: (context) => LibraryViewModel(
+        localDb: context.read<LocalDatabaseService>(),
+        firestoreService: context.read<FirestoreService>(),
+        syncService: context.read<SyncService>(),
+        userId: user.uid,
+      ),
+      child: Consumer<LibraryViewModel>(
+        builder: (context, viewModel, child) {
+          return Scaffold(
+            body: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Row(
+                children: [
+                  _buildSidebar(viewModel),
+                  Expanded(
+                    child: _buildMainContent(user, viewModel),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -172,13 +126,14 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildSidebar() {
+  Widget _buildSidebar(LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
     return Container(
       width: 280,
       padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(right: BorderSide(color: Color(0xFFEAEAEA))),
+        color: Theme.of(context).cardColor,
+        border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +144,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child:
@@ -201,16 +156,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: WebColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '| Knowledge Hub',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
             ],
@@ -219,44 +165,101 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
 
           // Main Sections
           _buildSidebarSection([
-            _buildSidebarItem('All Content', Icons.grid_view_rounded, true),
+            GestureDetector(
+                onTap: () => viewModel.selectFolder(null),
+                child: _buildSidebarItem('All Content', Icons.grid_view_rounded, selectedFolder == null)),
+            const SizedBox(height: 12),
             _buildSubItem('Recently Viewed', Icons.access_time_filled),
             _buildSubItem('Favorites', Icons.star_border),
             _buildSubItem('Collections', Icons.folder_outlined),
           ]),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // Workspace Section
-          _buildWorkspaceSection([
-            _buildWorkspaceItem('University 2024', Icons.school_outlined),
-            _buildWorkspaceItem('Personal Research', Icons.psychology_outlined),
-          ]),
-
-          const Spacer(),
-
-          // Create New Button
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6B5CE7),
-              borderRadius: BorderRadius.circular(12),
+          // Collections List
+          Text(
+            'COLLECTIONS',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+              letterSpacing: 1.2,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.add, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Create New',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<List<Folder>>(
+              stream: viewModel.allFolders$,
+              builder: (context, snapshot) {
+                final folders = snapshot.data ?? [];
+                return ListView.builder(
+                  itemCount: folders.length,
+                  itemBuilder: (context, index) {
+                    final folder = folders[index];
+                    final isSelected = selectedFolder?.id == folder.id;
+                    return GestureDetector(
+                      onTap: () => viewModel.selectFolder(folder),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        margin: const EdgeInsets.only(bottom: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.folder_open,
+                                size: 18,
+                                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                folder.name,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          GestureDetector(
+            onTap: () => context.push('/create'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Create New',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -276,7 +279,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFEEE9FE) : Colors.transparent,
+        color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -284,7 +287,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
           Icon(
             icon,
             color:
-                isSelected ? const Color(0xFF6B5CE7) : const Color(0xFFA280FF),
+                isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -294,8 +297,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               fontSize: 15,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               color: isSelected
-                  ? const Color(0xFF6B5CE7)
-                  : const Color(0xFF475569),
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -306,17 +309,19 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
   Widget _buildSubItem(String title, IconData icon) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 36),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 36),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFA280FF), size: 18),
+          Icon(icon, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6), size: 18),
           const SizedBox(width: 12),
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF475569),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
           ),
         ],
@@ -328,15 +333,15 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'WORKSPACE',
-          style: GoogleFonts.outfit(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF6B5CE7),
-            letterSpacing: 1.2,
+          Text(
+            'WORKSPACE',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
           ),
-        ),
         const SizedBox(height: 16),
         ...items,
       ],
@@ -356,7 +361,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             style: GoogleFonts.outfit(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF475569),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -364,13 +369,13 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildMainContent(UserModel user) {
+  Widget _buildMainContent(UserModel user, LibraryViewModel viewModel) {
     return Padding(
       padding: const EdgeInsets.all(40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(viewModel),
           const SizedBox(height: 32),
           _buildLibraryTabs(),
           const SizedBox(height: 24),
@@ -379,10 +384,10 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               controller: _tabController,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildCombinedGrid(user.uid),
-                _buildLibraryGrid(user.uid, 'summaries', _summariesStream),
-                _buildQuizGrid(user.uid),
-                _buildLibraryGrid(user.uid, 'flashcards', _flashcardsStream),
+                _buildCombinedGrid(user.uid, viewModel),
+                _buildLibraryGrid(user.uid, 'summaries', viewModel),
+                _buildQuizGrid(user.uid, viewModel),
+                _buildLibraryGrid(user.uid, 'flashcards', viewModel),
               ],
             ),
           ),
@@ -391,7 +396,8 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
     return Row(
       children: [
         Expanded(
@@ -399,19 +405,21 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Content Library',
+                selectedFolder != null ? selectedFolder.name : 'Content Library',
                 style: GoogleFonts.outfit(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: WebColors.textPrimary,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Manage and access your generated learning materials.',
+                selectedFolder != null 
+                  ? 'Viewing contents of ${selectedFolder.name}' 
+                  : 'Manage and access your generated learning materials.',
                 style: GoogleFonts.outfit(
                   fontSize: 16,
-                  color: const Color(0xFF6B5CE7),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -419,50 +427,35 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         ),
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEAEAEA)),
+            if (viewModel.isSyncing)
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.grid_view,
-                      size: 18, color: Color(0xFF6B5CE7)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Grid',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF6B5CE7),
-                    ),
-                  ),
-                ],
-              ),
+            IconButton(
+              icon: Icon(Icons.sync, color: Theme.of(context).colorScheme.primary),
+              onPressed: viewModel.syncAllData,
+              tooltip: 'Sync Data',
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              width: 300,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEAEAEA)),
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.list, size: 18, color: Color(0xFF94A3B8)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'List',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search Library...',
+                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],
@@ -473,9 +466,12 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
 
   // --- Grid Builders ---
 
-  Widget _buildCombinedGrid(String userId) {
+  Widget _buildCombinedGrid(String userId, LibraryViewModel viewModel) {
+    final stream = viewModel.selectedFolder == null 
+        ? viewModel.allItems$ 
+        : viewModel.getFolderItemsStream(viewModel.selectedFolder!.id);
     return StreamBuilder<List<LibraryItem>>(
-      stream: _allItemsStream,
+      stream: stream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return _buildLoading();
         final items = snapshot.data ?? [];
@@ -492,13 +488,26 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               'Start creating content to populate your library');
         }
 
-        return _buildContentGrid(filtered, userId);
+        return _buildContentGrid(filtered, userId, viewModel);
       },
     );
   }
 
   Widget _buildLibraryGrid(
-      String userId, String type, Stream<List<LibraryItem>>? stream) {
+      String userId, String type, LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
+    late Stream<List<LibraryItem>> stream;
+    
+    if (type == 'summaries') {
+      stream = selectedFolder == null 
+          ? viewModel.allSummaries$ 
+          : viewModel.getFolderSummariesStream(selectedFolder.id);
+    } else {
+      stream = selectedFolder == null 
+          ? viewModel.allFlashcards$ 
+          : viewModel.getFolderFlashcardsStream(selectedFolder.id);
+    }
+
     return StreamBuilder<List<LibraryItem>>(
       stream: stream,
       builder: (context, snapshot) {
@@ -508,26 +517,27 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
           return _buildEmptyState(
               'No $type yet', 'Create your first $type now');
         }
-        return _buildContentGrid(items, userId);
+        return _buildContentGrid(items, userId, viewModel);
       },
     );
   }
 
-  Widget _buildQuizGrid(String userId) {
-    return Consumer<QuizViewModel>(
-      builder: (context, vm, _) {
-        final items = vm.quizzes
-            .map((q) => LibraryItem(
-                id: q.id,
-                title: q.title,
-                type: LibraryItemType.quiz,
-                timestamp: Timestamp.fromDate(q.timestamp)))
-            .toList();
+  Widget _buildQuizGrid(String userId, LibraryViewModel viewModel) {
+    final selectedFolder = viewModel.selectedFolder;
+    final stream = selectedFolder == null 
+        ? viewModel.allQuizzes$ 
+        : viewModel.getFolderQuizzesStream(selectedFolder.id);
+
+    return StreamBuilder<List<LibraryItem>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return _buildLoading();
+        final items = snapshot.data ?? [];
         if (items.isEmpty) {
           return _buildEmptyState(
               'No quizzes yet', 'Generate a quiz from any content');
         }
-        return _buildContentGrid(items, userId);
+        return _buildContentGrid(items, userId, viewModel);
       },
     );
   }
@@ -552,7 +562,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
             style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: WebColors.textPrimary),
+                color: Theme.of(context).textTheme.titleLarge?.color),
           ),
           const SizedBox(height: 8),
           Text(
@@ -578,16 +588,27 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Row(
-        children: [
-          _buildTabItem('All Items', Icons.grid_view, 0, true),
-          _buildTabItem('Summaries', Icons.description_outlined, 1, false),
-          _buildTabItem('Quizzes', Icons.quiz_outlined, 2, false),
-          _buildTabItem('Flashcards', Icons.style_outlined, 3, false),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelColor: Colors.white,
+        unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
+        labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14),
+        unselectedLabelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 14),
+        tabs: const [
+          Tab(text: 'All Items', icon: Icon(Icons.grid_view, size: 18)),
+          Tab(text: 'Summaries', icon: Icon(Icons.description_outlined, size: 18)),
+          Tab(text: 'Quizzes', icon: Icon(Icons.quiz_outlined, size: 18)),
+          Tab(text: 'Flashcards', icon: Icon(Icons.style_outlined, size: 18)),
         ],
       ),
     );
@@ -601,7 +622,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         child: Container(
           height: 48,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF6B5CE7) : Colors.transparent,
+            color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -610,7 +631,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
               Icon(
                 icon,
                 size: 18,
-                color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                color: isSelected ? Theme.of(context).cardColor : Theme.of(context).textTheme.bodySmall?.color,
               ),
               const SizedBox(width: 8),
               Text(
@@ -618,7 +639,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                  color: isSelected ? Theme.of(context).cardColor : Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ],
@@ -628,7 +649,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
     );
   }
 
-  Widget _buildContentGrid(List<LibraryItem> items, String userId) {
+  Widget _buildContentGrid(List<LibraryItem> items, String userId, LibraryViewModel viewModel) {
     final cardData = items.map((item) {
       IconData icon;
       Color bgColor;
@@ -638,31 +659,31 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
 
       switch (item.type) {
         case LibraryItemType.summary:
-          icon = Icons.description_outlined;
-          bgColor = const Color(0xFFEEE9FE);
-          textColor = const Color(0xFF6B5CE7);
+          icon = Icons.article_outlined;
+          bgColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.1);
+          textColor = Theme.of(context).colorScheme.primary;
           typeName = 'SUMMARY';
-          badge = 'Never opened';
+          badge = item.description != null ? 'Details available' : 'No description';
           break;
         case LibraryItemType.quiz:
           icon = Icons.quiz_outlined;
-          bgColor = const Color(0xFFDCFCE7);
-          textColor = const Color(0xFF22C55E);
+          bgColor = Colors.green.withValues(alpha: 0.1);
+          textColor = Colors.green;
           typeName = 'QUIZ';
-          badge = 'Score: 92%';
+          badge = item.score != null ? 'Score: ${(item.score! * 100).round()}%' : '${item.itemCount ?? 0} Questions';
           break;
         case LibraryItemType.flashcards:
           icon = Icons.style_outlined;
-          bgColor = const Color(0xFFFED7AA);
-          textColor = const Color(0xFFF97316);
+          bgColor = Colors.orange.withValues(alpha: 0.1);
+          textColor = Colors.orange;
           typeName = 'FLASHCARDS';
-          badge = '50 Cards';
+          badge = '${item.itemCount ?? 0} Cards';
           break;
       }
 
       return _LibraryCardData(
         title: item.title,
-        subtitle: _getDescriptionForType(item.type),
+        subtitle: _getDescriptionForType(item),
         icon: icon,
         bgColor: bgColor,
         textColor: textColor,
@@ -671,10 +692,11 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         date: DateFormat('MMM dd, yyyy').format(item.timestamp.toDate()),
         onTap: () {
           if (item.type == LibraryItemType.summary) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => SummaryScreen(summary: null)));
+            context.push('/library/summary/${item.id}');
+          } else if (item.type == LibraryItemType.quiz) {
+            context.push('/library/results-view/${item.id}');
+          } else if (item.type == LibraryItemType.flashcards) {
+            context.push('/library/flashcards/${item.id}');
           }
         },
       );
@@ -685,26 +707,29 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
       title: 'New Resource',
       subtitle: 'Upload a PDF or link',
       icon: Icons.add_outlined,
-      bgColor: Colors.white,
-      textColor: const Color(0xFF94A3B8),
+      bgColor: Theme.of(context).cardColor,
+      textColor: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
       typeName: '',
       badge: '',
       date: '',
       isAddCard: true,
-      onTap: () => context.push('/create'),
+      onTap: () => context.push('/create-content'),
     ));
 
     return _buildMasonryGrid(cardData);
   }
 
-  String _getDescriptionForType(LibraryItemType type) {
-    switch (type) {
+  String _getDescriptionForType(LibraryItem item) {
+    if (item.description != null && item.description!.isNotEmpty) {
+      return item.description!;
+    }
+    switch (item.type) {
       case LibraryItemType.summary:
-        return 'Key concepts including cognitive biases, decision theory, and the nudge factor.';
+        return 'Detailed summary generated from your source content.';
       case LibraryItemType.quiz:
-        return '25 questions covering stereochemistry and reaction mechanisms.';
+        return 'Practice quiz with ${item.itemCount ?? 0} questions to test your knowledge.';
       case LibraryItemType.flashcards:
-        return 'Practice deck containing 50 common irregular verbs and conjugations.';
+        return 'Study deck with ${item.itemCount ?? 0} flashcards for spaced repetition.';
     }
   }
 
@@ -743,9 +768,9 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
         onTap: card.onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: card.bgColor,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEAEAEA)),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -774,15 +799,15 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEAEAEA),
+                                color: Theme.of(context).dividerColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFD1D5DB),
+                                  color: Theme.of(context).dividerColor,
                                   style: BorderStyle.solid,
                                 ),
                               ),
                               child: const Icon(Icons.add,
-                                  color: Color(0xFF94A3B8), size: 24),
+                                  color: Theme.of(context).textTheme.bodySmall?.color, size: 24),
                             ),
                           if (card.typeName.isNotEmpty)
                             Container(
@@ -810,27 +835,22 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: card.isAddCard
-                              ? const Color(0xFF475569)
-                              : WebColors.textPrimary,
-                          height: 1.3,
+                          color: Theme.of(context).textTheme.titleMedium?.color,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        card.subtitle,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                          height: 1.4,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (!card.isAddCard) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          card.subtitle,
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            color: const Color(0xFF6B5CE7),
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                       const SizedBox(height: 16),
                       if (!card.isAddCard)
                         Row(
@@ -839,7 +859,7 @@ class LibraryScreenWebState extends State<LibraryScreenWeb>
                               card.date,
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
-                                color: const Color(0xFF94A3B8),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             const Spacer(),

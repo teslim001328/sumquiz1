@@ -136,9 +136,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     bool success;
 
     if (kIsWeb) {
-      // Web Payment Redirect to Mobile Beta
-      // NOTE: Web payments are temporarily disabled in favor of mobile app beta access
-      /*
+      // Web Payment Flow with Links
+      
       final user = context.read<UserModel?>();
       if (user == null) {
         if (mounted) {
@@ -152,46 +151,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         return;
       }
 
-      // Check if FlutterWave is configured
-      if (!WebPaymentService.isConfigured) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Payment system not configured. Please contact support.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
-            ),
-          );
-        }
-        return;
-      }
-
       final result = await WebPaymentService().processWebPurchase(
         context: context,
         product: _selectedProduct!,
         user: user,
       );
 
-      if (result.success && mounted) {
-        // Show "Processing payment..." dialog
-        _showProcessingDialog(context, user.uid);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Payment failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      */
-
-      // Show Beta Access Dialog instead
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => const BetaAccessDialog(),
-        );
+        if (!result.success) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ?? 'Payment failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        // If success, the link is opened in a new tab, so we don't need to do anything here.
+        // Optionally show a "Confirming..." dialog if we were listening for webhooks.
       }
     } else {
       // Mobile Payment Flow
@@ -293,11 +269,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             child: Column(
                               children: [
                                 _buildFeatureRow(
-                                    'Unlimited AI Summaries & Quizzes',
+                                    'Unlimited AI Summaries, Quizzes & Flashcards',
+                                    isUnlocked: true,
+                                    theme: theme),
+                                _buildFeatureRow(
+                                    'AI Tutor Exam Generator',
+                                    isUnlocked: true,
+                                    theme: theme),
+                                _buildFeatureRow(
+                                    'Upload PDF, Audio, Video & Slides',
                                     isUnlocked: true,
                                     theme: theme),
                                 _buildFeatureRow(
                                     'Import from YouTube & Web Articles',
+                                    isUnlocked: true,
+                                    theme: theme),
+                                _buildFeatureRow(
+                                    'Deep Learning Mode (Advanced Analysis)',
                                     isUnlocked: true,
                                     theme: theme),
                                 _buildFeatureRow(
@@ -308,15 +296,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                     'Unlimited Spaced Repetition Review',
                                     isUnlocked: true,
                                     theme: theme),
-                                _buildFeatureRow('Offline Access & Cloud Sync',
-                                    isUnlocked: true, theme: theme),
-                                _buildFeatureRow(
-                                    'Creator Dashboard & Publishing',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow('Advanced Study Analytics',
-                                    isUnlocked: true, theme: theme),
-                                _buildFeatureRow('Priority Support',
+                                _buildFeatureRow('Offline Access, Cloud Sync & Creator Tools',
                                     isUnlocked: true, theme: theme),
                               ],
                             ),

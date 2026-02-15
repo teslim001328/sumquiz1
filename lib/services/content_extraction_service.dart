@@ -4,6 +4,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sumquiz/models/extraction_result.dart';
 
 /// Types of content that can be extracted from URLs
@@ -71,15 +72,33 @@ class ContentExtractionService {
           throw Exception('Image input must be Uint8List');
         }
         break;
+      case 'audio':
+      case 'video':
+        if (input == null) {
+          throw Exception('${type.toUpperCase()} input cannot be null');
+        }
+        if (input is Uint8List) {
+          if (input.isEmpty) {
+            throw Exception('${type.toUpperCase()} file is empty');
+          }
+          final limit = type == 'audio' ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
+          if (input.length > limit) {
+            throw Exception('${type.toUpperCase()} file too large. Maximum ${limit ~/ (1024 * 1024)}MB allowed.');
+          }
+        } else {
+          throw Exception('${type.toUpperCase()} input must be Uint8List');
+        }
+        break;
       default:
         throw Exception('Unknown content type: $type');
     }
   }
 
   Future<ExtractionResult> extractContent({
-    required String type, // 'text', 'link', 'pdf', 'image'
+    required String type, // 'text', 'link', 'pdf', 'image', 'audio', 'video'
     dynamic input,
     String? userId,
+    String? mimeType,
     bool refineWithAI = false,
     void Function(String)? onProgress,
   }) async {
@@ -151,42 +170,72 @@ class ContentExtractionService {
         }
       case 'pdf':
         onProgress?.call('Reading PDF document...');
-        rawText = await _extractFromPdfBytes(input as Uint8List);
-
-        // If PDF extraction yielded no text, it might be a scanned document.
-        // Use AI multimodal analysis as fallback.
-        if (rawText.trim().isEmpty ||
-            rawText.contains('[No text found in PDF.')) {
-          onProgress?.call('No text found. Analyzing scanned PDF with AI...');
-          if (userId == null) {
-            throw Exception('User ID is required for scanned PDF analysis.');
+        try {
+          // Only attempt PDF parsing if it's actually a PDF
+          if (mimeType == null || mimeType.contains('pdf')) {
+            rawText = await _extractFromPdfBytes(input as Uint8List);
+          } else {
+            rawText = ''; // Pass to AI for other doc types
           }
+        } catch (e) {
+          rawText = ''; // Fallback to AI
+        }
+
+        if (rawText.trim().isEmpty || rawText.contains('[No text found in PDF.')) {
+          onProgress?.call('Analyzing document complexity with AI...');
+          if (userId == null) throw Exception('User ID is required.');
           final result = await _enhancedAiService.analyzeContentFromBytes(
             bytes: input,
-            mimeType: 'application/pdf',
+            mimeType: mimeType ?? 'application/pdf',
             userId: userId,
           );
-          if (result is Ok<ExtractionResult>) {
-            return result.value;
-          }
+          if (result is Ok<ExtractionResult>) return result.value;
         }
-        suggestedTitle = 'PDF Document';
+        suggestedTitle = 'Document Content';
         break;
       case 'image':
-        onProgress?.call('Scanning image with AI Vision...');
-        if (userId == null) {
-          throw Exception('User ID is required for image analysis.');
+        if (!kIsWeb) {
+          onProgress?.call('Scanning image with on-device OCR...');
+          try {
+            rawText = await _extractFromImageBytes(input as Uint8List);
+          } catch (e) {
+            rawText = '';
+          }
         }
-        // Use AI for better OCR and web compatibility
-        try {
-          rawText = await _enhancedAiService.extractTextFromImage(input,
-              userId: userId);
-        } catch (e) {
-          // Fallback to local OCR if on mobile and AI fails
-          onProgress?.call('AI scan failed. Attempting local scan...');
-          rawText = await _extractFromImageBytes(input);
+
+        if (rawText.isEmpty || rawText.contains('[No text found in image.')) {
+          onProgress?.call('Analyzing image with AI Vision...');
+          if (userId == null) throw Exception('User ID is required.');
+          final result = await _enhancedAiService.analyzeContentFromBytes(
+            bytes: input,
+            mimeType: mimeType ?? 'image/jpeg',
+            userId: userId,
+          );
+          if (result is Ok<ExtractionResult>) return result.value;
         }
         suggestedTitle = 'Scanned Image';
+        break;
+      case 'audio':
+        onProgress?.call('Transcribing audio with AI...');
+        if (userId == null) throw Exception('User ID is required.');
+        final result = await _enhancedAiService.analyzeContentFromBytes(
+          bytes: input,
+          mimeType: mimeType ?? 'audio/mpeg',
+          userId: userId,
+        );
+        if (result is Ok<ExtractionResult>) return result.value;
+        suggestedTitle = 'Audio Lesson';
+        break;
+      case 'video':
+        onProgress?.call('Analyzing video with AI...');
+        if (userId == null) throw Exception('User ID is required.');
+        final result = await _enhancedAiService.analyzeContentFromBytes(
+          bytes: input,
+          mimeType: mimeType ?? 'video/mp4',
+          userId: userId,
+        );
+        if (result is Ok<ExtractionResult>) return result.value;
+        suggestedTitle = 'Video Lesson';
         break;
       default:
         throw Exception('Unknown content type: $type');

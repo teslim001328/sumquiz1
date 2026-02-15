@@ -41,7 +41,6 @@ import 'package:sumquiz/views/screens/web/create_content_screen_web.dart';
 import 'package:sumquiz/views/screens/web/progress_screen_web.dart';
 import 'package:sumquiz/views/screens/web/results_view_screen_web.dart';
 import 'package:sumquiz/views/screens/web/landing_page_web.dart';
-import 'package:sumquiz/views/screens/teacher_landing_screen.dart';
 import 'package:sumquiz/views/screens/exam_creation_screen.dart';
 import 'package:sumquiz/views/screens/web/review_screen_web.dart';
 import 'package:sumquiz/views/screens/web/extraction_view_screen_web.dart';
@@ -129,11 +128,7 @@ GoRouter createAppRouter(AuthService authService) {
       // Top-level routes that should not have the nav bar
       GoRoute(
         path: '/landing',
-        builder: (context, state) => const TeacherLandingScreen(), // Updated to use teacher landing screen
-      ),
-      GoRoute(
-        path: '/teacher-landing',
-        builder: (context, state) => const TeacherLandingScreen(),
+        builder: (context, state) => const LandingPageWeb(),
       ),
       GoRoute(
         path: '/onboarding',

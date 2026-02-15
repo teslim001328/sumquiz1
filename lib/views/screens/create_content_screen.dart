@@ -78,6 +78,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
   Uint8List? _pdfBytes;
   String? _imageName;
   Uint8List? _imageBytes;
+  String? _mimeType;
   String _errorMessage = '';
 
   // Topic-based learning state
@@ -118,6 +119,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       _pdfBytes = null;
       _imageName = null;
       _imageBytes = null;
+      _mimeType = null;
       _errorMessage = '';
     });
   }
@@ -224,6 +226,7 @@ class _CreateContentScreenState extends State<CreateContentScreen>
         setState(() {
           _pdfName = file.name;
           _pdfBytes = file.bytes;
+          _mimeType = _getMimeType(file.name);
         });
       }
     } catch (e) {
@@ -346,7 +349,7 @@ case 'slides':
           } else if (_pdfBytes!.length > 50 * 1024 * 1024) {
             validationError = 'Audio file is too large. Maximum size is 50MB';
           }
-          type = 'image'; // Using image type to send to AI service for analysis
+          type = 'audio'; // Changed from 'image'
           input = _pdfBytes;
           break;
         case 'image':
@@ -358,6 +361,10 @@ case 'slides':
           type = 'image';
           input = _imageBytes;
           break;
+        case 'exam':
+          if (!_checkProAccess('Tutor Exam')) return;
+          context.push('/exam-creation');
+          return;
         
         default:
           validationError = 'Please select an import method';
@@ -370,7 +377,7 @@ case 'slides':
         return;
       }
 
-      await _processContentExtraction(type, input, user);
+      await _processContentExtraction(type, input, user, mimeType: _mimeType);
     } finally {
       if (mounted) {
         setState(() {
@@ -382,7 +389,7 @@ case 'slides':
   }
 
   Future<void> _processContentExtraction(
-      String type, dynamic input, UserModel user) async {
+      String type, dynamic input, UserModel user, {String? mimeType}) async {
     if (_isCancelled) return;
 
     final extractionService =
@@ -419,6 +426,7 @@ case 'slides':
         type: type,
         input: input,
         userId: user.uid,
+        mimeType: mimeType,
         onProgress: (message) {
           if (!_isCancelled && mounted) {
             progressNotifier.value = message;
@@ -554,9 +562,11 @@ case 'slides':
         _buildImportCard(
             'Paste Text', Icons.text_fields_rounded, 'text', colorScheme),
         _buildImportCard(
-            'Scan Image', Icons.camera_alt_rounded, 'image', colorScheme),
+            'Image/Snap', Icons.camera_alt_rounded, 'image', colorScheme),
         _buildImportCard(
-            'Upload Audio', Icons.music_note_rounded, 'audio', colorScheme),
+            'Audio', Icons.music_note_rounded, 'audio', colorScheme),
+        _buildImportCard(
+            'Tutor Exam', Icons.school_rounded, 'exam', colorScheme),
       ],
     );
   }
@@ -660,6 +670,14 @@ case 'slides':
         child: GestureDetector(
           onTap: () {
             if (isDisabled) return;
+
+            if (method == 'exam') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
+              );
+              return;
+            }
 
             if (method == 'link' ||
                 method == 'pdf' ||
@@ -1721,23 +1739,28 @@ case 'slides':
       ),
     );
   }
+  String _getMimeType(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'pdf': return 'application/pdf';
+      case 'ppt': return 'application/vnd.ms-powerpoint';
+      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'doc': return 'application/msword';
+      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'txt': return 'text/plain';
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg';
+      case 'png': return 'image/png';
+      case 'webp': return 'image/webp';
+      case 'mp3': return 'audio/mpeg';
+      case 'wav': return 'audio/wav';
+      case 'm4a': return 'audio/mp4';
+      default: return 'application/octet-stream';
+    }
+  }
 
   String _getUserFriendlyError(dynamic error) {
     final errorStr = error.toString().toLowerCase();
-
-    // Network errors
-    if (errorStr.contains('socket') ||
-        errorStr.contains('network') ||
-        errorStr.contains('connection')) {
-      return '📡 Check your internet connection and try again';
-    }
-
-    // Timeout errors
-    if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
-      return '⏱️ Request took too long. Try with shorter content or check your connection';
-    }
-
-    // Rate limit errors
     if (errorStr.contains('rate limit')) {
       return '🚦 Too many requests. Please wait a few minutes before trying again';
     }

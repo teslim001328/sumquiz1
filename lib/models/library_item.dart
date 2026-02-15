@@ -15,7 +15,10 @@ class LibraryItem {
   final LibraryItemType type;
   final Timestamp timestamp;
   final bool isReadOnly;
-  final String? creatorName; // For imported decks
+  final String? creatorName;
+  final int? itemCount; // e.g., number of flashcards
+  final double? score; // e.g., quiz score
+  final String? description;
 
   LibraryItem({
     required this.id,
@@ -24,15 +27,19 @@ class LibraryItem {
     required this.timestamp,
     this.isReadOnly = false,
     this.creatorName,
+    this.itemCount,
+    this.score,
+    this.description,
   });
 
   factory LibraryItem.fromSummary(Summary summary) {
     return LibraryItem(
       id: summary.id,
-      title: summary.content,
+      title: summary.content, // Note: mobile uses content as title sometimes
       type: LibraryItemType.summary,
       timestamp: summary.timestamp,
       isReadOnly: false,
+      description: summary.description,
     );
   }
 
@@ -43,6 +50,7 @@ class LibraryItem {
       type: LibraryItemType.quiz,
       timestamp: quiz.timestamp,
       isReadOnly: false,
+      itemCount: quiz.questions.length,
     );
   }
 
@@ -53,6 +61,7 @@ class LibraryItem {
       type: LibraryItemType.flashcards,
       timestamp: flashcardSet.timestamp,
       isReadOnly: false,
+      itemCount: flashcardSet.flashcards.length,
     );
   }
 
@@ -63,6 +72,7 @@ class LibraryItem {
       type: LibraryItemType.summary,
       timestamp: Timestamp.fromDate(summary.timestamp),
       creatorName: summary.creatorName,
+      description: summary.description,
     );
   }
 
@@ -73,6 +83,8 @@ class LibraryItem {
       type: LibraryItemType.quiz,
       timestamp: Timestamp.fromDate(quiz.timestamp),
       creatorName: quiz.creatorName,
+      itemCount: quiz.questions.length,
+      score: quiz.score,
     );
   }
 
@@ -83,6 +95,7 @@ class LibraryItem {
       type: LibraryItemType.flashcards,
       timestamp: Timestamp.fromDate(flashcardSet.timestamp),
       creatorName: flashcardSet.creatorName,
+      itemCount: flashcardSet.flashcards.length,
     );
   }
 

@@ -25,6 +25,12 @@ import 'package:sumquiz/views/screens/spaced_repetition_screen.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'exam_creation_screen.dart';
+import '../../services/content_extraction_service.dart';
+import '../../models/extraction_result.dart';
+import '../widgets/extraction_progress_dialog.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
@@ -261,35 +267,36 @@ class _ReviewScreenState extends State<ReviewScreen> {
         children: [
           SpeedDialChild(
             child: const Icon(Icons.school),
-            label: 'Create Exam',
+            label: 'Tutor/Teacher Exam',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
             ),
           ),
           SpeedDialChild(
-            child: const Icon(Icons.style),
-            label: 'New Flashcards',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const FlashcardsScreen()),
-            ),
+            child: const Icon(Icons.picture_as_pdf),
+            label: 'Upload Doc',
+            onTap: () => _pickAndExtractFile(['pdf', 'doc', 'docx', 'ppt', 'pptx']),
           ),
           SpeedDialChild(
-            child: const Icon(Icons.quiz),
-            label: 'New Quiz',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const QuizScreen()),
-            ),
+            child: const Icon(Icons.link),
+            label: 'Analyze Link',
+            onTap: _showLinkDialog,
           ),
           SpeedDialChild(
-            child: const Icon(Icons.article),
-            label: 'New Summary',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SummaryScreen()),
-            ),
+            child: const Icon(Icons.camera_alt),
+            label: 'Image/Snap',
+            onTap: () => _pickAndExtractImage(ImageSource.camera),
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.audiotrack),
+            label: 'Audio',
+            onTap: () => _pickAndExtractFile(['mp3', 'wav', 'm4a']),
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.text_fields),
+            label: 'Paste Text',
+            onTap: _showPasteTextDialog,
           ),
         ],
       ),
@@ -1403,5 +1410,145 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ),
       ),
     ).animate().fadeIn().slideY(begin: -0.2);
+  }
+
+  Future<void> _pickAndExtractFile(List<String> extensions) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: extensions,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.single;
+        await _processExtraction(
+          extensions.contains('pdf') ? 'pdf' : 'audio',
+          file.bytes!,
+        );
+      }
+    } catch (e) {
+      _showError('Extraction failed: $e');
+    }
+  }
+
+  Future<void> _pickAndExtractImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: source);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        await _processExtraction('image', bytes);
+      }
+    } catch (e) {
+      _showError('Image extraction failed: $e');
+    }
+  }
+
+  void _showPasteTextDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Paste Text'),
+        content: TextField(
+          controller: controller,
+          maxLines: 10,
+          decoration: const InputDecoration(
+            hintText: 'Paste educational content here...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              Navigator.pop(context);
+              if (text.isNotEmpty) {
+                _processExtraction('text', text);
+              }
+            },
+            child: const Text('Extract'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLinkDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Analyze Link'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Paste YouTube or Web URL',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final url = controller.text.trim();
+              Navigator.pop(context);
+              if (url.isNotEmpty) {
+                _processExtraction('link', url);
+              }
+            },
+            child: const Text('Analyze'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processExtraction(String type, dynamic input) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.currentUser?.uid;
+    if (userId == null) return;
+
+    final extractionService = Provider.of<ContentExtractionService>(context, listen: false);
+    final progressNotifier = ValueNotifier<String>('Initializing extraction...');
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ExtractionProgressDialog(messageNotifier: progressNotifier),
+    );
+
+    try {
+      final result = await extractionService.extractContent(
+        type: type,
+        input: input,
+        userId: userId,
+        onProgress: (m) => progressNotifier.value = m,
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Close dialog
+        context.push('/create/extraction-view', extra: result);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showError('Extraction failed: $e');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 }

@@ -37,6 +37,7 @@ class UserModel {
   final bool _isTrialUser; // Private - use isTrial getter
   final bool isCreatorPro;
   final String? currentProduct; // Selected subscription product ID
+  final String? subscriptionType; // e.g. 'monthly', 'yearly', 'lifetime' - for manual management
 
   // Referral
   final String? referralCode;
@@ -69,6 +70,7 @@ class UserModel {
     bool isTrial = false,
     this.isCreatorPro = false,
     this.currentProduct,
+    this.subscriptionType,
     this.referralCode,
     this.creatorProfile = const {},
   }) : _isTrialUser = isTrial;
@@ -132,6 +134,7 @@ class UserModel {
       isTrial: data['isTrial'] ?? false,
       isCreatorPro: data['isCreatorPro'] ?? false,
       currentProduct: data['currentProduct'],
+      subscriptionType: data['subscriptionType'],
       referralCode: data['referralCode'],
       creatorProfile: data['creatorProfile'] ?? {},
     );
@@ -165,6 +168,7 @@ class UserModel {
       'isTrial': _isTrialUser, // Store the private field
       'isCreatorPro': isCreatorPro,
       'currentProduct': currentProduct,
+      'subscriptionType': subscriptionType,
       if (referralCode != null) 'referralCode': referralCode,
       'creatorProfile': creatorProfile,
     };
@@ -194,7 +198,9 @@ class UserModel {
     UserRole? role,
     bool? isTrial,
     bool? isCreatorPro,
+    bool? isCreatorPro,
     String? currentProduct,
+    String? subscriptionType,
     String? referralCode,
     Map<String, dynamic>? creatorProfile,
   }) {
@@ -225,6 +231,7 @@ class UserModel {
       isTrial: isTrial ?? _isTrialUser,
       isCreatorPro: isCreatorPro ?? this.isCreatorPro,
       currentProduct: currentProduct ?? this.currentProduct,
+      subscriptionType: subscriptionType ?? this.subscriptionType,
       referralCode: referralCode ?? this.referralCode,
       creatorProfile: creatorProfile ?? this.creatorProfile,
     );

@@ -108,11 +108,19 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
       
       int dailyGoal = 60; // Default
       int timeSpentToday = 0;
-      
+      String lastQuestion = "What is the 'event loop' in JavaScript?";
+
       if (userDoc.exists) {
         final userData = userDoc.data();
         dailyGoal = userData?['dailyGoal'] as int? ?? 60;
-        timeSpentToday = (totalTimeSpent / 60).round(); // Convert seconds to minutes
+      }
+      
+      timeSpentToday = (totalTimeSpent / 60).round(); // Convert seconds to minutes
+
+      // Fetch last flashcard for preview
+      final sets = await localDb.getAllFlashcardSets(userId);
+      if (sets.isNotEmpty && sets.first.flashcards.isNotEmpty) {
+        lastQuestion = sets.first.flashcards.first.question;
       }
 
       if (mounted) {
@@ -123,6 +131,7 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
           _accuracy = avgAccuracy;
           _dailyGoalMinutes = dailyGoal;
           _timeSpentMinutes = timeSpentToday;
+          _previewQuestion = lastQuestion;
           _isLoading = false;
           _error = null;
         });
@@ -300,11 +309,11 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Finish Foundation Module',
+              _dailyMission?.title ?? 'Daily Mission',
               style: GoogleFonts.outfit(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: WebColors.textPrimary,
+                color: Theme.of(context).textTheme.titleLarge?.color,
               ),
             ),
             const SizedBox(height: 8),
@@ -325,20 +334,19 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _fetchAndStartMission();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: WebColors.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Start Mission'),
+              child: Text(_dailyMission?.isCompleted == true ? 'Mission Completed' : 'Start Mission'),
             ),
           ],
         ),
@@ -485,12 +493,19 @@ class _ReviewScreenWebState extends State<ReviewScreenWeb> {
     );
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   Widget _buildHeader(UserModel? user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Good morning, ${user?.displayName.split(' ').first ?? 'Alex'}!',
+          '${_getGreeting()}, ${user?.displayName.split(' ').first ?? 'Scholar'}!',
           style: GoogleFonts.outfit(
             fontSize: 32,
             fontWeight: FontWeight.w900,

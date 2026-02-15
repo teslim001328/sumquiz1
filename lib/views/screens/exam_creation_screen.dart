@@ -7,6 +7,13 @@ import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
 import 'package:sumquiz/services/iap_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'dart:typed_data';
+import 'package:sumquiz/services/content_extraction_service.dart';
+import 'package:sumquiz/models/extraction_result.dart';
 
 class ExamCreationScreen extends StatefulWidget {
   const ExamCreationScreen({super.key});
@@ -605,24 +612,107 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
     );
   }
 
-  void _selectSourceMaterial(String type) async {
+  Future<void> _selectSourceMaterial(String type) async {
     setState(() {
       _isProcessing = true;
       _processingMessage = 'Selecting $type...';
     });
 
-    // Simulate file picking process
-    // In a real app, this would integrate with file picker
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      FilePickerResult? result;
+      FileType fileType;
+      List<String>? allowedExtensions;
 
-    // For demo purposes, we'll set a sample text
-    setState(() {
-      _sourceMaterial =
-          'This is a sample extracted content from your uploaded material. '
-          'It contains important information that will be used to generate exam questions. '
-          'The AI will analyze this content to create relevant questions based on the parameters you specified.';
-      _isProcessing = false;
-    });
+      if (type == 'PDF') {
+        fileType = FileType.custom;
+        allowedExtensions = ['pdf'];
+      } else if (type == 'Image') {
+        fileType = FileType.image;
+      } else {
+        // Notes / Text not supported via file picker yet
+        // Maybe open a text dialog? For now, keep mock or show dialog
+        setState(() => _isProcessing = false);
+        _showNotesInputDialog();
+        return;
+      }
+
+      result = await FilePicker.platform.pickFiles(
+        type: fileType,
+        allowedExtensions: allowedExtensions,
+        withData: true, // Important for web and direct bytes access
+      );
+
+      if (result != null) {
+        final file = result.files.single;
+        final bytes = file.bytes; // Works for web and if withData is true
+        final name = file.name;
+
+        if (bytes != null) {
+          setState(() => _processingMessage = 'Extracting content from $name...');
+          
+          final user = Provider.of<UserModel?>(context, listen: false);
+          final enhancedAiService = Provider.of<EnhancedAIService>(context, listen: false);
+          final extractionService = ContentExtractionService(enhancedAiService);
+
+          final extractionResult = await extractionService.extractContent(
+            type: type.toLowerCase(),
+            input: bytes,
+            userId: user?.uid,
+            mimeType: type == 'PDF' ? 'application/pdf' : 'image/jpeg', // simplified mime assumption
+            onProgress: (msg) {
+              if (mounted) setState(() => _processingMessage = msg);
+            },
+          );
+
+          setState(() {
+            _sourceMaterial = extractionResult.text;
+            _isProcessing = false;
+          });
+        }
+      } else {
+         setState(() => _isProcessing = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error extracting content: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showNotesInputDialog() {
+     final textController = TextEditingController();
+     showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Notes'),
+        content: TextField(
+          controller: textController,
+          maxLines: 10,
+          decoration: const InputDecoration(
+            hintText: 'Paste your notes here...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _sourceMaterial = textController.text;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Use Notes'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _generateDraftExam() async {
@@ -644,14 +734,10 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
     });
 
     try {
-      // Get services from provider with error handling
-      final localDb = Provider.of<LocalDatabaseService>(context, listen: false);
-      final iapService = Provider.of<IAPService>(context, listen: false);
       final user = Provider.of<UserModel?>(context, listen: false);
-
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
+      if (user == null) throw Exception('User not authenticated');
+      
+      final enhancedAIService = Provider.of<EnhancedAIService>(context, listen: false);
 
       // Prepare question types
       final questionTypes = <String>[];
@@ -666,12 +752,25 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
       }
 
       // Generate the exam using AI service
-      // This is a simplified version - in a real implementation, this would call the actual AI service
-      await Future.delayed(
-          const Duration(seconds: 2)); // Simulate processing time
+      final quiz = await enhancedAIService.generateExam(
+        text: _sourceMaterial,
+        title: _titleController.text,
+        subject: _subjectController.text,
+        level: _selectedLevel,
+        questionCount: _numberOfQuestions,
+        questionTypes: questionTypes,
+        difficultyMix: _difficultyValue,
+        userId: user.uid,
+        onProgress: (message) {
+          if (mounted) {
+            setState(() {
+              _processingMessage = message;
+            });
+          }
+        },
+      );
 
-      // Create mock questions based on the parameters
-      final questions = _generateMockQuestions();
+      final questions = quiz.questions;
 
       // Navigate to the question editor screen
       if (mounted) {
@@ -864,6 +963,11 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveExam,
+            tooltip: 'Save to Library',
+          ),
           TextButton(
             onPressed: _exportExam,
             child: const Text('Export Exam'),
@@ -1156,6 +1260,47 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     );
   }
 
+  Future<void> _saveExam() async {
+    setState(() {
+      _isProcessing = true;
+      _processingMessage = 'Saving exam to library...';
+    });
+    
+    try {
+      final user = Provider.of<UserModel?>(context, listen: false);
+      if (user == null) throw Exception('User not authenticated');
+      
+      await LocalDatabaseService().init();
+
+      final quiz = LocalQuiz(
+        id: const Uuid().v4(),
+        title: widget.examTitle,
+        questions: _questions,
+        timestamp: DateTime.now(),
+        userId: user.uid,
+        isSynced: false,
+      );
+
+      await LocalDatabaseService().saveQuiz(quiz);
+      
+      setState(() => _isProcessing = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Exam saved to library!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving exam: $e');
+      setState(() => _isProcessing = false);
+      if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving exam'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   void _addQuestion() {
     setState(() {
       _questions.add(LocalQuizQuestion(
@@ -1343,88 +1488,134 @@ class _ExportOptionsScreenState extends State<ExportOptionsScreen> {
   Future<void> _downloadPdf() async {
     setState(() {
       _isProcessing = true;
-      _processingMessage = 'Preparing your exam for download...';
+      _processingMessage = 'Generating PDF...';
     });
 
     try {
-      // Simulate PDF generation process
-      await Future.delayed(const Duration(seconds: 2));
+      final doc = pw.Document();
 
-      // Process questions based on selected options
+      // Filter and Shuffle Questions
       var processedQuestions = List<LocalQuizQuestion>.from(widget.questions);
-
       if (_randomizeQuestionOrder) {
         processedQuestions.shuffle();
       }
-
       if (_randomizeOptions) {
-        processedQuestions = processedQuestions.map((question) {
-          final shuffledOptions = List<String>.from(question.options)
-            ..shuffle();
-          // Need to update correct answer to match new option positions
-          final newCorrectAnswer =
-              shuffledOptions[question.options.indexOf(question.correctAnswer)];
-          return LocalQuizQuestion(
-            question: question.question,
-            options: shuffledOptions,
-            correctAnswer: newCorrectAnswer,
-            explanation: question.explanation,
-            questionType: question.questionType,
-          );
+        processedQuestions = processedQuestions.map((q) {
+          if (q.questionType == 'Multiple Choice') {
+             final opts = List<String>.from(q.options)..shuffle();
+             return LocalQuizQuestion(
+               question: q.question,
+               options: opts,
+               correctAnswer: q.correctAnswer, 
+               explanation: q.explanation,
+               questionType: q.questionType,
+             );
+          }
+          return q;
         }).toList();
       }
 
-      // In a real implementation, this would use a PDF generation library like pdf package
-      // For now, we'll simulate the process
+      // 1. Exam Paper
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+             return [
+               pw.Header(
+                 level: 0, 
+                 child: pw.Column(
+                   crossAxisAlignment: pw.CrossAxisAlignment.center,
+                   children: [
+                     pw.Text(widget.examTitle, style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                     pw.SizedBox(height: 8),
+                     pw.Text('${widget.subject} - ${widget.classLevel}', style: const pw.TextStyle(fontSize: 16)),
+                     pw.Text('Duration: ${widget.duration} mins', style: const pw.TextStyle(fontSize: 14)),
+                     pw.Divider(),
+                   ]
+                 )
+               ),
+               ...List.generate(processedQuestions.length, (index) {
+                 final q = processedQuestions[index];
+                 return pw.Container(
+                   margin: const pw.EdgeInsets.only(bottom: 16),
+                   child: pw.Column(
+                     crossAxisAlignment: pw.CrossAxisAlignment.start,
+                     children: [
+                       pw.Text('${index + 1}. ${q.question}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                       if (q.questionType == 'Multiple Choice' || q.questionType == 'True/False')
+                         pw.Padding(
+                           padding: const pw.EdgeInsets.only(left: 16, top: 4),
+                           child: pw.Column(
+                             crossAxisAlignment: pw.CrossAxisAlignment.start,
+                             children: q.options.asMap().entries.map((entry) {
+                               final char = String.fromCharCode(65 + entry.key);
+                               return pw.Text('$char. ${entry.value}');
+                             }).toList(),
+                           ),
+                         ),
+                        if (q.questionType == 'Theory' || q.questionType == 'Short Answer')
+                           pw.Padding(
+                             padding: const pw.EdgeInsets.only(top: 8),
+                             child: pw.Container(height: 40, width: double.infinity, decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide()))),
+                           ),
+                     ],
+                   ),
+                 );
+               })
+             ];
+          },
+        ),
+      );
 
-      setState(() {
-        _isProcessing = false;
-      });
-
-      // Show success message
-      if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Export Successful'),
-            content: const Text('Your exam has been exported successfully!'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  // Pop all screens back to the main screen
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+      // 2. Answer Sheet / Marking Scheme (New Page)
+      if (_includeAnswerSheet || _includeMarkingScheme) {
+         doc.addPage(
+           pw.MultiPage(
+             pageFormat: PdfPageFormat.a4,
+             build: (pw.Context context) {
+               return [
+                 pw.Header(level: 0, child: pw.Text('ANSWER KEY & MARKING SCHEME', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold))),
+                 pw.SizedBox(height: 16),
+                 ...List.generate(processedQuestions.length, (index) {
+                   final q = processedQuestions[index];
+                   return pw.Container(
+                     margin: const pw.EdgeInsets.only(bottom: 8),
+                     child: pw.Row(
+                       crossAxisAlignment: pw.CrossAxisAlignment.start,
+                       children: [
+                         pw.SizedBox(width: 30, child: pw.Text('${index+1}.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                         pw.Expanded(
+                           child: pw.Column(
+                             crossAxisAlignment: pw.CrossAxisAlignment.start,
+                             children: [
+                               pw.Text('Ans: ${q.correctAnswer == 'True' || q.correctAnswer == 'False' ? q.correctAnswer : q.correctAnswer}'),
+                               if (_includeMarkingScheme && q.explanation != null && q.explanation!.isNotEmpty)
+                                 pw.Text('Explanation: ${q.explanation}', style: pw.TextStyle(fontStyle: pw.FontStyle.italic, color: PdfColors.grey700, fontSize: 10)),
+                             ],
+                           )
+                         )
+                       ]
+                     )
+                   );
+                 })
+               ];
+             }
+           )
+         );
       }
-    } catch (e, stackTrace) {
-      // Log the actual error and stack trace for debugging
-      print('Error exporting PDF: $e');
-      print('Stack trace: $stackTrace');
 
-      setState(() {
-        _isProcessing = false;
-      });
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save(),
+        name: '${widget.examTitle}.pdf',
+      );
 
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Export Failed'),
-            content:
-                Text('There was an error exporting your exam: ${e.toString()}'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        setState(() => _isProcessing = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error exporting PDF: $e')));
       }
     }
   }

@@ -50,18 +50,6 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
   }
 
   void _toggleOutput(OutputType type) {
-    if (type == OutputType.flashcards) {
-      final user = context.read<UserModel?>();
-      if (user != null && !user.isPro) {
-        showDialog(
-          context: context,
-          builder: (_) =>
-              const UpgradeDialog(featureName: 'Interactive Flashcards'),
-        );
-        return;
-      }
-    }
-
     setState(() {
       if (_selectedOutputs.contains(type)) {
         _selectedOutputs.remove(type);
@@ -165,7 +153,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WebColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -182,10 +170,10 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                       flex: 3,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(24),
                           border:
-                              Border.all(color: WebColors.border, width: 1.5),
+                              Border.all(color: Theme.of(context).dividerColor, width: 1.5),
                           boxShadow: WebColors.cardShadow,
                         ),
                         child: Column(
@@ -210,21 +198,21 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          "Source Content",
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                            color: WebColors.textPrimary,
+                                          Text(
+                                            "Source Content",
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: Theme.of(context).textTheme.titleLarge?.color,
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          "Review and edit your content before generating",
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 14,
-                                            color: WebColors.textSecondary,
+                                          Text(
+                                            "Review and edit your content before generating",
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 14,
+                                              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -240,7 +228,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                   maxLines: null,
                                   expands: true,
                                   style: GoogleFonts.outfit(
-                                    color: WebColors.textPrimary,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
                                     fontSize: 16,
                                     height: 1.7,
                                   ),
@@ -297,7 +285,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                               style: GoogleFonts.outfit(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
-                                color: WebColors.textPrimary,
+                                color: Theme.of(context).textTheme.headlineMedium?.color,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -316,7 +304,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                               style: GoogleFonts.outfit(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: WebColors.textTertiary,
+                                color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.5),
                                 letterSpacing: 1.2,
                               ),
                             ),
@@ -324,7 +312,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                             TextField(
                               controller: _titleController,
                               style: GoogleFonts.outfit(
-                                  color: WebColors.textPrimary, fontSize: 16),
+                                  color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
                               decoration: InputDecoration(
                                 hintText: "Enter a title for your content...",
                                 hintStyle: GoogleFonts.outfit(
@@ -332,13 +320,13 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide:
-                                      BorderSide(color: WebColors.border),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: WebColors.border),
-                                ),
+                                    BorderSide(color: Theme.of(context).dividerColor),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Theme.of(context).dividerColor),
+                              ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
@@ -354,7 +342,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                               style: GoogleFonts.outfit(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: WebColors.textTertiary,
+                                color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.5),
                                 letterSpacing: 1.2,
                               ),
                             ),
@@ -399,13 +387,13 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                       gradient:
                                           isSelected ? gradients[type] : null,
                                       color: !isSelected
-                                          ? WebColors.backgroundAlt
+                                          ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
                                           : null,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: isSelected
                                             ? Colors.transparent
-                                            : WebColors.border,
+                                            : Theme.of(context).dividerColor,
                                       ),
                                       boxShadow: isSelected
                                           ? [
@@ -426,7 +414,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                           icons[type],
                                           color: isSelected
                                               ? Colors.white
-                                              : WebColors.textSecondary,
+                                              : Theme.of(context).iconTheme.color?.withValues(alpha: 0.7),
                                           size: 24,
                                         ),
                                         const SizedBox(width: 12),
@@ -436,7 +424,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                             style: GoogleFonts.outfit(
                                               color: isSelected
                                                   ? Colors.white
-                                                  : WebColors.textPrimary,
+                                                  : Theme.of(context).textTheme.bodyLarge?.color,
                                               fontWeight: isSelected
                                                   ? FontWeight.w700
                                                   : FontWeight.w500,
@@ -462,11 +450,11 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                             // Confidence indicator
                             Container(
                               padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: WebColors.backgroundAlt,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: WebColors.border),
-                              ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Theme.of(context).dividerColor),
+                                ),
                               child: Row(
                                 children: [
                                   Container(
@@ -489,7 +477,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                                           style: GoogleFonts.outfit(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: WebColors.textPrimary,
+                                            color: Theme.of(context).textTheme.titleSmall?.color,
                                           ),
                                         ),
                                         Text(
@@ -573,15 +561,15 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WebColors.border, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: WebColors.cardShadow,
       ),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back, color: WebColors.textPrimary),
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
             onPressed: () => context.pop(),
           ),
           const SizedBox(width: 16),
@@ -594,14 +582,14 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
                   style: GoogleFonts.outfit(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: WebColors.textPrimary,
+                    color: Theme.of(context).textTheme.headlineMedium?.color,
                   ),
                 ),
                 Text(
                   'Refine your content before AI processing',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
-                    color: WebColors.textSecondary,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -610,20 +598,20 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: WebColors.backgroundAlt,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.auto_awesome, color: WebColors.primary, size: 16),
+                Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   'AI Ready',
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: WebColors.textPrimary,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
               ],
@@ -638,9 +626,9 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: WebColors.backgroundAlt,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WebColors.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -657,7 +645,7 @@ class _ExtractionViewScreenWebState extends State<ExtractionViewScreenWeb> {
           Text(
             _loadingMessage,
             style: GoogleFonts.outfit(
-              color: WebColors.textPrimary,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),

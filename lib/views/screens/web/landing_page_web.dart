@@ -217,7 +217,7 @@ class _LandingPageWebState extends State<LandingPageWeb>
                             dividerColor: Colors.transparent,
                             tabs: const [
                               Tab(text: 'Student'),
-                              Tab(text: 'Creator'),
+                              Tab(text: 'Teacher'),
                             ],
                           ),
                         ),

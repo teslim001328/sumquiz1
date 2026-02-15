@@ -1,0 +1,38 @@
+
+{
+  "learning_engagement": [
+    "👋 Hey {name}! It's a great day to learn something new. Let's start a new quiz!",
+    "Ready for a challenge, {name}? Your next quiz is waiting for you.",
+    "Don't let your knowledge get rusty! Come back and review your flashcards.",
+    "Consistency is key, {name}! Spend 5 minutes on a quiz to keep your streak going.",
+    "Psst... a new summary is ready for you. Come and check it out!"
+  ],
+  "content_based_nudges": [
+    "You aced the last quiz! Ready for a new topic?",
+    "We noticed you're interested in {topic}. We've prepared a new quiz just for you!",
+    "Expand your knowledge! Check out this new summary about {related_topic}.",
+    "Challenge yourself with a harder quiz on {topic}. Think you can handle it?",
+    "Your study routine is impressive! Here's a new set of flashcards to master."
+  ],
+  "pro_conversion_triggers": [
+    "Unlock your full potential! Go Pro to get unlimited quizzes and summaries.",
+    "Want to generate quizzes from PDFs and images? Upgrade to SumQuiz Pro!",
+    "Take your learning to the next level. See what you're missing in our Pro version.",
+    "Don't let limits hold you back. Go Pro for an ad-free experience and unlimited access.",
+    "You're doing great! Imagine how much more you could learn with SumQuiz Pro."
+  ],
+  "referral_program": [
+    "Love SumQuiz? Share it with a friend and you'll both get a month of Pro for free!",
+    "Learning is better with friends! Invite a friend to SumQuiz today.",
+    "Get rewarded for sharing! Refer a friend and unlock exclusive Pro features.",
+    "Know someone who would love SumQuiz? Send them an invite!",
+    "Share the knowledge! Invite your friends to join you on SumQuiz."
+  ],
+  "system_and_updates": [
+    "New feature alert! You can now generate quizzes from images. Try it out!",
+    "We've updated our AI model to give you even better summaries. Enjoy!",
+    "Heads up! We'll be undergoing scheduled maintenance this weekend. The app may be temporarily unavailable.",
+    "Thanks for being a loyal user! We've just squashed some bugs to improve your experience.",
+    "Welcome to SumQuiz! We're excited to have you on board. Let's start learning!"
+  ]
+}

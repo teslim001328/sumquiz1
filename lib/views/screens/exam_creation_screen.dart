@@ -51,8 +51,6 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final user = Provider.of<UserModel?>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -241,13 +239,7 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                                 Text(
                                   _showFullPreview
                                       ? _sourceMaterial
-                                      : _sourceMaterial.substring(
-                                            0,
-                                            _sourceMaterial.length > 100
-                                                ? 100
-                                                : _sourceMaterial.length,
-                                          ) +
-                                          '...',
+                                      : '${_sourceMaterial.substring(0, _sourceMaterial.length > 100 ? 100 : _sourceMaterial.length)}...',
                                   maxLines: _showFullPreview ? null : 3,
                                   style: theme.textTheme.bodySmall,
                                 ),
@@ -397,10 +389,7 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
                                 value: _difficultyValue,
                                 min: 0.0,
                                 max: 1.0,
-                                label: (_difficultyValue * 100)
-                                        .round()
-                                        .toString() +
-                                    '%',
+                                label: '${(_difficultyValue * 100).round()}%',
                                 onChanged: (double value) {
                                   setState(() {
                                     _difficultyValue = value;
@@ -812,55 +801,6 @@ class _ExamCreationScreenState extends State<ExamCreationScreen> {
       }
     }
   }
-
-  List<LocalQuizQuestion> _generateMockQuestions() {
-    final questions = <LocalQuizQuestion>[];
-
-    // Calculate how many questions of each type to generate
-    final questionTypes = <String>[];
-    if (_includeMultipleChoice) questionTypes.add('Multiple Choice');
-    if (_includeShortAnswer) questionTypes.add('Short Answer');
-    if (_includeTheory) questionTypes.add('Theory');
-    if (_includeTrueFalse) questionTypes.add('True/False');
-
-    // If no question types are selected, default to Multiple Choice
-    if (questionTypes.isEmpty) {
-      questionTypes.add('Multiple Choice');
-    }
-
-    for (int i = 0; i < _numberOfQuestions; i++) {
-      final typeIndex = i % questionTypes.length;
-      final type = questionTypes[typeIndex];
-
-      if (type == 'Multiple Choice') {
-        questions.add(LocalQuizQuestion(
-          question: 'Sample MCQ $i: What is the capital of Nigeria?',
-          options: ['Lagos', 'Abuja', 'Kano', 'Ibadan'],
-          correctAnswer: 'Abuja',
-        ));
-      } else if (type == 'True/False') {
-        questions.add(LocalQuizQuestion(
-          question: 'Sample T/F $i: Nigeria gained independence in 1960.',
-          options: ['True', 'False'],
-          correctAnswer: 'True',
-        ));
-      } else {
-        // For simplicity, default to MCQ for other types in this mock
-        questions.add(LocalQuizQuestion(
-          question: 'Sample question $i: What is the main purpose of an exam?',
-          options: [
-            'To evaluate knowledge',
-            'To waste time',
-            'To confuse students',
-            'None of the above'
-          ],
-          correctAnswer: 'To evaluate knowledge',
-        ));
-      }
-    }
-
-    return questions;
-  }
 }
 
 class QuestionEditorScreen extends StatefulWidget {
@@ -875,7 +815,7 @@ class QuestionEditorScreen extends StatefulWidget {
   final List<LocalQuizQuestion>? initialQuestions;
 
   const QuestionEditorScreen({
-    Key? key,
+    super.key,
     required this.examTitle,
     required this.subject,
     required this.classLevel,
@@ -885,7 +825,7 @@ class QuestionEditorScreen extends StatefulWidget {
     required this.difficultyMix,
     required this.sourceMaterial,
     this.initialQuestions,
-  }) : super(key: key);
+  });
 
   @override
   State<QuestionEditorScreen> createState() => _QuestionEditorScreenState();
@@ -940,8 +880,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
               'None of the above'
             ],
             correctAnswer: 'To evaluate knowledge',
-            explanation:
-                'Exams are designed to assess a student\'s understanding of a subject.',
+            explanation: "Exams are designed to assess a student's understanding of a subject.",
             questionType: type,
           );
         }
@@ -1193,7 +1132,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   void _editQuestion(int index) {
     // In a real implementation, this might open a detailed edit dialog
     // For now, the inline editing is already available in the card
-    print('Editing question $index');
+    debugPrint('Editing question $index');
   }
 
   Future<void> _regenerateQuestion(int index) async {
@@ -1229,8 +1168,8 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       }
     } catch (e, stackTrace) {
       // Log the actual error and stack trace for debugging
-      print('Error regenerating question: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error regenerating question: $e');
+      debugPrint('Stack trace: $stackTrace');
 
       setState(() {
         _isProcessing = false;
@@ -1295,7 +1234,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       setState(() => _isProcessing = false);
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving exam'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Error saving exam'), backgroundColor: Colors.red),
         );
       }
     }
@@ -1344,13 +1283,13 @@ class ExportOptionsScreen extends StatefulWidget {
   final List<LocalQuizQuestion> questions;
 
   const ExportOptionsScreen({
-    Key? key,
+    super.key,
     required this.examTitle,
     required this.subject,
     required this.classLevel,
     required this.duration,
     required this.questions,
-  }) : super(key: key);
+  });
 
   @override
   State<ExportOptionsScreen> createState() => _ExportOptionsScreenState();

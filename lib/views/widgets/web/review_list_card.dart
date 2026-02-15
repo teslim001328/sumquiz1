@@ -17,7 +17,7 @@ class ReviewListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (dueCount == 0) return const SizedBox();
 
-    final List<Map<String, dynamic>> _mockItems = [
+    final List<Map<String, dynamic>> mockItems = [
       {
         'title': 'JavaScript Closures',
         'subtitle': 'Overdue by 2 days',
@@ -70,7 +70,7 @@ class ReviewListCard extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Row(
-          children: _mockItems.map((item) {
+          children: mockItems.map((item) {
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(right: 16.0),

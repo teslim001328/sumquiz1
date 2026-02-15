@@ -7,6 +7,7 @@ class Summary {
   String content;
   final Timestamp timestamp;
   List<String> tags;
+  final String? description;
 
   Summary({
     required this.id,
@@ -15,6 +16,7 @@ class Summary {
     required this.content,
     required this.timestamp,
     this.tags = const [],
+    this.description,
   });
 
   Summary copyWith({
@@ -24,6 +26,7 @@ class Summary {
     String? content,
     Timestamp? timestamp,
     List<String>? tags,
+    String? description,
   }) {
     return Summary(
       id: id ?? this.id,
@@ -32,6 +35,7 @@ class Summary {
       content: content ?? this.content,
       timestamp: timestamp ?? this.timestamp,
       tags: tags ?? this.tags,
+      description: description ?? this.description,
     );
   }
 
@@ -44,6 +48,7 @@ class Summary {
       content: data['content'] ?? '',
       timestamp: data['timestamp'] ?? Timestamp.now(),
       tags: List<String>.from(data['tags'] ?? []),
+      description: data['description'],
     );
   }
 
@@ -54,6 +59,7 @@ class Summary {
       'content': content,
       'timestamp': timestamp,
       'tags': tags,
+      'description': description,
     };
   }
 }

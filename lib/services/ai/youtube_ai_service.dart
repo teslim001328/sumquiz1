@@ -4,7 +4,6 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:sumquiz/models/extraction_result.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart'; // For Result/ExtractionResult if needed
 import 'ai_base_service.dart';
-import 'ai_config.dart';
 import 'dart:developer' as developer;
 
 class YouTubeAIService extends AIBaseService {

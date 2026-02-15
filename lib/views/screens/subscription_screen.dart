@@ -7,7 +7,6 @@ import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/web_payment_service.dart';
 import 'package:sumquiz/providers/subscription_provider.dart';
-import 'package:sumquiz/views/widgets/web/beta_access_dialog.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});

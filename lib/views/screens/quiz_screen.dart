@@ -304,8 +304,8 @@ class _QuizScreenState extends State<QuizScreen> {
             MaterialPageRoute(builder: (_) => const ExamCreationScreen()),
           );
         },
-        child: const Icon(Icons.school),
         tooltip: 'Create Exam',
+        child: const Icon(Icons.school),
       ),
       appBar: AppBar(
         title: Text(

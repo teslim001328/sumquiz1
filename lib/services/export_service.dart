@@ -171,9 +171,9 @@ class ExportService {
 
       // If summary is null but others exist, we need a title for the file name
       String title = 'Export';
-      if (summary != null)
+      if (summary != null) {
         title = summary.title;
-      else if (quiz != null)
+      } else if (quiz != null)
         title = quiz.title;
       else if (flashcardSet != null) title = flashcardSet.title;
 

@@ -16,7 +16,6 @@ import 'package:sumquiz/models/local_flashcard.dart';
 import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:sumquiz/models/public_deck.dart';
 import 'package:sumquiz/services/local_database_service.dart';
-import 'package:sumquiz/utils/share_code_generator.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

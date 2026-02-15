@@ -1,5 +1,4 @@
 // Test file to verify the three exam-focused prompts are properly integrated
-import 'package:sumquiz/services/enhanced_ai_service.dart';
 
 void main() {
   print('=== EXAM-FOCUSED PROMPT VERIFICATION ===\n');

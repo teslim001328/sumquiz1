@@ -6,7 +6,6 @@ import 'package:sumquiz/models/local_flashcard_set.dart';
 import 'package:sumquiz/models/local_quiz_question.dart';
 import 'package:sumquiz/models/local_flashcard.dart';
 import 'ai_base_service.dart';
-import 'ai_config.dart';
 import 'dart:developer' as developer;
 
 class GeneratorAIService extends AIBaseService {

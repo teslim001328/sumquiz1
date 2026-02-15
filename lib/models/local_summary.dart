@@ -34,6 +34,9 @@ class LocalSummary extends HiveObject {
   @HiveField(9)
   String? creatorName;
 
+  @HiveField(10)
+  String? description;
+
   LocalSummary({
     required this.id,
     required this.title,
@@ -45,6 +48,7 @@ class LocalSummary extends HiveObject {
     this.isReadOnly = false,
     this.publicDeckId,
     this.creatorName,
+    this.description,
   });
 
   factory LocalSummary.fromJson(Map<String, dynamic> json) => LocalSummary(
@@ -55,6 +59,7 @@ class LocalSummary extends HiveObject {
         userId: ' ',
         timestamp: DateTime.now(),
         isReadOnly: false,
+        description: json['description'],
       );
 
   LocalSummary copyWith({
@@ -68,6 +73,7 @@ class LocalSummary extends HiveObject {
     bool? isReadOnly,
     String? publicDeckId,
     String? creatorName,
+    String? description,
   }) {
     return LocalSummary(
       id: id ?? this.id,
@@ -80,6 +86,7 @@ class LocalSummary extends HiveObject {
       isReadOnly: isReadOnly ?? this.isReadOnly,
       publicDeckId: publicDeckId ?? this.publicDeckId,
       creatorName: creatorName ?? this.creatorName,
+      description: description ?? this.description,
     );
   }
 
@@ -94,5 +101,6 @@ class LocalSummary extends HiveObject {
     isReadOnly = false;
     publicDeckId = null;
     creatorName = null;
+    description = null;
   }
 }

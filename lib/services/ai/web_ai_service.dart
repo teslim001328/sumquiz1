@@ -5,6 +5,7 @@ import 'package:sumquiz/models/extraction_result.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
 import 'ai_base_service.dart';
 import 'dart:developer' as developer;
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class WebAIService extends AIBaseService {
   Future<Result<ExtractionResult>> extractWebpage(String url) async {
@@ -16,7 +17,7 @@ class WebAIService extends AIBaseService {
             'title': Schema.string(description: 'The most suitable title for this content'),
             'content': Schema.string(description: 'All the extracted educational text from the webpage'),
           },
-          requiredProperties: ['title', 'content'],
+          required: ['title', 'content'],
         ),
       );
 

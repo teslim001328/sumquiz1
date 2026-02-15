@@ -26,11 +26,9 @@ import '../../services/spaced_repetition_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'exam_creation_screen.dart';
 import '../../services/content_extraction_service.dart';
-import '../../models/extraction_result.dart';
 import '../widgets/extraction_progress_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});

@@ -52,6 +52,8 @@ class LocalQuiz extends HiveObject {
     this.timeSpent = 0,
   }) : scores = scores ?? [];
 
+  double? get score => scores.isNotEmpty ? scores.last : null;
+
   LocalQuiz.empty() {
     id = '';
     title = '';

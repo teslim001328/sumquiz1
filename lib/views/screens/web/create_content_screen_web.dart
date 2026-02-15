@@ -27,11 +27,39 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
   late TabController _tabController;
   final _textController = TextEditingController();
   final _linkController = TextEditingController();
+  final _topicController = TextEditingController();
   String? _fileName;
   Uint8List? _fileBytes;
   bool _isLoading = false;
   String _errorMessage = '';
-  String? _fileName;
+  String _extractionProgress = 'Preparing to extract content...';
+  String _selectedInputType = 'topic'; // Default to topic now
+
+  // Exam Generation State
+  String _examLevel = 'Intermediate';
+  String _examSubject = 'General';
+  final List<String> _selectedQuestionTypes = ['Multiple Choice', 'True/False'];
+
+  // Topic-based learning state
+  String _topicDepth = 'intermediate';
+  double _topicCardCount = 15;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 9, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _scrollController.dispose();
+    _textController.dispose();
+    _linkController.dispose();
+    _topicController.dispose();
+    super.dispose();
+  }
 
   String _getMimeTypeFromName(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
@@ -51,36 +79,6 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
       case 'm4a': return 'audio/mp4';
       default: return 'application/octet-stream';
     }
-  }
-  String _extractionProgress = 'Preparing to extract content...';
-  String _selectedInputType = 'topic'; // Default to topic now
-
-  // Exam Generation State
-  String _examLevel = 'Intermediate';
-  String _examSubject = 'General';
-  final List<String> _selectedQuestionTypes = ['Multiple Choice', 'True/False'];
-
-  // Topic-based learning state
-  final _topicController = TextEditingController();
-  String _topicDepth = 'intermediate';
-  double _topicCardCount = 15;
-  late TabController _tabController;
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 9, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _scrollController.dispose();
-    _textController.dispose();
-    _linkController.dispose();
-    _topicController.dispose();
-    super.dispose();
   }
 
   void _resetInputs() {
@@ -108,10 +106,15 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
 
   Future<void> _pickFile(String type) async {
     String featureName = '';
-    if (type == 'pdf') featureName = 'PDF Upload';
-    else if (type == 'image') featureName = 'Image Scan';
-    else if (type == 'audio') featureName = 'Audio/Speech Analysis';
-    else if (type == 'slides') featureName = 'Slides Analysis';
+    if (type == 'pdf') {
+      featureName = 'PDF Upload';
+    } else if (type == 'image') {
+      featureName = 'Image Scan';
+    } else if (type == 'audio') {
+      featureName = 'Audio/Speech Analysis';
+    } else if (type == 'slides') {
+      featureName = 'Slides Analysis';
+    }
 
     if (!_checkProAccess(featureName)) return;
 
@@ -294,7 +297,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
             end: Alignment.bottomRight,
             colors: [
               Theme.of(context).scaffoldBackgroundColor,
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+              Theme.of(context).colorScheme.primary.withOpacity(0.05),
             ],
           ),
         ),
@@ -338,7 +341,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           textAlign: TextAlign.center,
           style: GoogleFonts.outfit(
             fontSize: 20,
-            color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.7),
+            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
             height: 1.5,
             fontWeight: FontWeight.w400,
           ),
@@ -404,7 +407,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TabBar(
@@ -414,7 +417,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -489,7 +492,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           'Tell us what you want to learn, and AI will build a complete study deck for you.',
           style: GoogleFonts.outfit(
             fontSize: 16,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -599,7 +602,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
       style: GoogleFonts.outfit(
         fontSize: 12,
         fontWeight: FontWeight.w800,
-        color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.5),
+        color: Theme.of(context).textTheme.labelSmall?.color?.withOpacity(0.5),
         letterSpacing: 1.5,
       ),
     );
@@ -609,7 +612,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
@@ -647,7 +650,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -841,9 +844,6 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     final hasFile = _fileName != null && _selectedInputType == type;
     if (hasFile) return _buildFilePreview();
 
-    bool isPdf = type == 'pdf';
-    bool isAudio = type == 'audio';
-    bool isImage = type == 'image';
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1108,7 +1108,6 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
       default: return 'Select a file from your device';
     }
   }
-}
 
   // ===========================================================
   // EXAM GENERATION
@@ -1138,7 +1137,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           'Generate a comprehensive exam to test your knowledge.',
           style: GoogleFonts.outfit(
             fontSize: 16,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -1175,7 +1174,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
                         _buildSectionHeader('DIFFICULTY LEVEL'),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _examLevel,
+                          initialValue: _examLevel,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: WebColors.backgroundAlt,
@@ -1200,7 +1199,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
                         _buildSectionHeader('SUBJECT AREA'),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _examSubject,
+                          initialValue: _examSubject,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: WebColors.backgroundAlt,
@@ -1232,7 +1231,6 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
     // Navigate to the dedicated Exam Creation Screen
     context.push('/exam-creation');
   }
-
 }
 
 // Simple dashed border painter

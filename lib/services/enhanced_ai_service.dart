@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:developer' as developer;
 
@@ -13,12 +12,16 @@ import 'package:sumquiz/services/iap_service.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/extraction_result.dart';
 
-import 'ai/ai_config.dart';
-import 'ai/ai_base_service.dart';
 import 'ai/youtube_ai_service.dart';
 import 'ai/web_ai_service.dart';
 import 'ai/generator_ai_service.dart';
 import 'ai/ai_types.dart';
+import 'package:uuid/uuid.dart';
+import 'package:sumquiz/models/folder.dart';
+import 'package:sumquiz/services/spaced_repetition_service.dart';
+import 'package:sumquiz/services/sync_service.dart';
+import 'package:sumquiz/models/local_quiz_question.dart';
+import 'package:sumquiz/models/local_flashcard.dart';
 export 'ai/ai_types.dart';
 
 // --- EXCEPTIONS moved to ai_types.dart ---

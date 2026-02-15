@@ -198,7 +198,6 @@ class UserModel {
     UserRole? role,
     bool? isTrial,
     bool? isCreatorPro,
-    bool? isCreatorPro,
     String? currentProduct,
     String? subscriptionType,
     String? referralCode,

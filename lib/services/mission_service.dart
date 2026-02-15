@@ -161,8 +161,9 @@ class MissionService {
         newMomentum += dailyGain;
 
         // 3. Cap Total Momentum
-        if (newMomentum > 1000)
+        if (newMomentum > 1000) {
           newMomentum = 1000; // Increased cap for more growth
+        }
 
         // 4. Save to Firestore
         final updatedUser = user.copyWith(

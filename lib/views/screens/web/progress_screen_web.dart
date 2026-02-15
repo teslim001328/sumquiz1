@@ -148,7 +148,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Keep it up, ${user?.displayName?.split(' ').first ?? 'Student'}! 👏',
+                'Keep it up, ${user?.displayName.split(' ').first ?? 'Student'}! 👏',
                 style: GoogleFonts.outfit(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
@@ -498,7 +498,7 @@ class _ProgressScreenWebState extends State<ProgressScreenWeb> {
           ),
         ],
       ),
-    );
+    )
   }
 
   Widget _buildMilestoneCard() {

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "curl -o f.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz && tar xf f.xz && mv flutter /f && git config --global --add safe.directory /f && export PATH=\"/f/bin:$PATH\" && flutter precache && flutter pub get",
+  "installCommand": "curl -o f.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz && tar xf f.xz && mv flutter /f && export PATH=\"/f/bin:$PATH\" && flutter pub get",
   "buildCommand": "flutter build web --release",
   "outputDirectory": "build/web",
   "rewrites": [

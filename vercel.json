@@ -9,7 +9,7 @@
       }
     }
   ],
-  "installCommand": "echo 'Installing Flutter...' && git clone https://github.com/flutter/flutter.git -b stable --depth 1 /vercel/flutter && export PATH=\"/vercel/flutter/bin:$PATH\" && flutter doctor --android-licenses && flutter --version && flutter pub get",
+  "installCommand": "curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz && tar xf flutter.tar.xz && mv flutter /vercel/flutter && export PATH=\"/vercel/flutter/bin:$PATH\" && flutter precache && flutter doctor --android-licenses < /dev/null && flutter doctor && flutter pub get",
   "buildCommand": "flutter build web --release --web-renderer canvaskit",
   "outputDirectory": "build/web",
   "rewrites": [

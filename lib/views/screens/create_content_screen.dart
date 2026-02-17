@@ -180,7 +180,18 @@ class _CreateContentScreenState extends State<CreateContentScreen>
       int maxSizeMb;
 
       if (_selectedImportMethod == 'pdf' || _selectedImportMethod == 'slides') {
-        allowedTypes = ['pdf', 'ppt', 'pptx', 'odp', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
+        allowedTypes = [
+          'pdf',
+          'ppt',
+          'pptx',
+          'odp',
+          'doc',
+          'docx',
+          'txt',
+          'jpg',
+          'jpeg',
+          'png'
+        ];
         fileTypeDescription = 'document';
         maxSizeMb = 15;
       } else if (_selectedImportMethod == 'audio') {
@@ -290,7 +301,8 @@ class _CreateContentScreenState extends State<CreateContentScreen>
     // Check if API key is configured
     if (!_isApiKeyConfigured()) {
       setState(() {
-        _errorMessage = '🔑 API key is not configured. Please set up your API key in the .env file.';
+        _errorMessage =
+            '🔑 API key is not configured. Please set up your API key in the .env file.';
       });
       return;
     }
@@ -335,11 +347,12 @@ class _CreateContentScreenState extends State<CreateContentScreen>
           input = _linkController.text;
           break;
         case 'pdf':
-case 'slides':
+        case 'slides':
           if (_pdfBytes == null) {
             validationError = 'Please upload a document';
           } else if (_pdfBytes!.length > 15 * 1024 * 1024) {
-            validationError = 'Document file is too large. Maximum size is 15MB';
+            validationError =
+                'Document file is too large. Maximum size is 15MB';
           }
           type = 'pdf';
           input = _pdfBytes;
@@ -366,7 +379,7 @@ case 'slides':
           if (!_checkProAccess('Tutor Exam')) return;
           context.push('/exam-creation');
           return;
-        
+
         default:
           validationError = 'Please select an import method';
           type = '';
@@ -390,7 +403,8 @@ case 'slides':
   }
 
   Future<void> _processContentExtraction(
-      String type, dynamic input, UserModel user, {String? mimeType}) async {
+      String type, dynamic input, UserModel user,
+      {String? mimeType}) async {
     if (_isCancelled) return;
 
     final extractionService =
@@ -412,10 +426,10 @@ case 'slides':
           return PopScope(
             canPop: false,
             onPopInvoked: (didPop) {
-                if (didPop) {
-                    return;
-                }
-                 _isCancelled = true;
+              if (didPop) {
+                return;
+              }
+              _isCancelled = true;
             },
             child: ExtractionProgressDialog(messageNotifier: progressNotifier),
           );
@@ -477,8 +491,7 @@ case 'slides':
         title: Text('Create Content',
             style: TextStyle(
                 color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-        actions: [
-        ],
+        actions: [],
         backgroundColor: Colors.transparent,
         elevation: 0,
         systemOverlayStyle: theme.brightness == Brightness.dark
@@ -523,9 +536,9 @@ case 'slides':
           RichText(
             text: TextSpan(
               style: theme.textTheme.headlineMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
               ),
               children: [
                 const TextSpan(text: 'What will you '),
@@ -558,7 +571,6 @@ case 'slides':
       crossAxisSpacing: 16,
       childAspectRatio: 1.4,
       children: [
-        _buildQuickTopicCard(theme, colorScheme),
         _buildImportCard(
             'Upload Doc', Icons.insert_drive_file_rounded, 'pdf', colorScheme),
         _buildImportCard('Link/Video', Icons.link_rounded, 'link', colorScheme),
@@ -571,93 +583,6 @@ case 'slides':
         _buildImportCard(
             'Tutor Exam', Icons.school_rounded, 'exam', colorScheme),
       ],
-    );
-  }
-
-  Widget _buildQuickTopicCard(ThemeData theme, ColorScheme colorScheme) {
-    final isSelected = _topicController.text.trim().isNotEmpty;
-    final isDisabled = _isProcessing || _isLoading;
-
-    return IgnorePointer(
-      ignoring: isDisabled,
-      child: Opacity(
-        opacity: isDisabled ? 0.6 : 1.0,
-        child: GestureDetector(
-          onTap: () {
-            if (isDisabled) return;
-
-            setState(() {
-              _selectedImportMethod = '';
-              if (!isSelected) {
-                // Clear other inputs when selecting topic
-                _resetInputs();
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest.withAlpha(77),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.outline.withAlpha(51),
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.auto_awesome,
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : colorScheme.primary,
-                    size: 28),
-                const SizedBox(height: 8),
-                Text(
-                  'Quick Topic',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : colorScheme.onSurface,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'AI Generated',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? colorScheme.onPrimary.withAlpha(204)
-                        : colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
-                ),
-                if (isDisabled) ...[
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isSelected
-                            ? colorScheme.onPrimary
-                            : colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -754,9 +679,8 @@ case 'slides':
   }
 
   Widget _buildActiveImportSection(ThemeData theme) {
-    // Show Quick Topic section if topic controller has text or no import method selected
-    if (_topicController.text.trim().isNotEmpty ||
-        _selectedImportMethod.isEmpty) {
+    // Show topic section only if explicitly typing in topic field
+    if (_topicController.text.trim().isNotEmpty) {
       return _buildLearnTopicSection(theme);
     }
 
@@ -792,7 +716,7 @@ case 'slides':
         border: Border.all(color: colorScheme.outline.withAlpha(26)),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark 
+            color: theme.brightness == Brightness.dark
                 ? colorScheme.primary.withAlpha(38)
                 : colorScheme.primary.withAlpha(13),
             blurRadius: 20,
@@ -832,8 +756,7 @@ case 'slides':
                   prefixIcon: Icon(Icons.auto_awesome,
                       color: colorScheme.primary, size: 20),
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest
-                      .withAlpha(77),
+                  fillColor: colorScheme.surfaceContainerHighest.withAlpha(77),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -918,8 +841,7 @@ case 'slides':
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 6,
                   activeTrackColor: colorScheme.primary,
-                  inactiveTrackColor:
-                      colorScheme.primary.withAlpha(26),
+                  inactiveTrackColor: colorScheme.primary.withAlpha(26),
                   thumbColor: colorScheme.primary,
                   overlayColor: colorScheme.primary.withAlpha(26),
                   thumbShape:
@@ -1030,7 +952,8 @@ case 'slides':
     // Check if API key is configured
     if (!_isApiKeyConfigured()) {
       setState(() {
-        _errorMessage = '🔑 API key is not configured. Please set up your API key in the .env file.';
+        _errorMessage =
+            '🔑 API key is not configured. Please set up your API key in the .env file.';
       });
       return;
     }
@@ -1050,13 +973,13 @@ case 'slides':
           barrierDismissible: false,
           builder: (context) {
             return PopScope(
-                canPop: false,
-                onPopInvoked: (didPop) {
-                    if (didPop) {
-                        return;
-                    }
-                    _isCancelled = true;
-                },
+              canPop: false,
+              onPopInvoked: (didPop) {
+                if (didPop) {
+                  return;
+                }
+                _isCancelled = true;
+              },
               child: AlertDialog(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -1124,7 +1047,7 @@ case 'slides':
       // Log the actual error and stack trace for debugging
       debugPrint('Error generating content from topic: $e');
       debugPrint('Stack trace: $stackTrace');
-      
+
       if (!_isCancelled && mounted) {
         try {
           Navigator.of(context).pop(); // Close progress dialog
@@ -1133,9 +1056,10 @@ case 'slides':
         setState(() {
           _errorMessage = _getUserFriendlyError(e);
           // Provide more specific error message if it's an API key issue
-          if (e.toString().toLowerCase().contains('api') || 
+          if (e.toString().toLowerCase().contains('api') ||
               e.toString().toLowerCase().contains('key')) {
-            _errorMessage = 'API configuration error. Please check your API key in the .env file.';
+            _errorMessage =
+                'API configuration error. Please check your API key in the .env file.';
           }
         });
       }
@@ -1148,11 +1072,10 @@ case 'slides':
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: theme.colorScheme.outline.withAlpha(26)),
+        border: Border.all(color: theme.colorScheme.outline.withAlpha(26)),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark 
+            color: theme.brightness == Brightness.dark
                 ? Colors.black.withAlpha(64)
                 : Colors.black.withAlpha(13),
             blurRadius: 10,
@@ -1176,8 +1099,7 @@ case 'slides':
                 decoration: InputDecoration(
                   hintText: 'Type or paste your notes here...',
                   hintStyle: GoogleFonts.outfit(
-                      color: theme.colorScheme.onSurfaceVariant
-                          .withAlpha(128)),
+                      color: theme.colorScheme.onSurfaceVariant.withAlpha(128)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(24),
                 ),
@@ -1240,17 +1162,17 @@ case 'slides':
               color: _linkController.text.isEmpty
                   ? colorScheme.outline.withAlpha(26)
                   : isValid
-                      ? theme.brightness == Brightness.dark 
+                      ? theme.brightness == Brightness.dark
                           ? theme.colorScheme.secondary
                           : Colors.green.withAlpha(128)
-                      : theme.brightness == Brightness.dark 
+                      : theme.brightness == Brightness.dark
                           ? theme.colorScheme.error
                           : Colors.red.withAlpha(128),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.brightness == Brightness.dark 
+                color: theme.brightness == Brightness.dark
                     ? Colors.black.withAlpha(64)
                     : Colors.black.withAlpha(8),
                 blurRadius: 10,
@@ -1307,8 +1229,7 @@ case 'slides':
                       decoration: InputDecoration(
                         hintText: 'Paste any URL here...',
                         hintStyle: GoogleFonts.outfit(
-                          color: colorScheme.onSurfaceVariant
-                              .withAlpha(102),
+                          color: colorScheme.onSurfaceVariant.withAlpha(102),
                         ),
                         border: InputBorder.none,
                       ),
@@ -1378,7 +1299,7 @@ case 'slides':
               ),
               boxShadow: [
                 BoxShadow(
-                  color: theme.brightness == Brightness.dark 
+                  color: theme.brightness == Brightness.dark
                       ? Colors.black.withAlpha(64)
                       : Colors.black.withAlpha(8),
                   blurRadius: 10,
@@ -1394,8 +1315,7 @@ case 'slides':
                   decoration: BoxDecoration(
                     color: isSelected
                         ? colorScheme.primary.withAlpha(26)
-                        : colorScheme.surfaceContainerHighest
-                            .withAlpha(128),
+                        : colorScheme.surfaceContainerHighest.withAlpha(128),
                     shape: BoxShape.circle,
                   ),
                   child: isDisabled
@@ -1436,8 +1356,7 @@ case 'slides':
                           ? 'Tap to change file'
                           : 'PDF, DOC, PPT, Images - Max 15MB',
                   style: GoogleFonts.outfit(
-                      color:
-                          colorScheme.onSurfaceVariant.withAlpha(153),
+                      color: colorScheme.onSurfaceVariant.withAlpha(153),
                       fontSize: 13,
                       fontWeight: FontWeight.w500),
                 ),
@@ -1477,7 +1396,7 @@ case 'slides':
               ),
               boxShadow: [
                 BoxShadow(
-                  color: theme.brightness == Brightness.dark 
+                  color: theme.brightness == Brightness.dark
                       ? Colors.black.withAlpha(64)
                       : Colors.black.withAlpha(8),
                   blurRadius: 10,
@@ -1493,8 +1412,7 @@ case 'slides':
                   decoration: BoxDecoration(
                     color: isSelected
                         ? colorScheme.primary.withAlpha(26)
-                        : colorScheme.surfaceContainerHighest
-                            .withAlpha(128),
+                        : colorScheme.surfaceContainerHighest.withAlpha(128),
                     shape: BoxShape.circle,
                   ),
                   child: isDisabled
@@ -1517,9 +1435,7 @@ case 'slides':
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  isSelected
-                      ? (_pdfName ?? 'Audio Selected')
-                      : 'Upload Audio',
+                  isSelected ? (_pdfName ?? 'Audio Selected') : 'Upload Audio',
                   style: GoogleFonts.outfit(
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
@@ -1535,8 +1451,7 @@ case 'slides':
                           ? 'Tap to change file'
                           : 'MP3, WAV, M4A - Max 50MB',
                   style: GoogleFonts.outfit(
-                      color:
-                          colorScheme.onSurfaceVariant.withAlpha(153),
+                      color: colorScheme.onSurfaceVariant.withAlpha(153),
                       fontSize: 13,
                       fontWeight: FontWeight.w500),
                 ),
@@ -1604,7 +1519,7 @@ case 'slides':
           ),
           boxShadow: [
             BoxShadow(
-              color: theme.brightness == Brightness.dark 
+              color: theme.brightness == Brightness.dark
                   ? Colors.black.withAlpha(64)
                   : Colors.black.withAlpha(8),
               blurRadius: 10,
@@ -1620,8 +1535,7 @@ case 'slides':
               decoration: BoxDecoration(
                 color: isSelected
                     ? colorScheme.primary.withAlpha(26)
-                    : colorScheme.surfaceContainerHighest
-                        .withAlpha(128),
+                    : colorScheme.surfaceContainerHighest.withAlpha(128),
                 shape: BoxShape.circle,
               ),
               child: isDisabled
@@ -1745,23 +1659,37 @@ case 'slides':
       ),
     );
   }
+
   String _getMimeType(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
-      case 'pdf': return 'application/pdf';
-      case 'ppt': return 'application/vnd.ms-powerpoint';
-      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-      case 'doc': return 'application/msword';
-      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      case 'txt': return 'text/plain';
+      case 'pdf':
+        return 'application/pdf';
+      case 'ppt':
+        return 'application/vnd.ms-powerpoint';
+      case 'pptx':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'txt':
+        return 'text/plain';
       case 'jpg':
-      case 'jpeg': return 'image/jpeg';
-      case 'png': return 'image/png';
-      case 'webp': return 'image/webp';
-      case 'mp3': return 'audio/mpeg';
-      case 'wav': return 'audio/wav';
-      case 'm4a': return 'audio/mp4';
-      default: return 'application/octet-stream';
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'wav':
+        return 'audio/wav';
+      case 'm4a':
+        return 'audio/mp4';
+      default:
+        return 'application/octet-stream';
     }
   }
 

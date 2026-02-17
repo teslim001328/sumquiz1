@@ -35,11 +35,6 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
   String _extractionProgress = 'Preparing to extract content...';
   String _selectedInputType = 'topic'; // Default to topic now
 
-  // Exam Generation State
-  String _examLevel = 'Intermediate';
-  String _examSubject = 'General';
-  final List<String> _selectedQuestionTypes = ['Multiple Choice', 'True/False'];
-
   // Topic-based learning state
   String _topicDepth = 'intermediate';
   double _topicCardCount = 15;
@@ -64,20 +59,33 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
   String _getMimeTypeFromName(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
-      case 'pdf': return 'application/pdf';
-      case 'ppt': return 'application/vnd.ms-powerpoint';
-      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-      case 'doc': return 'application/msword';
-      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      case 'txt': return 'text/plain';
+      case 'pdf':
+        return 'application/pdf';
+      case 'ppt':
+        return 'application/vnd.ms-powerpoint';
+      case 'pptx':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'txt':
+        return 'text/plain';
       case 'jpg':
-      case 'jpeg': return 'image/jpeg';
-      case 'png': return 'image/png';
-      case 'webp': return 'image/webp';
-      case 'mp3': return 'audio/mpeg';
-      case 'wav': return 'audio/wav';
-      case 'm4a': return 'audio/mp4';
-      default: return 'application/octet-stream';
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'wav':
+        return 'audio/wav';
+      case 'm4a':
+        return 'audio/mp4';
+      default:
+        return 'application/octet-stream';
     }
   }
 
@@ -262,7 +270,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           );
           break;
         case 'exam':
-          await _processExamGeneration(user);
+          // Navigate to dedicated exam creation screen
+          context.push('/exam-creation');
           return;
         default:
           throw Exception('Please provide some content first.');
@@ -341,7 +350,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           textAlign: TextAlign.center,
           style: GoogleFonts.outfit(
             fontSize: 20,
-            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+            color:
+                Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
             height: 1.5,
             fontWeight: FontWeight.w400,
           ),
@@ -431,8 +441,17 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
         onTap: (index) {
           _resetInputs();
           setState(() {
-            _selectedInputType =
-                ['topic', 'text', 'link', 'pdf', 'slides', 'image', 'audio', 'video', 'exam'][index];
+            _selectedInputType = [
+              'topic',
+              'text',
+              'link',
+              'pdf',
+              'slides',
+              'image',
+              'audio',
+              'video',
+              'exam'
+            ][index];
           });
         },
         tabs: [
@@ -492,7 +511,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           'Tell us what you want to learn, and AI will build a complete study deck for you.',
           style: GoogleFonts.outfit(
             fontSize: 16,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+            color:
+                Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -569,11 +589,13 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
                             divisions: 5,
                             onChanged: (value) {
                               if (value > 10) {
-                                final user = Provider.of<UserModel?>(context, listen: false);
+                                final user = Provider.of<UserModel?>(context,
+                                    listen: false);
                                 if (user != null && !user.isPro) {
                                   showDialog(
                                     context: context,
-                                    builder: (_) => const UpgradeDialog(featureName: 'Larger Decks'),
+                                    builder: (_) => const UpgradeDialog(
+                                        featureName: 'Larger Decks'),
                                   );
                                   return;
                                 }
@@ -642,15 +664,20 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).dividerColor,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -661,7 +688,9 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
           label,
           style: TextStyle(
             fontSize: 14,
-            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -856,7 +885,7 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
               color: WebColors.backgroundAlt,
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
-                style: BorderStyle.solid, 
+                style: BorderStyle.solid,
               ),
             ),
             child: Column(
@@ -1078,34 +1107,52 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
 
   IconData _getFileUploadIcon(String type) {
     switch (type) {
-      case 'pdf': return Icons.picture_as_pdf_rounded;
-      case 'slides': return Icons.slideshow_rounded;
-      case 'image': return Icons.add_a_photo_rounded;
-      case 'audio': return Icons.audiotrack_rounded;
-      case 'video': return Icons.videocam_rounded;
-      default: return Icons.cloud_upload_outlined;
+      case 'pdf':
+        return Icons.picture_as_pdf_rounded;
+      case 'slides':
+        return Icons.slideshow_rounded;
+      case 'image':
+        return Icons.add_a_photo_rounded;
+      case 'audio':
+        return Icons.audiotrack_rounded;
+      case 'video':
+        return Icons.videocam_rounded;
+      default:
+        return Icons.cloud_upload_outlined;
     }
   }
 
   String _getFileUploadTitle(String type) {
     switch (type) {
-      case 'pdf': return 'Choose a PDF file';
-      case 'slides': return 'Upload Presentation';
-      case 'image': return 'Select an Image';
-      case 'audio': return 'Select Audio File';
-      case 'video': return 'Select Video File';
-      default: return 'Select File';
+      case 'pdf':
+        return 'Choose a PDF file';
+      case 'slides':
+        return 'Upload Presentation';
+      case 'image':
+        return 'Select an Image';
+      case 'audio':
+        return 'Select Audio File';
+      case 'video':
+        return 'Select Video File';
+      default:
+        return 'Select File';
     }
   }
 
   String _getFileUploadSubtitle(String type) {
     switch (type) {
-      case 'pdf': return 'Drop your PDF here or click to browse';
-      case 'slides': return 'Upload PPT, PPTX, or other presentation slides';
-      case 'image': return 'Upload an image with text to turn it into flashcards';
-      case 'audio': return 'Upload lecture recordings, notes, or educational audio';
-      case 'video': return 'Upload educational video clips, lectures, or tutorials';
-      default: return 'Select a file from your device';
+      case 'pdf':
+        return 'Drop your PDF here or click to browse';
+      case 'slides':
+        return 'Upload PPT, PPTX, or other presentation slides';
+      case 'image':
+        return 'Upload an image with text to turn it into flashcards';
+      case 'audio':
+        return 'Upload lecture recordings, notes, or educational audio';
+      case 'video':
+        return 'Upload educational video clips, lectures, or tutorials';
+      default:
+        return 'Select a file from your device';
     }
   }
 
@@ -1120,8 +1167,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
         ShaderMask(
           shaderCallback: (bounds) =>
               WebColors.HeroGradient.createShader(bounds),
-          child: const Icon(Icons.school_rounded,
-              size: 64, color: Colors.white),
+          child:
+              const Icon(Icons.school_rounded, size: 64, color: Colors.white),
         ),
         const SizedBox(height: 24),
         Text(
@@ -1132,104 +1179,8 @@ class _CreateContentScreenWebState extends State<CreateContentScreenWeb>
             color: WebColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          'Generate a comprehensive exam to test your knowledge.',
-          style: GoogleFonts.outfit(
-            fontSize: 16,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 48),
-        Container(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Column(
-            children: [
-              TextField(
-                controller: _topicController, // Reuse topic controller for simplicity
-                style: GoogleFonts.outfit(
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'e.g., "Advanced Calculus", "World War II"...',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Icon(Icons.menu_book_rounded, size: 28),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
-                ),
-              ),
-              const SizedBox(height: 40),
-               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader('DIFFICULTY LEVEL'),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: _examLevel,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: WebColors.backgroundAlt,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          items: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
-                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                              .toList(),
-                          onChanged: (v) => setState(() => _examLevel = v!),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader('SUBJECT AREA'),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: _examSubject,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: WebColors.backgroundAlt,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          items: ['General', 'Science', 'History', 'Math', 'Language', 'Programming']
-                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                              .toList(),
-                          onChanged: (v) => setState(() => _examSubject = v!),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ],
     );
-  }
-
-  Future<void> _processExamGeneration(UserModel user) async {
-    if (!_checkProAccess('Tutor Exam')) return;
-    
-    // Navigate to the dedicated Exam Creation Screen
-    context.push('/exam-creation');
   }
 }
 

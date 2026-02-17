@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 
 import '../../models/user_model.dart';
 import '../../models/library_item.dart';
@@ -13,6 +13,7 @@ import '../../models/local_quiz.dart';
 import '../../models/local_flashcard_set.dart';
 import '../../models/quiz_question.dart';
 import '../../models/flashcard.dart';
+import '../../models/flashcard_set.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_database_service.dart';
 import '../../services/sync_service.dart';
@@ -398,9 +399,17 @@ class _LibraryViewState extends State<_LibraryView>
               theme);
         }
 
+        // Debug: Log the raw data count
+        debugPrint(
+            'Library: Received ${snapshot.data!.length} items from stream');
+
         final items = snapshot.data!
             .where((item) => item.title.toLowerCase().contains(_searchQuery))
             .toList();
+
+        // Debug: Log filtered count
+        debugPrint(
+            'Library: After search filter "$_searchQuery": ${items.length} items');
 
         if (items.isEmpty && _searchQuery.isNotEmpty) {
           return _buildNoSearchResultsState(theme);
@@ -730,7 +739,21 @@ class _LibraryViewState extends State<_LibraryView>
           screen = QuizScreen(quiz: contentData);
           break;
         case LibraryItemType.flashcards:
-          screen = FlashcardsScreen(flashcardSet: contentData);
+          final localSet = contentData as LocalFlashcardSet;
+          screen = FlashcardsScreen(
+            flashcardSet: FlashcardSet(
+              id: localSet.id,
+              title: localSet.title,
+              flashcards: localSet.flashcards
+                  .map((f) => Flashcard(
+                        id: f.id,
+                        question: f.question,
+                        answer: f.answer,
+                      ))
+                  .toList(),
+              timestamp: fs.Timestamp.fromDate(localSet.timestamp),
+            ),
+          );
           break;
       }
 
@@ -790,7 +813,7 @@ class _LibraryViewState extends State<_LibraryView>
             title: summary.title,
             content: summary.content,
             tags: summary.tags,
-            timestamp: Timestamp.fromDate(summary.timestamp),
+            timestamp: fs.Timestamp.fromDate(summary.timestamp),
           );
           break;
         case LibraryItemType.quiz:
@@ -807,7 +830,7 @@ class _LibraryViewState extends State<_LibraryView>
             type: 'quiz',
             title: quiz.title,
             questions: quizQuestions,
-            timestamp: Timestamp.fromDate(quiz.timestamp),
+            timestamp: fs.Timestamp.fromDate(quiz.timestamp),
           );
           break;
         case LibraryItemType.flashcards:
@@ -824,7 +847,7 @@ class _LibraryViewState extends State<_LibraryView>
             type: 'flashcards',
             title: flashcardSet.title,
             flashcards: flashcards,
-            timestamp: Timestamp.fromDate(flashcardSet.timestamp),
+            timestamp: fs.Timestamp.fromDate(flashcardSet.timestamp),
           );
           break;
       }

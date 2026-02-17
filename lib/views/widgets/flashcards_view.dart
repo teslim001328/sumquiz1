@@ -136,7 +136,7 @@ class _FlashcardsViewState extends State<FlashcardsView> {
                 return Center(
                   child: ConstrainedBox(
                     constraints:
-                        const BoxConstraints(maxWidth: 600, maxHeight: 400),
+                        const BoxConstraints(maxWidth: 700, maxHeight: 600),
                     child: FlipCard(
                       front: _buildCardSide(card.question,
                           isFront: true, theme: theme),
@@ -245,15 +245,28 @@ class _FlashcardsViewState extends State<FlashcardsView> {
   }
 
   Widget _buildGlassCard({required Widget child, required ThemeData theme}) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       height: double.infinity,
       padding: const EdgeInsets.all(40.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: WebColors.border),
-        boxShadow: WebColors.cardShadow,
+        border: Border.all(
+          color: isDark
+              ? theme.colorScheme.outline.withValues(alpha: 0.3)
+              : WebColors.border,
+        ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ]
+            : WebColors.cardShadow,
       ),
       child: child,
     );

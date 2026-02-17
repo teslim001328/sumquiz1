@@ -4,8 +4,26 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, compute;
 import 'package:sumquiz/models/extraction_result.dart';
+
+// Top-level function for PDF extraction in isolate
+// Must be top-level or static to work with compute()
+String _extractPdfTextInIsolate(Uint8List pdfBytes) {
+  try {
+    final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
+    final String text = PdfTextExtractor(document).extractText();
+    document.dispose();
+
+    if (text.isEmpty) {
+      return '[No text found in PDF. The PDF might contain only images or scanned content.]';
+    }
+
+    return text;
+  } catch (e) {
+    throw Exception('PDF text extraction failed: $e');
+  }
+}
 
 /// Types of content that can be extracted from URLs
 enum UrlContentType {
@@ -30,7 +48,8 @@ class ContentExtractionService {
           throw Exception('Text input cannot be empty');
         }
         if (input.toString().length > 50000) {
-          throw Exception('Text input too large. Maximum 50,000 characters allowed.');
+          throw Exception(
+              'Text input too large. Maximum 50,000 characters allowed.');
         }
         break;
       case 'link':
@@ -39,7 +58,8 @@ class ContentExtractionService {
         }
         final url = input.toString();
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          throw Exception('Invalid URL format. Must start with http:// or https://');
+          throw Exception(
+              'Invalid URL format. Must start with http:// or https://');
         }
         break;
       case 'pdf':
@@ -50,7 +70,8 @@ class ContentExtractionService {
           if (input.isEmpty) {
             throw Exception('PDF file is empty');
           }
-          if (input.length > 50 * 1024 * 1024) { // 50MB limit
+          if (input.length > 50 * 1024 * 1024) {
+            // 50MB limit
             throw Exception('PDF file too large. Maximum 50MB allowed.');
           }
         } else {
@@ -65,7 +86,8 @@ class ContentExtractionService {
           if (input.isEmpty) {
             throw Exception('Image file is empty');
           }
-          if (input.length > 10 * 1024 * 1024) { // 10MB limit
+          if (input.length > 10 * 1024 * 1024) {
+            // 10MB limit
             throw Exception('Image file too large. Maximum 10MB allowed.');
           }
         } else {
@@ -83,7 +105,8 @@ class ContentExtractionService {
           }
           final limit = type == 'audio' ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
           if (input.length > limit) {
-            throw Exception('${type.toUpperCase()} file too large. Maximum ${limit ~/ (1024 * 1024)}MB allowed.');
+            throw Exception(
+                '${type.toUpperCase()} file too large. Maximum ${limit ~/ (1024 * 1024)}MB allowed.');
           }
         } else {
           throw Exception('${type.toUpperCase()} input must be Uint8List');
@@ -104,7 +127,7 @@ class ContentExtractionService {
   }) async {
     // Validate input before processing to prevent crashes
     _validateInput(type, input);
-    
+
     String rawText = '';
     String suggestedTitle = 'Imported Content';
 
@@ -181,7 +204,8 @@ class ContentExtractionService {
           rawText = ''; // Fallback to AI
         }
 
-        if (rawText.trim().isEmpty || rawText.contains('[No text found in PDF.')) {
+        if (rawText.trim().isEmpty ||
+            rawText.contains('[No text found in PDF.')) {
           onProgress?.call('Analyzing document complexity with AI...');
           if (userId == null) throw Exception('User ID is required.');
           final result = await _enhancedAiService.analyzeContentFromBytes(
@@ -363,18 +387,13 @@ class ContentExtractionService {
     return 'application/octet-stream';
   }
 
-  /// Extract text from PDF using Syncfusion PDF library
-  /// No AI usage - pure PDF parsing
+  /// Extract text from PDF using Syncfusion PDF library in a background isolate
+  /// This prevents UI freezing on large PDF files
   Future<String> _extractFromPdfBytes(Uint8List pdfBytes) async {
     try {
-      final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
-      final String text = PdfTextExtractor(document).extractText();
-      document.dispose();
-
-      if (text.isEmpty) {
-        return '[No text found in PDF. The PDF might contain only images or scanned content.]';
-      }
-
+      // Run PDF extraction in isolate to prevent UI freeze
+      // compute() spawns an isolate and runs the function there
+      final String text = await compute(_extractPdfTextInIsolate, pdfBytes);
       return text;
     } catch (e) {
       throw Exception('PDF text extraction failed: $e');

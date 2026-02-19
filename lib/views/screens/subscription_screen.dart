@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
@@ -30,65 +31,39 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       List<ProductDetails> products = [];
 
       if (kIsWeb) {
-        // Web Flow
         products = await WebPaymentService().getAvailableProducts();
       } else {
-        // Mobile Flow
         final iapService = context.read<IAPService?>();
         if (iapService != null) {
           products = await iapService.getAvailableProducts();
         }
       }
 
-      // If still empty on mobile, provide fallback informational products
       if (products.isEmpty && !kIsWeb) {
         products = [
           _FallbackProductDetails(
-            id: 'daily_pass',
-            title: 'Daily Pass',
-            description: '24 hours unlimited access',
-            price: 'US\$0.99',
-            rawPrice: 0.99,
-          ),
-          _FallbackProductDetails(
-            id: 'weekly_pass',
-            title: 'Weekly Pass',
-            description: '7 days unlimited access',
-            price: 'US\$3.99',
-            rawPrice: 3.99,
-          ),
-          _FallbackProductDetails(
-            id: 'unlimited_upload_pass',
-            title: 'Unlimited Uploads',
-            description: 'Unlimited sources upload',
-            price: 'US\$2.99',
-            rawPrice: 2.99,
-          ),
-          _FallbackProductDetails(
-            id: 'monthly_subscription',
-            title: 'Monthly Pro',
+            id: 'monthly_plan',
+            title: 'Monthly Plan',
             description: 'Standard monthly plan',
-            price: 'US\$9.99',
-            rawPrice: 9.99,
+            price: '\$5.99',
+            rawPrice: 5.99,
           ),
           _FallbackProductDetails(
-            id: 'yearly_subscription',
-            title: 'Annual Pro',
+            id: 'yearly_plan',
+            title: 'Yearly Plan',
             description: 'Best value annual plan',
-            price: 'US\$59.99',
-            rawPrice: 59.99,
-          ),
-          _FallbackProductDetails(
-            id: 'lifetime_access',
-            title: 'Lifetime',
-            description: 'One-time payment',
-            price: 'US\$129.99',
-            rawPrice: 129.99,
+            price: '\$49.00',
+            rawPrice: 49.00,
           ),
         ];
       }
 
-      // Sort: Monthly < Yearly < Lifetime
+      // Filter for only monthly and yearly plans
+      products = products
+          .where((p) => p.id.contains('monthly') || p.id.contains('yearly'))
+          .toList();
+      
+      // Sort: Monthly < Yearly
       products.sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
       if (mounted) {
@@ -98,31 +73,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         });
       }
     } catch (e) {
-      // Error handling is now managed by SubscriptionProvider
+      // Error handling
     }
   }
 
   void _setDefaultSelection() {
     if (_products.isNotEmpty) {
-      // First try to find a yearly product
       _selectedProduct = _products.firstWhere(
         (p) => p.id.contains('yearly'),
-        orElse: () {
-          // Then try to find a monthly product
-          return _products.firstWhere(
-            (p) => p.id.contains('monthly'),
-            orElse: () {
-              // Then try to find a lifetime product
-              return _products.firstWhere(
-                (p) => p.id.contains('lifetime'),
-                orElse: () {
-                  // Finally, just pick the first available product
-                  return _products.first;
-                },
-              );
-            },
-          );
-        },
+        orElse: () => _products.first,
       );
     }
   }
@@ -132,11 +91,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     final subscriptionProvider = context.read<SubscriptionProvider>();
 
-    bool success;
-
     if (kIsWeb) {
-      // Web Payment Flow with Links
-      
       final user = context.read<UserModel?>();
       if (user == null) {
         if (mounted) {
@@ -156,21 +111,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         user: user,
       );
 
-      if (mounted) {
-        if (!result.success) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.errorMessage ?? 'Payment failed'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        // If success, the link is opened in a new tab, so we don't need to do anything here.
-        // Optionally show a "Confirming..." dialog if we were listening for webhooks.
+      if (mounted && !result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Payment failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } else {
-      // Mobile Payment Flow
-      success =
+      final success =
           await subscriptionProvider.purchaseProduct(_selectedProduct!.id);
 
       if (mounted) {
@@ -181,7 +131,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          // Give user time to see success message
           await Future.delayed(const Duration(seconds: 1));
           if (mounted) context.pop();
         } else {
@@ -198,678 +147,310 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final subscriptionProvider = context.watch<SubscriptionProvider>();
-
-    // Check if user is already Pro
     final user = context.watch<UserModel?>();
+
     if (user != null && user.isPro) {
-      return _buildAlreadyProView(context, theme);
+      return _buildAlreadyProView(context);
     }
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: subscriptionProvider.isLoading
-          ? Center(
-              child:
-                  CircularProgressIndicator(color: theme.colorScheme.primary))
-          : SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
+      backgroundColor: const Color(0xFF0F112B),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: subscriptionProvider.isLoading && _products.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Header
-                          const SizedBox(height: 10),
-                          Icon(Icons.bolt_rounded,
-                              color: theme.colorScheme.primary, size: 48),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Master Your Exams',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Identify what matters, test your knowledge, \nand retain everything forever.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.6),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 48),
-
-                          // Features List
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: theme.cardColor,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                  color: theme.dividerColor
-                                      .withValues(alpha: 0.5)),
-                            ),
-                            child: Column(
-                              children: [
-                                _buildFeatureRow(
-                                    'Unlimited AI Summaries, Quizzes & Flashcards',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'AI Tutor Exam Generator',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'Upload PDF, Audio, Video & Slides',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'Import from YouTube & Web Articles',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'Deep Learning Mode (Advanced Analysis)',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'Export PDF (Summary, Quiz, Flashcards)',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow(
-                                    'Unlimited Spaced Repetition Review',
-                                    isUnlocked: true,
-                                    theme: theme),
-                                _buildFeatureRow('Offline Access, Cloud Sync & Creator Tools',
-                                    isUnlocked: true, theme: theme),
-                              ],
-                            ),
-                          ),
-
+                          _buildHeroSection(),
                           const SizedBox(height: 32),
-
-                          // Quick Access Passes Section (NEW)
-                          _buildQuickAccessSection(theme, isDark),
-
+                          _buildFeaturesList(),
                           const SizedBox(height: 32),
-
-                          // Divider with "OR SUBSCRIBE" text
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color:
-                                      theme.dividerColor.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  'OR SUBSCRIBE',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.5),
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color:
-                                      theme.dividerColor.withValues(alpha: 0.3),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Products List (filter out passes) - Yearly pre-selected
-                          ..._products
-                              .where((p) =>
-                                  !p.id.contains('daily') &&
-                                  !p.id.contains('weekly'))
-                              .map((product) =>
-                                  _buildProductCard(product, theme, isDark)),
-
-                          const SizedBox(height: 20),
+                          ..._products.map((product) => _buildPlanCard(product)),
+                          const SizedBox(height: 120), // Space for the floating button
                         ],
                       ),
                     ),
-                  ),
-
-                  // Bottom Section
-                  Container(
-                    padding: const EdgeInsets.all(24.0),
-                    decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        border: Border(
-                            top: BorderSide(
-                                color: theme.dividerColor
-                                    .withValues(alpha: 0.5)))),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: _selectedProduct != null &&
-                                    !subscriptionProvider.isLoading
-                                ? _buyProduct
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: subscriptionProvider.isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
-                                    ),
-                                  )
-                                : _selectedProduct != null
-                                    ? Text(
-                                        'Start ${_getProductTitle(_selectedProduct!.id)} Plan',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ))
-                                    : const Text('Select a Plan'),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        GestureDetector(
-                          onTap: () => context.push('/referral'),
-                          child: RichText(
-                            text: TextSpan(
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.5)),
-                                children: const [
-                                  TextSpan(
-                                      text:
-                                          '🎁 Invite friends and earn free Pro time'),
-                                ]),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  )
-                ],
-              ),
             ),
+          ],
+        ),
+      ),
+      bottomSheet: _buildBottomSheet(),
     );
   }
 
-  Widget _buildFeatureRow(String label,
-      {required bool isUnlocked, required ThemeData theme}) {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.check_circle_rounded,
-              color: theme.colorScheme.primary, size: 20),
-          const SizedBox(width: 12),
-          Text(label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              )),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => context.pop(),
+          ),
+          Row(
+            children: [
+              Image.asset('assets/images/sumquiz_logo.png', height: 28),
+              const SizedBox(width: 8),
+              const Text(
+                'SumQuiz',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: () {
+              // Restore purchases logic
+            },
+            child: const Text(
+              'Restore',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProductCard(
-      ProductDetails product, ThemeData theme, bool isDark) {
-    final isSelected = _selectedProduct?.id == product.id;
-    final isBestValue = product.id.contains('yearly');
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedProduct = product;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.05)
-              : theme.cardColor,
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withValues(alpha: 0.5),
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(_getProductTitle(product.id),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface)),
-                      if (isBestValue) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.amber[600]!, Colors.orange[400]!],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star,
-                                  color: Colors.white, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                'POPULAR',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      ]
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getBillingText(product.id),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(product.price,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface)),
-                if (!product.id.contains('lifetime'))
-                  Text(
-                    '/${_getPeriod(product.id)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAccessSection(ThemeData theme, bool isDark) {
-    final passes = _products
-        .where((p) => p.id.contains('daily') || p.id.contains('weekly'))
-        .toList();
-
-    if (passes.isEmpty) return const SizedBox.shrink();
-
+  Widget _buildHeroSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
           children: [
-            Icon(Icons.flash_on, color: Colors.amber[700], size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Quick Access',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/onboarding_background.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Positioned(
+              top: -10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade800,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.local_fire_department, color: Colors.white, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Exam Season Boost',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Need access now? Get instant unlimited access!',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        const SizedBox(height: 24),
+        const Text(
+          'Pass Exams Faster with AI Power',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: passes
-              .map((pass) => Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: passes.indexOf(pass) == 0 ? 8 : 0,
-                        left: passes.indexOf(pass) == 1 ? 8 : 0,
-                      ),
-                      child: _buildPassCard(pass, theme, isDark),
-                    ),
-                  ))
-              .toList(),
+        const Text(
+          'Join thousands of students acing their classes with smart summaries and practice.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildPassCard(ProductDetails pass, ThemeData theme, bool isDark) {
-    final isDailyPass = pass.id.contains('daily');
-    final isSelected = _selectedProduct?.id == pass.id;
+  Widget _buildFeaturesList() {
+    return const Column(
+      children: [
+        _FeatureListItem(
+          text: 'Unlimited AI Summaries',
+          subtext: 'Turn 100 pages into concise notes instantly.',
+        ),
+        _FeatureListItem(
+          text: 'Track Weak Topics',
+          subtext: 'Identify knowledge gaps before the test.',
+        ),
+        _FeatureListItem(
+          text: 'Exam Mode Practice',
+          subtext: 'Simulate real conditions with AI generated quizzes.',
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPlanCard(ProductDetails product) {
+    final isSelected = _selectedProduct?.id == product.id;
+    final isBestValue = product.id.contains('yearly');
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedProduct = pass),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+      onTap: () => setState(() => _selectedProduct = product),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withValues(alpha: 0.15),
-                    Colors.amber.withValues(alpha: 0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : theme.cardColor,
+          color: isSelected ? const Color(0xFF3D4080) : const Color(0xFF1A1F44),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withValues(alpha: 0.3),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? const Color(0xFF474BFF) : Colors.transparent,
+            width: 2,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              isDailyPass ? Icons.timer : Icons.calendar_today,
-              color: isSelected ? theme.colorScheme.primary : Colors.amber[700],
-              size: 28,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isBestValue)
+                  const Text('BEST VALUE', style: TextStyle(color: Color(0xFF3D9CFF), fontWeight: FontWeight.bold))
+                else 
+                   const Text('FLEXIBLE', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  product.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (isBestValue) ...[
+                  const SizedBox(height: 4),
+                  const Text('Save 30% compared to monthly', style: TextStyle(color: Color(0xFF3D9CFF)))
+                ]
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              isDailyPass ? 'Daily Pass' : 'Weekly Pass',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              pass.price,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isDailyPass ? '24 hours' : '7 days',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                 Text(
+                  product.price,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  product.id.contains('monthly') ? '/month' : '/year',
+                  style: const TextStyle(color: Colors.white70),
+                )
+              ],
+            )
           ],
         ),
       ),
     );
   }
 
-  /*
-  void _showProcessingDialog(BuildContext context, String uid) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StreamBuilder<bool>(
-          stream: WebPaymentService().watchPremiumStatus(uid),
-          builder: (context, snapshot) {
-            final isPremium = snapshot.data ?? false;
-
-            if (isPremium) {
-              // Automatically close dialog and screen on success
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context); // Close dialog
-                  context.pop(); // Close subscription screen
-                }
-              });
-
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle,
-                        color: Colors.green, size: 64),
-                    const SizedBox(height: 16),
-                    Text('Payment Successful!',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    const Text('Your premium features are now unlocked.'),
-                  ],
-                ),
-              );
-            }
-
-            return AlertDialog(
+  Widget _buildBottomSheet() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      color: const Color(0xFF0F112B).withOpacity(0.95),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ElevatedButton(
+            onPressed: _buyProduct,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF474BFF),
+              minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text('Processing Payment...',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'We are waiting for confirmation from the payment provider. This usually takes a few seconds.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Wait in background'),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(16),
               ),
-            );
-          },
-        );
-      },
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Unlock Pro Now',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, color: Colors.white),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock, color: Colors.white54, size: 14),
+              SizedBox(width: 8),
+              Text(
+                'Secure payment via PLayStore',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () {},
+                child: const Text('Terms of Service', style: TextStyle(color: Colors.white70)),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white70)),
+              TextButton(
+                onPressed: () {},
+                child: const Text('Privacy Policy', style: TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
-  */
 
-  String _getProductTitle(String id) {
-    if (id.contains('daily')) return 'Daily';
-    if (id.contains('weekly')) return 'Weekly';
-    if (id.contains('monthly')) return 'Monthly';
-    if (id.contains('yearly')) return 'Annual';
-    if (id.contains('lifetime')) return 'Lifetime';
-    return 'Standard';
-  }
-
-  String _getPeriod(String id) {
-    if (id.contains('daily')) return 'day';
-    if (id.contains('weekly')) return 'wk';
-    if (id.contains('monthly')) return 'mo';
-    if (id.contains('yearly')) return 'yr';
-    return '';
-  }
-
-  String _getBillingText(String id) {
-    if (id.contains('daily')) return 'Access for 24 hours';
-    if (id.contains('weekly')) return 'Access for 7 days';
-    if (id.contains('monthly')) return 'Billed monthly';
-    if (id.contains('yearly')) return 'Save ~US\$10/month';
-    if (id.contains('lifetime')) return 'One-time payment';
-    return '';
-  }
-
-  Widget _buildAlreadyProView(BuildContext context, ThemeData theme) {
-    final subscriptionProvider = context.watch<SubscriptionProvider>();
-    final user = context.watch<UserModel?>();
-
-    String statusText = 'Pro Member';
-    String? expiryText;
-    IconData statusIcon = Icons.check_circle_rounded;
-    Color statusColor = theme.colorScheme.primary;
-
-    if (user != null) {
-      if (user.isCreatorPro) {
-        statusText = 'Creator Pro';
-        statusIcon = Icons.workspace_premium;
-        statusColor = Colors.purple;
-      } else if (user.isTrial) {
-        statusText = 'Trial Member';
-        statusIcon = Icons.timelapse;
-        statusColor = Colors.orange;
-        expiryText =
-            'Trial ends in ${subscriptionProvider.getFormattedExpiry()}';
-      } else if (subscriptionProvider.subscriptionExpiry != null) {
-        expiryText = 'Expires in ${subscriptionProvider.getFormattedExpiry()}';
-        if (subscriptionProvider.isExpiringSoon()) {
-          statusText = 'Pro (Expiring Soon)';
-          statusColor = Colors.orange;
-        }
-      } else {
-        // Lifetime access
-        expiryText = 'Lifetime access';
-      }
-    }
-
+  Widget _buildAlreadyProView(BuildContext context) {
+    // Keeping this simple as it's not the focus of the redesign.
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF0F112B),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => context.pop(),
         ),
       ),
-      body: Center(
+      body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(statusIcon, color: statusColor, size: 80),
-            const SizedBox(height: 24),
+            Icon(Icons.check_circle, color: Colors.green, size: 80),
+            SizedBox(height: 24),
             Text(
-              statusText,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface),
+              'You are a Pro Member!',
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Thank you for supporting SumQuiz.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
-              textAlign: TextAlign.center,
-            ),
-            if (expiryText != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: theme.dividerColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  expiryText,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.8)),
-                ),
-              ),
-            ],
-            const SizedBox(height: 32),
-            if (!user!.isCreatorPro &&
-                !user
-                    .isTrial) // Only show restore button for regular subscribers
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await subscriptionProvider.restorePurchases();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Purchases restored successfully'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.restore),
-                label: const Text('Restore Purchases'),
-                style: OutlinedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
           ],
         ),
       ),
@@ -877,7 +458,50 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 }
 
-/// Fallback product details for when the store is offline
+class _FeatureListItem extends StatelessWidget {
+  final String text;
+  final String subtext;
+
+  const _FeatureListItem({required this.text, required this.subtext});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle, color: Color(0xFF474BFF), size: 24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtext,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FallbackProductDetails implements ProductDetails {
   @override
   final String id;
@@ -902,3 +526,4 @@ class _FallbackProductDetails implements ProductDetails {
     required this.rawPrice,
   });
 }
+

@@ -5,15 +5,12 @@ import 'package:sumquiz/models/local_quiz_question.dart';
 import 'package:sumquiz/services/local_database_service.dart';
 import 'package:sumquiz/models/user_model.dart';
 import 'package:sumquiz/services/enhanced_ai_service.dart';
-import 'package:sumquiz/services/iap_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'dart:typed_data';
 import 'package:sumquiz/services/content_extraction_service.dart';
-import 'package:sumquiz/models/extraction_result.dart';
 
 class ExamCreationScreen extends StatefulWidget {
   const ExamCreationScreen({super.key});

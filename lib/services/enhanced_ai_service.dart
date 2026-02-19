@@ -299,7 +299,7 @@ OUTPUT: Structured knowledge extracted from the file.''';
     }
   }
 
-  Future<String> generateAndStoreOutputs({
+  Future<Map<String, dynamic>> generateAndStoreOutputs({
     required String text,
     required String title,
     required List<String> requestedOutputs,
@@ -319,7 +319,7 @@ OUTPUT: Structured knowledge extracted from the file.''';
     await localDb.saveFolder(folder);
 
     final srsService = SpacedRepetitionService(localDb.getSpacedRepetitionBox());
-
+    final generatedContent = <String, dynamic>{};
     int completed = 0;
     final total = requestedOutputs.length;
     final failures = <String>[];
@@ -333,11 +333,13 @@ OUTPUT: Structured knowledge extracted from the file.''';
             case 'summary':
               final summary = await _generatorService.generateSummary(text, userId: userId);
               await localDb.saveSummary(summary, folderId);
+              generatedContent['summary'] = summary;
               break;
 
             case 'quiz':
               final quiz = await _generatorService.generateQuiz(text, userId: userId);
               await localDb.saveQuiz(quiz, folderId);
+              generatedContent['quiz'] = quiz;
               break;
 
             case 'flashcards':
@@ -346,6 +348,7 @@ OUTPUT: Structured knowledge extracted from the file.''';
               for (final card in set.flashcards) {
                 await srsService.scheduleReview(card.id, userId);
               }
+              generatedContent['flashcards'] = set;
               break;
           }
 
@@ -372,7 +375,8 @@ OUTPUT: Structured knowledge extracted from the file.''';
       // Trigger sync in background
       SyncService(localDb).syncAllData();
 
-      return folderId;
+      generatedContent['folderId'] = folderId;
+      return generatedContent;
     } catch (e) {
       onProgress('Error occurred. Cleaning up...');
       await localDb.deleteFolder(folderId);

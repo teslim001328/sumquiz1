@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -52,7 +53,8 @@ OUTPUT FORMAT (JSON):
   "content": "All the extracted educational text..."
 }''';
 
-      final response = await generateWithRetry(prompt, customModel: visionModel, generationConfig: config);
+      final response = await generateWithRetry(prompt, customModel: visionModel, generationConfig: config)
+          .timeout(const Duration(seconds: 30));
       final jsonStr = extractJson(response);
       final data = json.decode(jsonStr);
 
@@ -75,6 +77,8 @@ OUTPUT FORMAT (JSON):
         suggestedTitle: title,
         sourceUrl: videoUrl,
       ));
+    } on TimeoutException {
+      return Result.error(EnhancedAIServiceException('The request to analyze the video timed out.', code: 'TIMEOUT'));
     } catch (e) {
       developer.log('YouTube AI Vision Analysis failed, trying transcript fallback...', error: e);
       return extractTranscript(videoUrl);
@@ -86,15 +90,15 @@ OUTPUT FORMAT (JSON):
       final videoId = _extractVideoId(videoUrl);
       if (videoId == null) throw Exception('Could not extract video ID.');
 
-      final video = await _yt.videos.get(videoId);
-      final manifest = await _yt.videos.closedCaptions.getManifest(videoId);
+      final video = await _yt.videos.get(videoId).timeout(const Duration(seconds: 30));
+      final manifest = await _yt.videos.closedCaptions.getManifest(videoId).timeout(const Duration(seconds: 30));
       
       if (manifest.tracks.isEmpty) {
         throw Exception('No captions available for this video.');
       }
 
       final track = manifest.tracks.first;
-      final captions = await _yt.videos.closedCaptions.get(track);
+      final captions = await _yt.videos.closedCaptions.get(track).timeout(const Duration(seconds: 30));
       final transcript = captions.captions.map((c) => c.text).join(' ');
 
       return Result.ok(ExtractionResult(
@@ -102,6 +106,8 @@ OUTPUT FORMAT (JSON):
         suggestedTitle: video.title,
         sourceUrl: videoUrl,
       ));
+    } on TimeoutException {
+      return Result.error(EnhancedAIServiceException('The request to extract the transcript timed out.', code: 'TIMEOUT'));
     } catch (e) {
       return Result.error(EnhancedAIServiceException('Transcript extraction failed: $e', code: 'TRANSCRIPT_FAILED'));
     }

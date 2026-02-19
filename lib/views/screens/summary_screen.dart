@@ -110,7 +110,7 @@ class SummaryScreenState extends State<SummaryScreen> {
     });
 
     try {
-      final folderId = await _aiService.generateAndStoreOutputs(
+      final generatedContent = await _aiService.generateAndStoreOutputs(
         text: _textController.text,
         title: _summaryTitle.isNotEmpty ? _summaryTitle : 'Summary',
         requestedOutputs: ['summary'],
@@ -123,10 +123,7 @@ class SummaryScreenState extends State<SummaryScreen> {
         },
       );
 
-      final content = await _localDbService.getFolderContents(folderId);
-      final summaryId =
-          content.firstWhere((c) => c.contentType == 'summary').contentId;
-      final summary = await _localDbService.getSummary(summaryId);
+      final LocalSummary? summary = generatedContent['summary'] as LocalSummary?;
 
       if (summary != null) {
         if (!userModel.isPro) await usageService.recordAction(userModel.uid, 'summaries');
@@ -438,7 +435,7 @@ class SummaryScreenState extends State<SummaryScreen> {
           const SizedBox(height: 24),
           Text(_loadingMessage,
               style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                  color: theme.colorScheme.onSurface.withAlpha(179))),
         ],
       ).animate().fadeIn(),
     );
@@ -464,7 +461,7 @@ class SummaryScreenState extends State<SummaryScreen> {
               Text(
                 'Paste your content or upload a PDF to generate a comprehensive summary',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                    color: theme.colorScheme.onSurface.withAlpha(153)),
               ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2),
               const SizedBox(height: 48),
               TextField(
@@ -474,7 +471,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                 decoration: InputDecoration(
                   hintText: 'Paste your text here...',
                   hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                      color: theme.colorScheme.onSurface.withAlpha(77)),
                   filled: true,
                   fillColor: theme.cardColor,
                   border: OutlineInputBorder(
@@ -503,7 +500,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                         Icons.upload_file_rounded,
                         color: _pdfFileName != null
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withOpacity(0.6),
+                            : theme.colorScheme.onSurface.withAlpha(153),
                       ),
                       label: Text(
                         _pdfFileName ?? 'Upload PDF',
@@ -580,7 +577,7 @@ class SummaryScreenState extends State<SummaryScreen> {
             Text(_errorMessage,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                    color: theme.colorScheme.onSurface.withAlpha(179))),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _retry,
@@ -606,7 +603,7 @@ class SummaryScreenState extends State<SummaryScreen> {
       return Center(
           child: Text('No summary available',
               style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6))));
+                  color: theme.colorScheme.onSurface.withAlpha(153))));
     }
 
     final isViewingSaved = widget.summary != null;
@@ -641,7 +638,7 @@ class SummaryScreenState extends State<SummaryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          color: theme.colorScheme.primary.withAlpha(26),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(

@@ -124,7 +124,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       developer.log('Generating flashcards for content...',
           name: 'flashcards.generation');
 
-      final folderId = await _aiService.generateAndStoreOutputs(
+      final generatedContent = await _aiService.generateAndStoreOutputs(
         text: _textController.text,
         title: _titleController.text,
         requestedOutputs: ['flashcards'],
@@ -148,11 +148,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
         await usageService.recordAction(userModel.uid, 'flashcards');
       }
 
-      final content = await _localDbService.getFolderContents(folderId);
-      final flashcardSetId =
-          content.firstWhere((c) => c.contentType == 'flashcardSet').contentId;
-      final flashcardSet =
-          await _localDbService.getFlashcardSet(flashcardSetId);
+      final LocalFlashcardSet? flashcardSet = generatedContent['flashcards'] as LocalFlashcardSet?;
 
       if (flashcardSet != null && flashcardSet.flashcards.isNotEmpty) {
         if (mounted) {
@@ -495,9 +491,9 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                     hintText: 'e.g., Biology Chapter 5',
                     hintStyle: TextStyle(
                         color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                            theme.colorScheme.onSurface.withAlpha(128)),
                     filled: true,
-                    fillColor: theme.cardColor.withValues(alpha: 0.5),
+                    fillColor: theme.cardColor.withAlpha(128),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none),
@@ -518,9 +514,9 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                     hintText: 'Paste your notes, an article, or any text here.',
                     hintStyle: TextStyle(
                         color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                            theme.colorScheme.onSurface.withAlpha(128)),
                     filled: true,
-                    fillColor: theme.cardColor.withValues(alpha: 0.5),
+                    fillColor: theme.cardColor.withAlpha(128),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none),
@@ -597,7 +593,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                   'You got $_correctCount out of ${_flashcards.length} correct.',
                   style: theme.textTheme.titleMedium?.copyWith(
                       color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                          theme.colorScheme.onSurface.withAlpha(204))),
               const SizedBox(height: 40),
               if (_isCreationMode) ...[
                 SizedBox(
@@ -649,7 +645,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                     child: Text('Finish',
                         style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7)))),
+                                .withAlpha(179)))),
               ),
             ],
           ),
@@ -669,13 +665,13 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
         child: Container(
           padding: padding ?? const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: 0.8),
+            color: theme.cardColor.withAlpha(204),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-                color: theme.dividerColor.withValues(alpha: 0.2), width: 1.5),
+                color: theme.dividerColor.withAlpha(51), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withAlpha(13),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
